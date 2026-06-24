@@ -1,0 +1,22 @@
+{
+  "name": "assetmason-agent-tools",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w ard-kit && npm run build -w ard-cli && npm run build -w ai-catalog",
+    "lint": "npm run typecheck",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build -ws --if-present && vitest run",
+    "pack:dry-run": "npm run pack:dry-run -ws --if-present",
+    "names:check": "node scripts/names-check.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

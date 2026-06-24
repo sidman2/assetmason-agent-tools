@@ -1,0 +1,17 @@
+{
+  "name": "ard-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc --module NodeNext --moduleResolution NodeNext --target ES2022 --strict --esModuleInterop --skipLibCheck --resolveJsonModule --declaration --outDir dist --rootDir src src/index.ts src/validateAiCatalog.ts src/types.ts src/fixtures.ts",
+    "test": "vitest run",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  }
+}

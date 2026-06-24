@@ -1,0 +1,14 @@
+{
+  "specVersion": "preview-1",
+  "host": { "displayName": "Example", "documentationUrl": "https://example.com/docs" },
+  "entries": [
+    {
+      "identifier": "bad",
+      "displayName": "Bad",
+      "type": "page",
+      "url": "https://example.com",
+      "representativeQueries": ["one", "two"],
+      "mcpAvailable": true
+    }
+  ]
+}

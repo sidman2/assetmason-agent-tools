@@ -1,0 +1,18 @@
+{
+  "name": "ai-catalog",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ai-catalog": "./bin/ai-catalog.js"
+  },
+  "files": ["dist", "bin", "README.md"],
+  "dependencies": {
+    "ard-kit": "file:../ard-kit"
+  },
+  "scripts": {
+    "build": "tsc --module NodeNext --moduleResolution NodeNext --target ES2022 --strict --esModuleInterop --skipLibCheck --resolveJsonModule --declaration --outDir dist --rootDir src src/index.ts src/main.ts",
+    "test": "vitest run",
+    "pack:dry-run": "npm pack --dry-run"
+  }
+}
