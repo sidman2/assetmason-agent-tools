@@ -2,22 +2,24 @@
 
 - Repo URL: `https://github.com/sidman2/assetmason-agent-tools`
 - Local folder: `C:\Users\sudhir.manchanda\OneDrive - Accenture\Desktop\Tinkering\assetmason-agent-tools`
-- Branch: `feature/initial-ard-ai-catalog-packages`
+- Branch: `feature/verify-npm-publish-privacy-metadata`
 - Commit hash: not yet committed at packet draft time
 - Package versions: `0.1.0-preview.0` across `ard-kit`, `ard-cli`, and `ai-catalog`
+- GitHub repo visibility: private/public status was not changed
+- npm package publish status: not published
+- npm package metadata private flags: root private=true; workspaces not private=true
 
 ## What Works Locally
 
-- `ard-cli scan <url> --json` returns JSON only.
-- `ard-cli scan <url>` returns readable JSON output.
-- `ard-cli check <path> --json` returns JSON only.
-- `ai-catalog validate <path> --json` returns JSON only.
 - `npm run typecheck`
 - `npm run lint`
 - `npm test`
 - `npm run build`
 - `npm run pack:dry-run`
 - `npm run names:check`
+- `npm publish --dry-run --workspace ard-kit` blocks on prerelease tagging
+- `npm publish --dry-run --workspace ai-catalog` blocks on prerelease tagging
+- `npm publish --dry-run --workspace ard-cli` blocks on prerelease tagging
 
 ## Intentionally Not Included
 
@@ -30,6 +32,4 @@
 
 ## Publish Blockers
 
-- Packages remain private in the workspace.
-- Publish is manual-only and not performed by this pass.
-
+- Packages are now metadata-publishable, but `npm publish --dry-run` still requires an explicit `--tag` for prerelease versions.

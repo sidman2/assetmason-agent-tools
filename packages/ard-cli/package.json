@@ -1,7 +1,6 @@
 {
   "name": "ard-cli",
   "version": "0.1.0-preview.0",
-  "private": true,
   "type": "module",
   "bin": {
     "ard-cli": "./bin/ard-cli.js"

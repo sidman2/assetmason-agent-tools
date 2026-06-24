@@ -1,47 +1,33 @@
 # NPM Dry Run Results
 
+## Pack dry run
+
+Ran successfully:
+
+- `npm run pack:dry-run`
+
+Observed tarballs:
+
+- `ai-catalog-0.1.0-preview.0.tgz`
+- `ard-cli-0.1.0-preview.0.tgz`
+- `ard-kit-0.1.0-preview.0.tgz`
+
+## Publish dry run
+
 Ran:
 
-- `npm pack --dry-run --workspace ard-kit`
-- `npm pack --dry-run --workspace ard-cli`
-- `npm pack --dry-run --workspace ai-catalog`
+- `npm publish --dry-run --workspace ard-kit`
+- `npm publish --dry-run --workspace ai-catalog`
+- `npm publish --dry-run --workspace ard-cli`
 
-Observed contents:
+Results:
 
-## `ard-kit`
-
-- `README.md`
-- `dist/index.d.ts`
-- `dist/index.js`
-- `dist/types.d.ts`
-- `dist/types.js`
-- `dist/validateAiCatalog.d.ts`
-- `dist/validateAiCatalog.js`
-- `package.json`
-
-## `ard-cli`
-
-- `README.md`
-- `bin/ard-cli.js`
-- `dist/index.d.ts`
-- `dist/index.js`
-- `dist/main.d.ts`
-- `dist/main.js`
-- `package.json`
-
-## `ai-catalog`
-
-- `README.md`
-- `bin/ai-catalog.js`
-- `dist/index.d.ts`
-- `dist/index.js`
-- `dist/main.d.ts`
-- `dist/main.js`
-- `package.json`
+- `ard-kit`: blocked by `npm error You must specify a tag using --tag when publishing a prerelease version.`
+- `ai-catalog`: blocked by the same prerelease tag requirement, with a publish-normalization warning about the `bin` field.
+- `ard-cli`: blocked by the same prerelease tag requirement, with a publish-normalization warning about the `bin` field.
 
 Notes:
 
-- No `tmp/` files were included in the tarball contents.
-- No tests were included in the tarball contents.
-- No credential files or local path junk were included.
-
+- No npm publish happened.
+- No credentials were entered or stored.
+- The dry-run checks confirmed the packages are packaging cleanly enough for tarball inspection, but publish still needs an explicit prerelease tag.

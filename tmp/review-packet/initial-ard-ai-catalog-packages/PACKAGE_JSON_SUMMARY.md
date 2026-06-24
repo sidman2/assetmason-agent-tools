@@ -5,12 +5,13 @@
 - `private: true`
 - workspaces: `packages/*`
 - scripts: `build`, `lint`, `typecheck`, `test`, `pack:dry-run`, `names:check`
-- no root `package-lock.json` is committed in this repo; this review pass keeps the workspace lockfile out of source control so the publish review stays focused on package contents rather than local install state
+- `package-lock.json` exists locally as an untracked install artifact and is intentionally not part of this review branch
 
 ## `packages/ard-kit`
 
 - version: `0.1.0-preview.0`
-- local private package
+- `private` field absent
+- publishable from package metadata
 - exposes `dist/index.js`
 - build compiles shared validator source
 - package `files` include `dist`, `README.md`, and `LICENSE`
@@ -18,7 +19,8 @@
 ## `packages/ard-cli`
 
 - version: `0.1.0-preview.0`
-- local private package
+- `private` field absent
+- publishable from package metadata
 - binary: `ard-cli`
 - depends on `ard-kit`
 - build compiles CLI source
@@ -27,9 +29,9 @@
 ## `packages/ai-catalog`
 
 - version: `0.1.0-preview.0`
-- local private package
+- `private` field absent
+- publishable from package metadata
 - binary: `ai-catalog`
 - depends on `ard-kit`
 - build compiles CLI source
 - package `files` include `dist`, `bin`, `README.md`, and `LICENSE`
-

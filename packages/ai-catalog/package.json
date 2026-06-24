@@ -1,7 +1,6 @@
 {
   "name": "ai-catalog",
   "version": "0.1.0-preview.0",
-  "private": true,
   "type": "module",
   "bin": {
     "ai-catalog": "./bin/ai-catalog.js"
