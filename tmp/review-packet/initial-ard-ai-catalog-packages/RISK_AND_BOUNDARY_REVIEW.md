@@ -12,3 +12,4 @@ No certification/safety/compliance/ranking/indexing/invocation guarantee was add
 
 - `npm publish --dry-run --tag preview` was attempted only as a dry-run and succeeded for all three workspace packages.
 - The local `package-lock.json` remains untracked and was not added to the review branch.
+- npm still emitted a `bin` normalization warning during dry-run for `ard-cli` and `ai-catalog`, so the warning is not yet fully eliminated.

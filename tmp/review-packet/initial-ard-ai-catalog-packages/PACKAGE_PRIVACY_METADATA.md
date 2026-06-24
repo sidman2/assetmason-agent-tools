@@ -13,18 +13,21 @@
 - version: `0.1.0-preview.0`
 - private value: absent
 - publishable from package metadata: yes
+- bin value: absent
 
 ## `packages/ai-catalog/package.json`
 
 - version: `0.1.0-preview.0`
 - private value: absent
 - publishable from package metadata: yes
+- bin value: `{ "ai-catalog": "./bin/ai-catalog.js" }`
 
 ## `packages/ard-cli/package.json`
 
 - version: `0.1.0-preview.0`
 - private value: absent
 - publishable from package metadata: yes
+- bin value: `{ "ard-cli": "./bin/ard-cli.js" }`
 
 ## Publishability State
 

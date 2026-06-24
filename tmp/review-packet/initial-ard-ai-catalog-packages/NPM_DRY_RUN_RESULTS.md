@@ -23,12 +23,13 @@ Ran:
 Results:
 
 - `ard-kit`: succeeded as a dry run with tag `preview`.
-- `ai-catalog`: succeeded as a dry run with tag `preview`, with a publish-normalization warning about the `bin` field.
-- `ard-cli`: succeeded as a dry run with tag `preview`, with a publish-normalization warning about the `bin` field.
+- `ai-catalog`: succeeded as a dry run with tag `preview`, but npm still auto-corrected the `bin` metadata and warned that `bin[ai-catalog]` was invalid and removed.
+- `ard-cli`: succeeded as a dry run with tag `preview`, but npm still auto-corrected the `bin` metadata and warned that `bin[ard-cli]` was invalid and removed.
 - npm also printed `This command requires you to be logged in to https://registry.npmjs.org/ (dry-run)`.
 
 Notes:
 
 - No npm publish happened.
 - No credentials were entered or stored.
+- The previous CLI bin normalization warning is not gone yet.
 - The dry-run checks confirmed the packages are packaging cleanly enough for tarball inspection and that prerelease publish should use the preview tag.

@@ -1,4 +1,3 @@
-docs/MANUAL_NPM_PUBLISH_CHECKLIST.md
 tmp/review-packet/initial-ard-ai-catalog-packages/CHANGED_FILES.txt
 tmp/review-packet/initial-ard-ai-catalog-packages/FULL_DIFF.patch
 tmp/review-packet/initial-ard-ai-catalog-packages/NPM_DRY_RUN_RESULTS.md
