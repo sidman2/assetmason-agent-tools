@@ -25,3 +25,8 @@ npx ai-catalog explain
 
 `ard-mcp`, `ard-scan`, and `ard-check` are planned later packages. They are not published or scaffolded as empty placeholders in this pass.
 
+## External reference
+
+For background on the emerging Agentic Resource Discovery protocol, see the external ARD specification reference at https://agenticresourcediscovery.org/.
+
+AssetMason Agent Tools are preview readiness helpers and are not an official conformance authority for ARD or AI Catalog.

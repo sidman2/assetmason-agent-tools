@@ -19,4 +19,4 @@ npx ai-catalog generate --url https://example.com --out ./ai-catalog.draft.json
 - No telemetry
 - No credential capture
 - JSON output is parseable JSON only
-
+- For background on the emerging Agentic Resource Discovery protocol, see the external ARD specification reference at https://agenticresourcediscovery.org/.

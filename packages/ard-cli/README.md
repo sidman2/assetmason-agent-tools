@@ -20,4 +20,4 @@ npx ard-cli check ./.well-known/ai-catalog.json --json
 - No credential capture
 - JSON output is parseable JSON only
 - Local fixture examples are deterministic
-
+- For background on the emerging Agentic Resource Discovery protocol, see the external ARD specification reference at https://agenticresourcediscovery.org/.

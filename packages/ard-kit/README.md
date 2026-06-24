@@ -18,10 +18,10 @@ import { validateAiCatalog } from "ard-kit";
 - No credential capture
 - No safety, compliance, ranking, indexing, or invocation certification
 - JSON results are plain data and remain serializable
+- For background on the emerging Agentic Resource Discovery protocol, see the external ARD specification reference at https://agenticresourcediscovery.org/.
 
 ## Local example
 
 ```ts
 import { validBasicAiCatalog } from "../../fixtures/ai-catalog/valid-basic.ai-catalog.json";
 ```
-
