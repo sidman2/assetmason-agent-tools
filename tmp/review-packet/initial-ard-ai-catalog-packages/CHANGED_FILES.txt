@@ -1,10 +1,7 @@
-packages/ai-catalog/package.json
-packages/ard-cli/package.json
-packages/ard-kit/package.json
+docs/MANUAL_NPM_PUBLISH_CHECKLIST.md
 tmp/review-packet/initial-ard-ai-catalog-packages/CHANGED_FILES.txt
 tmp/review-packet/initial-ard-ai-catalog-packages/FULL_DIFF.patch
 tmp/review-packet/initial-ard-ai-catalog-packages/NPM_DRY_RUN_RESULTS.md
-tmp/review-packet/initial-ard-ai-catalog-packages/PACKAGE_JSON_SUMMARY.md
 tmp/review-packet/initial-ard-ai-catalog-packages/PACKAGE_PRIVACY_METADATA.md
 tmp/review-packet/initial-ard-ai-catalog-packages/RISK_AND_BOUNDARY_REVIEW.md
 tmp/review-packet/initial-ard-ai-catalog-packages/SUMMARY.md

@@ -2,14 +2,19 @@
 
 Use this checklist only when a human is ready to decide on publish. Do not paste npm tokens into the IDE.
 
+## Prerelease publish
+
+For version `0.1.0-preview.0`, publish manually with `--tag preview`.
+Do not publish prerelease packages under the default `latest` tag.
+
 ## Before publish
 
 1. Run `npm login` in a trusted terminal.
 2. Run `npm whoami` and confirm the expected account.
 3. Verify 2FA requirements for the account and package scope.
-4. Run `npm publish --dry-run --workspace ard-kit`.
-5. Run `npm publish --dry-run --workspace ard-cli`.
-6. Run `npm publish --dry-run --workspace ai-catalog`.
+4. Run `npm publish --dry-run --tag preview --workspace ard-kit`.
+5. Run `npm publish --dry-run --tag preview --workspace ard-cli`.
+6. Run `npm publish --dry-run --tag preview --workspace ai-catalog`.
 
 ## Publish later, manually only
 
@@ -18,9 +23,24 @@ Use this checklist only when a human is ready to decide on publish. Do not paste
 3. Publish `ai-catalog` only if the dry run looks correct.
 4. If trusted publishing is adopted later, evaluate it separately. It is not required for this review pass.
 
+Manual-only publish commands:
+
+```bash
+npm publish --tag preview --workspace ard-kit
+npm publish --tag preview --workspace ard-cli
+npm publish --tag preview --workspace ai-catalog
+```
+
+Post-publish verification:
+
+```bash
+npm view ard-kit version dist-tags --json
+npm view ard-cli version dist-tags --json
+npm view ai-catalog version dist-tags --json
+```
+
 ## After publish
 
 1. Verify the package pages on npm.
 2. Confirm the expected versions and package contents.
 3. Check that no secrets, tokens, or local paths were included.
-

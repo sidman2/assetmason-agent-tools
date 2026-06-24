@@ -31,3 +31,4 @@
 - Root workspace remains private.
 - Publishable workspace packages are not marked `private: true`.
 - No registry credentials, tokens, passwords, recovery codes, or personal email were stored.
+- `npm publish --dry-run --tag preview` succeeded for `ard-kit`, `ard-cli`, and `ai-catalog`.

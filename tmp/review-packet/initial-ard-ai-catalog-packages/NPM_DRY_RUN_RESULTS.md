@@ -16,18 +16,19 @@ Observed tarballs:
 
 Ran:
 
-- `npm publish --dry-run --workspace ard-kit`
-- `npm publish --dry-run --workspace ai-catalog`
-- `npm publish --dry-run --workspace ard-cli`
+- `npm publish --dry-run --tag preview --workspace ard-kit`
+- `npm publish --dry-run --tag preview --workspace ai-catalog`
+- `npm publish --dry-run --tag preview --workspace ard-cli`
 
 Results:
 
-- `ard-kit`: blocked by `npm error You must specify a tag using --tag when publishing a prerelease version.`
-- `ai-catalog`: blocked by the same prerelease tag requirement, with a publish-normalization warning about the `bin` field.
-- `ard-cli`: blocked by the same prerelease tag requirement, with a publish-normalization warning about the `bin` field.
+- `ard-kit`: succeeded as a dry run with tag `preview`.
+- `ai-catalog`: succeeded as a dry run with tag `preview`, with a publish-normalization warning about the `bin` field.
+- `ard-cli`: succeeded as a dry run with tag `preview`, with a publish-normalization warning about the `bin` field.
+- npm also printed `This command requires you to be logged in to https://registry.npmjs.org/ (dry-run)`.
 
 Notes:
 
 - No npm publish happened.
 - No credentials were entered or stored.
-- The dry-run checks confirmed the packages are packaging cleanly enough for tarball inspection, but publish still needs an explicit prerelease tag.
+- The dry-run checks confirmed the packages are packaging cleanly enough for tarball inspection and that prerelease publish should use the preview tag.
