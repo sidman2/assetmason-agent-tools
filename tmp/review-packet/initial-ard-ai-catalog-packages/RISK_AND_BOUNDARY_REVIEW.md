@@ -8,6 +8,7 @@
 - Publishable workspace packages are not marked private.
 - Preview packages require `--tag preview` when manually published.
 - CLI bin metadata is explicit and packed tarballs preserve bin entries.
+- External ARD reference link is informational only and does not claim affiliation, certification, ranking, indexing, registry acceptance, or invocation guarantee.
 - No certification/safety/compliance/ranking/indexing/invocation guarantee was added.
 
 ## Additional boundary notes

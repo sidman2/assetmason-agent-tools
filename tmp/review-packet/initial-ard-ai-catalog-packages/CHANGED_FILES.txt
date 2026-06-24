@@ -8,3 +8,6 @@ tmp/review-packet/initial-ard-ai-catalog-packages/PACKAGE_PRIVACY_METADATA.md
 tmp/review-packet/initial-ard-ai-catalog-packages/RISK_AND_BOUNDARY_REVIEW.md
 tmp/review-packet/initial-ard-ai-catalog-packages/SUMMARY.md
 tmp/review-packet/initial-ard-ai-catalog-packages/TEST_RESULTS.md
+packages/ard-kit/README.md
+packages/ard-cli/README.md
+packages/ai-catalog/README.md

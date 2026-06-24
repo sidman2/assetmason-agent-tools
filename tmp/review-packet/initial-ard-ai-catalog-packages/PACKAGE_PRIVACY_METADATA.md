@@ -7,6 +7,7 @@
 - GitHub repo visibility changed: no
 - npm publish happened: no
 - npm credentials stored: no
+- These states were re-read after the docs-link commit and before `main` was created.
 
 ## `packages/ard-kit/package.json`
 
