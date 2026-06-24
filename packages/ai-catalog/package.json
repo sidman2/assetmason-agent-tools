@@ -3,7 +3,7 @@
   "version": "0.1.0-preview.0",
   "type": "module",
   "bin": {
-    "ai-catalog": "./bin/ai-catalog.js"
+    "ai-catalog": "bin/ai-catalog.js"
   },
   "files": ["dist", "bin", "README.md", "LICENSE"],
   "dependencies": {

@@ -1,4 +1,4 @@
-# Test Results
+﻿# Test Results
 
 Ran successfully:
 
@@ -17,8 +17,8 @@ Ran successfully:
 Notes:
 
 - `npm publish --dry-run --tag preview --workspace ard-kit` succeeded.
-- `npm publish --dry-run --tag preview --workspace ai-catalog` succeeded, plus npm warned it would remove the invalid bin entry during publish normalization.
-- `npm publish --dry-run --tag preview --workspace ard-cli` succeeded, plus npm warned it would remove the invalid bin entry during publish normalization.
+- `npm publish --dry-run --tag preview --workspace ai-catalog` succeeded, and npm did not warn that it would remove the invalid bin entry during publish normalization.
+- `npm publish --dry-run --tag preview --workspace ard-cli` succeeded, and npm did not warn that it would remove the invalid bin entry during publish normalization.
 - npm also printed `This command requires you to be logged in to https://registry.npmjs.org/ (dry-run)`.
-- The previous CLI bin normalization warning remains.
+- The previous CLI bin normalization warning is gone.
 - `package-lock.json` was generated locally by `npm install` and remains untracked.
