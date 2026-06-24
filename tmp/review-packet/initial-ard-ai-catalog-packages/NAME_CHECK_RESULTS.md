@@ -1,12 +1,18 @@
 # Name Check Results
 
-All requested `npm view <name> name version --json` checks returned `E404` / not found.
+Ran `npm run names:check`.
 
-- `ard-kit`
-- `ard-cli`
-- `ai-catalog`
-- `ard-check`
-- `ard-scan`
-- `ard-mcp`
-- `agentic-resource-discovery`
+Results:
+
+- `ard-kit`: not found on the public npm registry
+- `ard-cli`: not found on the public npm registry
+- `ai-catalog`: not found on the public npm registry
+- `ard-check`: not found on the public npm registry
+- `ard-scan`: not found on the public npm registry
+- `ard-mcp`: not found on the public npm registry
+- `agentic-resource-discovery`: not found on the public npm registry
+
+Interpretation:
+
+- The names-check helper reports registry lookup failures as not found, which is consistent with the packages not being published yet.
 

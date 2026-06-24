@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { validateAiCatalog } from "ard-kit";
 
+const version = "0.1.0-preview.0";
+
 function isPrivateHost(url: URL): boolean {
   return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
 }
@@ -23,15 +25,23 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   const [command, target, ...rest] = argv;
   const json = rest.includes("--json");
   if (!command || command === "--help" || command === "-h") {
+    if (json) return report({ name: "ard-cli", version, usage: "ard-cli check <path-or-url> | scan <url> | explain" }, true);
     console.log("ard-cli check <path-or-url>\nard-cli scan <url>\nard-cli explain");
     return 0;
   }
   if (command === "--version" || command === "-v") {
-    console.log("0.0.0");
+    console.log(json ? JSON.stringify({ name: "ard-cli", version }) : version);
     return 0;
   }
   if (command === "explain") {
-    console.log("Preview ARD / AI Catalog helper. It validates local or fetched catalog JSON, reports readiness signals, and does not certify safety, compliance, ranking, indexing, or invocation.");
+    const result = {
+      name: "ard-cli",
+      version,
+      description: "Preview ARD / AI Catalog helper.",
+      capabilities: ["validates local or fetched catalog JSON", "reports readiness signals"],
+      doesNotCertify: ["safety", "compliance", "ranking", "indexing", "invocation"]
+    };
+    console.log(json ? JSON.stringify(result) : "Preview ARD / AI Catalog helper. It validates local or fetched catalog JSON, reports readiness signals, and does not certify safety, compliance, ranking, indexing, or invocation.");
     return 0;
   }
   if (!target) {

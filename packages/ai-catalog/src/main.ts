@@ -1,6 +1,8 @@
 import { writeFile } from "node:fs/promises";
 import { validateAiCatalog } from "ard-kit";
 
+const version = "0.1.0-preview.0";
+
 function hostnameFrom(url: string): string { return new URL(url).hostname; }
 function isJsonFlag(args: string[]): boolean { return args.includes("--json"); }
 
@@ -13,8 +15,8 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   const [command, ...rest] = argv;
   const json = isJsonFlag(rest);
   if (!command || command === "--help") return out({ message: "ai-catalog validate <path-or-url>\nai-catalog explain\nai-catalog generate --url <url> --out <path>" }, json);
-  if (command === "--version") return out({ version: "0.0.0" }, json);
-  if (command === "explain") return out({ what: "Preview ai-catalog.json validator and generator.", checks: ["structure", "limited readiness signals"], doesNotCertify: ["safety", "compliance", "ranking", "indexing", "invocation"] }, json);
+  if (command === "--version") return out(json ? { name: "ai-catalog", version } : version, json);
+  if (command === "explain") return out({ name: "ai-catalog", version, what: "Preview ai-catalog.json validator and generator.", checks: ["structure", "limited readiness signals"], doesNotCertify: ["safety", "compliance", "ranking", "indexing", "invocation"] }, json);
   if (command === "validate") {
     const target = rest.find((arg) => !arg.startsWith("--")) ?? "";
     const loaded = await loadCatalog(target);
