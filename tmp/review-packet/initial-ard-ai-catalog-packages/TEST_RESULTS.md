@@ -22,3 +22,6 @@ Notes:
 - npm also printed `This command requires you to be logged in to https://registry.npmjs.org/ (dry-run)`.
 - The previous CLI bin normalization warning is gone.
 - `package-lock.json` was generated locally by `npm install` and remains untracked.
+- `npm pack --workspace ai-catalog --pack-destination tmp/npm-pack-proof`: passed
+- `npm pack --workspace ard-cli --pack-destination tmp/npm-pack-proof`: passed
+- `tar -tf` plus extracted wrapper `--help` checks: passed

@@ -6,6 +6,11 @@ Use this checklist only when a human is ready to decide on publish. Do not paste
 
 For version `0.1.0-preview.0`, publish manually with `--tag preview`.
 Do not publish prerelease packages under the default `latest` tag.
+Manual release is not yet performed.
+Actual npm publish must be done by the user from a clean `main` checkout.
+Use `--tag preview` for `0.1.0-preview.0`.
+Do not publish prerelease packages under `latest`.
+Make GitHub repo public before or shortly after npm publish so users can inspect source/docs.
 
 ## Before publish
 
@@ -38,6 +43,12 @@ npm view ard-kit version dist-tags --json
 npm view ard-cli version dist-tags --json
 npm view ai-catalog version dist-tags --json
 ```
+
+Manual publish order recommended:
+
+1. `ard-kit`
+2. `ai-catalog`
+3. `ard-cli`
 
 ## After publish
 

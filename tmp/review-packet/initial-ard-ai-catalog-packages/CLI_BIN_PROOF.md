@@ -13,3 +13,4 @@
   - `node tmp/npm-pack-proof/ai-catalog/package/bin/ai-catalog.js --help`
   - `node tmp/npm-pack-proof/ard-cli/package/bin/ard-cli.js --help`
 - npm publish dry-run still strips bin entries: no
+- The previous publish-time `bin` invalid/removed warning did not reappear.

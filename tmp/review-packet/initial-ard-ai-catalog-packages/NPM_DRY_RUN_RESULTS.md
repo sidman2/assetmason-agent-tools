@@ -33,3 +33,4 @@ Notes:
 - No credentials were entered or stored.
 - The previous CLI bin invalid/removed warning is gone.
 - The dry-run checks confirmed the packages are packaging cleanly enough for tarball inspection and that prerelease publish should use the preview tag.
+- No actual npm publish happened.

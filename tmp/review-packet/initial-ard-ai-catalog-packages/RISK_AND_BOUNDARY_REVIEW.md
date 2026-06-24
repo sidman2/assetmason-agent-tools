@@ -13,5 +13,5 @@
 ## Additional boundary notes
 
 - `npm publish --dry-run --tag preview` was attempted only as a dry-run and succeeded for all three workspace packages.
-- The local `package-lock.json` remains untracked and was not added to the review branch.
-- npm no longer emitted the `bin` normalization warning during dry-run for `ard-cli` and `ai-catalog`.
+- The local `package-lock.json` was cleaned during prep and is not intended to be committed.
+- npm did not emit the `bin` normalization warning during dry-run for `ard-cli` and `ai-catalog`.
