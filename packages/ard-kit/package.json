@@ -2,6 +2,21 @@
   "name": "ard-kit",
   "version": "0.1.0-preview.0",
   "type": "module",
+  "description": "Shared schemas, validators, fixtures, and helpers for preview ARD / AI Catalog work.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git",
+    "directory": "packages/ard-kit"
+  },
+  "bugs": {
+    "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
+  },
+  "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
+  "keywords": ["ard", "ai-catalog", "discovery", "preview", "schemas"],
+  "engines": {
+    "node": ">=18"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": ["dist", "README.md", "LICENSE"],
