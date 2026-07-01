@@ -14,9 +14,9 @@ async function loadCatalog(target: string): Promise<{ value: unknown }> {
 export async function main(argv: string[] = process.argv.slice(2)) {
   const [command, ...rest] = argv;
   const json = isJsonFlag(rest);
-  if (!command || command === "--help") return out({ message: "ai-catalog validate <path-or-url>\nai-catalog explain\nai-catalog generate --url <url> --out <path>" }, json);
-  if (command === "--version") return out(json ? { name: "ai-catalog", version } : version, json);
-  if (command === "explain") return out({ name: "ai-catalog", version, what: "Preview ai-catalog.json validator and generator.", checks: ["structure", "limited readiness signals"], doesNotCertify: ["safety", "compliance", "ranking", "indexing", "invocation"] }, json);
+  if (!command || command === "--help") return out({ message: "ai-discovery validate <path-or-url>\nai-discovery explain\nai-discovery generate --url <url> --out <path>" }, json);
+  if (command === "--version") return out(json ? { name: "ai-discovery", version } : version, json);
+  if (command === "explain") return out({ name: "ai-discovery", version, what: "Preview ai-catalog.json validator and generator.", checks: ["structure", "limited readiness signals"], doesNotCertify: ["safety", "compliance", "ranking", "indexing", "invocation"] }, json);
   if (command === "validate") {
     const target = rest.find((arg) => !arg.startsWith("--")) ?? "";
     const loaded = await loadCatalog(target);

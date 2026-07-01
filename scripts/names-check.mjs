@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 
-const names = ["ard-kit", "ard-cli", "ai-catalog", "ard-check", "ard-scan", "ard-mcp", "agentic-resource-discovery"];
+const names = ["ard-kit", "ard-cli", "ai-discovery", "ard-check", "ard-scan", "ard-mcp", "agentic-resource-discovery"];
 const npmCli = process.env.npm_execpath ?? "";
 for (const name of names) {
   try {

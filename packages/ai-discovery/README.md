@@ -1,6 +1,6 @@
-# ai-catalog
+# ai-discovery
 
-Focused validator, explainer, and generator for `ai-catalog.json`.
+`ai-discovery` validates and explains AI Catalog / ARD discovery assets such as `/.well-known/ai-catalog.json`.
 
 ## Status
 
@@ -9,9 +9,9 @@ Preview package. It helps generate and validate readiness signals and does not c
 ## Install and use
 
 ```bash
-npx ai-catalog validate ./.well-known/ai-catalog.json
-npx ai-catalog explain
-npx ai-catalog generate --url https://example.com --out ./ai-catalog.draft.json
+npx ai-discovery validate ./.well-known/ai-catalog.json
+npx ai-discovery explain
+npx ai-discovery generate --url https://example.com --out ./ai-catalog.draft.json
 ```
 
 ## Boundary
