@@ -2,7 +2,7 @@
 
 Preview ARD / AI Catalog tooling for making public app, API, docs, and workflow resources more discoverable to agents.
 
-These packages help inspect and generate readiness signals. They do not certify safety, compliance, ranking, indexing, or successful agent invocation.
+These packages are preview developer tools for inspecting and improving ARD / AI Catalog readiness. They do not certify ARD conformance, guarantee registry indexing, guarantee invocation success, or provide security/compliance certification.
 
 ## Quickstart
 
@@ -19,7 +19,7 @@ npx ai-discovery explain
 | --- | --- |
 | `ard-kit` | shared schemas, validators, fixtures, and helper types |
 | `ard-cli` | umbrella local CLI for ARD / AI Catalog scan and check workflows |
-| `ai-discovery` | focused validator/explainer/generator for `ai-catalog.json` |
+| `ai-discovery` | focused validator/explainer/generator for `ai-catalog.json` and `/.well-known/ai-catalog.json` |
 
 ## Not included yet
 
