@@ -1,0 +1,234 @@
+﻿diff --git a/README.md b/README.md
+index 4ddaaea..465f2d8 100644
+--- a/README.md
++++ b/README.md
+@@ -9,8 +9,8 @@ These packages help inspect and generate readiness signals. They do not certify
+ ```bash
+ npx ard-cli check ./.well-known/ai-catalog.json
+ npx ard-cli scan https://example.com
+-npx ai-catalog validate ./.well-known/ai-catalog.json
+-npx ai-catalog explain
++npx ai-discovery validate ./.well-known/ai-catalog.json
++npx ai-discovery explain
+ ```
+ 
+ ## Packages
+@@ -19,7 +19,7 @@ npx ai-catalog explain
+ | --- | --- |
+ | `ard-kit` | shared schemas, validators, fixtures, and helper types |
+ | `ard-cli` | umbrella local CLI for ARD / AI Catalog scan and check workflows |
+-| `ai-catalog` | focused validator/explainer/generator for `ai-catalog.json` |
++| `ai-discovery` | focused validator/explainer/generator for `ai-catalog.json` |
+ 
+ ## Not included yet
+ 
+diff --git a/docs/MANUAL_NPM_PUBLISH_CHECKLIST.md b/docs/MANUAL_NPM_PUBLISH_CHECKLIST.md
+index 0dde737..978b4c1 100644
+--- a/docs/MANUAL_NPM_PUBLISH_CHECKLIST.md
++++ b/docs/MANUAL_NPM_PUBLISH_CHECKLIST.md
+@@ -20,13 +20,13 @@ For background on the emerging Agentic Resource Discovery protocol, see the exte
+ 3. Verify 2FA requirements for the account and package scope.
+ 4. Run `npm publish --dry-run --tag preview --workspace ard-kit`.
+ 5. Run `npm publish --dry-run --tag preview --workspace ard-cli`.
+-6. Run `npm publish --dry-run --tag preview --workspace ai-catalog`.
++6. Run `npm publish --dry-run --tag preview --workspace ai-discovery`.
+ 
+ ## Publish later, manually only
+ 
+ 1. Publish `ard-kit` only if the dry run looks correct.
+ 2. Publish `ard-cli` only if the dry run looks correct.
+-3. Publish `ai-catalog` only if the dry run looks correct.
++3. Publish `ai-discovery` only if the dry run looks correct.
+ 4. If trusted publishing is adopted later, evaluate it separately. It is not required for this review pass.
+ 
+ Manual-only publish commands:
+@@ -34,7 +34,7 @@ Manual-only publish commands:
+ ```bash
+ npm publish --tag preview --workspace ard-kit
+ npm publish --tag preview --workspace ard-cli
+-npm publish --tag preview --workspace ai-catalog
++npm publish --tag preview --workspace ai-discovery
+ ```
+ 
+ Post-publish verification:
+@@ -42,13 +42,13 @@ Post-publish verification:
+ ```bash
+ npm view ard-kit version dist-tags --json
+ npm view ard-cli version dist-tags --json
+-npm view ai-catalog version dist-tags --json
++npm view ai-discovery version dist-tags --json
+ ```
+ 
+ Manual publish order recommended:
+ 
+ 1. `ard-kit`
+-2. `ai-catalog`
++2. `ai-discovery`
+ 3. `ard-cli`
+ 
+ ## After publish
+diff --git a/package.json b/package.json
+index 3934c9a..17aa271 100644
+--- a/package.json
++++ b/package.json
+@@ -6,7 +6,7 @@
+     "packages/*"
+   ],
+   "scripts": {
+-    "build": "npm run build -w ard-kit && npm run build -w ard-cli && npm run build -w ai-catalog",
++    "build": "npm run build -w ard-kit && npm run build -w ard-cli && npm run build -w ai-discovery",
+     "lint": "npm run typecheck",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "npm run build -ws --if-present && vitest run",
+diff --git a/packages/ai-catalog/README.md b/packages/ai-catalog/README.md
+deleted file mode 100644
+index 4717339..0000000
+--- a/packages/ai-catalog/README.md
++++ /dev/null
+@@ -1,22 +0,0 @@
+-# ai-catalog
+-
+-Focused validator, explainer, and generator for `ai-catalog.json`.
+-
+-## Status
+-
+-Preview package. It helps generate and validate readiness signals and does not certify safety, compliance, ranking, indexing, or successful invocation.
+-
+-## Install and use
+-
+-```bash
+-npx ai-catalog validate ./.well-known/ai-catalog.json
+-npx ai-catalog explain
+-npx ai-catalog generate --url https://example.com --out ./ai-catalog.draft.json
+-```
+-
+-## Boundary
+-
+-- No telemetry
+-- No credential capture
+-- JSON output is parseable JSON only
+-- For background on the emerging Agentic Resource Discovery protocol, see the external ARD specification reference at https://agenticresourcediscovery.org/.
+diff --git a/packages/ai-catalog/bin/ai-catalog.js b/packages/ai-catalog/bin/ai-catalog.js
+deleted file mode 100644
+index 244be1b..0000000
+--- a/packages/ai-catalog/bin/ai-catalog.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-#!/usr/bin/env node
+-import { main } from "../dist/main.js";
+-
+-main().then((code) => process.exit(code));
+diff --git a/packages/ai-catalog/package.json b/packages/ai-catalog/package.json
+deleted file mode 100644
+index e26acd1..0000000
+--- a/packages/ai-catalog/package.json
++++ /dev/null
+@@ -1,17 +0,0 @@
+-{
+-  "name": "ai-catalog",
+-  "version": "0.1.0-preview.0",
+-  "type": "module",
+-  "bin": {
+-    "ai-catalog": "bin/ai-catalog.js"
+-  },
+-  "files": ["dist", "bin", "README.md", "LICENSE"],
+-  "dependencies": {
+-    "ard-kit": "file:../ard-kit"
+-  },
+-  "scripts": {
+-    "build": "tsc --module NodeNext --moduleResolution NodeNext --target ES2022 --strict --esModuleInterop --skipLibCheck --resolveJsonModule --declaration --outDir dist --rootDir src src/index.ts src/main.ts",
+-    "test": "vitest run",
+-    "pack:dry-run": "npm pack --dry-run"
+-  }
+-}
+diff --git a/packages/ai-catalog/src/index.ts b/packages/ai-catalog/src/index.ts
+deleted file mode 100644
+index eb647bb..0000000
+--- a/packages/ai-catalog/src/index.ts
++++ /dev/null
+@@ -1,2 +0,0 @@
+-export { main } from "./main.js";
+-
+diff --git a/packages/ai-catalog/src/main.ts b/packages/ai-catalog/src/main.ts
+deleted file mode 100644
+index 74114fe..0000000
+--- a/packages/ai-catalog/src/main.ts
++++ /dev/null
+@@ -1,40 +0,0 @@
+-import { writeFile } from "node:fs/promises";
+-import { validateAiCatalog } from "ard-kit";
+-
+-const version = "0.1.0-preview.0";
+-
+-function hostnameFrom(url: string): string { return new URL(url).hostname; }
+-function isJsonFlag(args: string[]): boolean { return args.includes("--json"); }
+-
+-async function loadCatalog(target: string): Promise<{ value: unknown }> {
+-  if (/^https?:\/\//i.test(target)) return { value: await (await fetch(target)).json() };
+-  return { value: JSON.parse(await (await import("node:fs/promises")).readFile(target, "utf8")) };
+-}
+-
+-export async function main(argv: string[] = process.argv.slice(2)) {
+-  const [command, ...rest] = argv;
+-  const json = isJsonFlag(rest);
+-  if (!command || command === "--help") return out({ message: "ai-catalog validate <path-or-url>\nai-catalog explain\nai-catalog generate --url <url> --out <path>" }, json);
+-  if (command === "--version") return out(json ? { name: "ai-catalog", version } : version, json);
+-  if (command === "explain") return out({ name: "ai-catalog", version, what: "Preview ai-catalog.json validator and generator.", checks: ["structure", "limited readiness signals"], doesNotCertify: ["safety", "compliance", "ranking", "indexing", "invocation"] }, json);
+-  if (command === "validate") {
+-    const target = rest.find((arg) => !arg.startsWith("--")) ?? "";
+-    const loaded = await loadCatalog(target);
+-    return out(validateAiCatalog(loaded.value), json);
+-  }
+-  if (command === "generate") {
+-    const url = rest[rest.indexOf("--url") + 1] ?? "";
+-    const outPath = rest[rest.indexOf("--out") + 1] ?? "";
+-    const draft = { specVersion: "preview-1", host: { displayName: hostnameFrom(url) }, entries: [{ identifier: "public-site-resource", displayName: "Public site resource", type: "page", url, representativeQueries: ["site", "docs"], limitations: "Draft generated from URL only; no unsupported capabilities inferred." }] };
+-    await writeFile(outPath, JSON.stringify(draft, null, 2), "utf8");
+-    return out({ ok: true, out: outPath }, json);
+-  }
+-  return out({ ok: false, error: `Unknown command: ${command}` }, json, 1);
+-}
+-
+-function out(value: any, json: boolean, exitCode = value?.ok === false ? 1 : 0) {
+-  console.log(json ? JSON.stringify(value) : JSON.stringify(value, null, 2));
+-  return exitCode;
+-}
+-
+-if (import.meta.url === `file://${process.argv[1]}`) main().then((code) => process.exit(code));
+diff --git a/packages/ai-catalog/test/aiCatalogCli.test.ts b/packages/ai-catalog/test/aiCatalogCli.test.ts
+deleted file mode 100644
+index fbf62be..0000000
+--- a/packages/ai-catalog/test/aiCatalogCli.test.ts
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import { describe, expect, it } from "vitest";
+-import { main } from "../src/main.js";
+-
+-describe("ai-catalog", () => {
+-  it("prints explain output", async () => {
+-    expect(await main(["explain"])).toBe(0);
+-  });
+-});
+-
+diff --git a/packages/ai-catalog/tsconfig.json b/packages/ai-catalog/tsconfig.json
+deleted file mode 100644
+index e8b02ca..0000000
+--- a/packages/ai-catalog/tsconfig.json
++++ /dev/null
+@@ -1,4 +0,0 @@
+-{
+-  "extends": "../../tsconfig.json",
+-  "include": ["src/**/*.ts", "test/**/*.ts"]
+-}
+diff --git a/scripts/names-check.mjs b/scripts/names-check.mjs
+index 876eedc..a2574be 100644
+--- a/scripts/names-check.mjs
++++ b/scripts/names-check.mjs
+@@ -1,6 +1,6 @@
+ import { execFileSync } from "node:child_process";
+ 
+-const names = ["ard-kit", "ard-cli", "ai-catalog", "ard-check", "ard-scan", "ard-mcp", "agentic-resource-discovery"];
++const names = ["ard-kit", "ard-cli", "ai-discovery", "ard-check", "ard-scan", "ard-mcp", "agentic-resource-discovery"];
+ const npmCli = process.env.npm_execpath ?? "";
+ for (const name of names) {
+   try {

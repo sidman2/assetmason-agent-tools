@@ -9,8 +9,8 @@ These packages help inspect and generate readiness signals. They do not certify 
 ```bash
 npx ard-cli check ./.well-known/ai-catalog.json
 npx ard-cli scan https://example.com
-npx ai-catalog validate ./.well-known/ai-catalog.json
-npx ai-catalog explain
+npx ai-discovery validate ./.well-known/ai-catalog.json
+npx ai-discovery explain
 ```
 
 ## Packages
@@ -19,7 +19,7 @@ npx ai-catalog explain
 | --- | --- |
 | `ard-kit` | shared schemas, validators, fixtures, and helper types |
 | `ard-cli` | umbrella local CLI for ARD / AI Catalog scan and check workflows |
-| `ai-catalog` | focused validator/explainer/generator for `ai-catalog.json` |
+| `ai-discovery` | focused validator/explainer/generator for `ai-catalog.json` |
 
 ## Not included yet
 
