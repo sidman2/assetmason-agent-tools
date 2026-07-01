@@ -6,12 +6,17 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git"
+    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git",
+    "directory": "packages/ard-cli"
   },
   "bugs": {
     "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
   },
   "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
+  "keywords": ["ard", "ai-catalog", "discovery", "preview", "cli"],
+  "engines": {
+    "node": ">=18"
+  },
   "bin": {
     "ard-cli": "bin/ard-cli.js"
   },
