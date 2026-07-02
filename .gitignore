@@ -3,3 +3,6 @@ dist
 coverage
 .DS_Store
 tmp/review-packet/**/node_modules
+tmp/
+*.tgz
+package-lock.json

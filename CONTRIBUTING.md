@@ -1,13 +1,40 @@
 # Contributing
 
-Thanks for helping improve AssetMason Agent Tools.
+AssetMason Agent Tools are preview, solo-maintained developer tools.
 
-Good first contributions include:
+## Helpful contributions
 
-- better fixtures for `ai-catalog.json`;
-- clearer validation errors;
-- docs improvements;
-- examples for API, MCP, OpenAPI, and docs surfaces;
-- tests for missing, invalid, thin, or unsupported discovery assets.
+Useful contributions include:
 
-Please keep outputs source-linked, truthful, and non-certifying. Do not add claims of ARD certification, registry acceptance, ranking, indexing, safety, compliance, or guaranteed invocation.
+- bug reports;
+- documentation fixes;
+- reproducible CLI issues;
+- schema or validator fixtures;
+- small focused pull requests.
+
+## Before opening a pull request
+
+Run:
+
+```bash
+npm install
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
+## Boundaries
+
+Please do not open pull requests that:
+
+* add new packages without maintainer approval;
+* add `ai-catalog` as a package or command;
+* add telemetry;
+* capture credentials;
+* claim certification, guaranteed indexing, ranking, registry acceptance, or agent invocation;
+* add website/web-app routes, headers, middleware, or API endpoints.
+
+## Security issues
+
+Use `SECURITY.md` for security reports.

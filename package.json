@@ -2,6 +2,15 @@
   "name": "assetmason-agent-tools",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
+  },
+  "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
   "workspaces": [
     "packages/*"
   ],

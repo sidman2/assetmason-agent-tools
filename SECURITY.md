@@ -1,20 +1,28 @@
 # Security Policy
 
-AssetMason Agent Tools are preview developer utilities for local ARD / AI Catalog readiness checks.
+## Supported versions
 
-Please do not open public issues for suspected credential exposure, secret handling, or security-sensitive behavior. Instead, contact the maintainer privately through GitHub or the project support channel.
+This project is in preview. The latest preview line receives best-effort security fixes.
+
+## Reporting a vulnerability
+
+If GitHub private vulnerability reporting is enabled, use it.
+
+If it is not enabled, open a minimal issue asking for a secure contact path. Do not include exploit details, secrets, tokens, private keys, or sensitive data in a public issue.
 
 ## Scope
 
-In scope:
+This policy covers the source code and npm packages in this repository.
 
-- credential capture concerns;
-- package publishing concerns;
-- unexpected network behavior;
-- unsafe CLI behavior.
+## Security posture
 
-Out of scope:
+- The tools are local-first developer utilities.
+- They do not send telemetry by default.
+- They must not capture credentials.
+- They must not require secrets for basic local usage.
+- Do not paste secrets into examples, issues, fixtures, or reports.
+- These tools are not a security audit, compliance audit, legal review, or certification product.
 
-- claims that these preview tools certify ARD, compliance, security, ranking, indexing, or invocation success.
+## Response expectations
 
-These tools should not ask for credentials, capture secrets, or send telemetry by default.
+This is a preview, solo-maintained project. Security reports are handled on a best-effort basis and do not include a formal SLA.

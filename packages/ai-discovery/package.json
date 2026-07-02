@@ -2,18 +2,17 @@
   "name": "ai-discovery",
   "version": "0.1.0-preview.0",
   "type": "module",
-  "description": "Preview validator and explainer for AI Catalog / ARD discovery assets.",
-  "license": "Apache-2.0",
+  "description": "CLI tools for validating, explaining, and drafting ai-catalog.json discovery assets.",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git",
-    "directory": "packages/ai-discovery"
+    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git"
   },
   "bugs": {
     "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
   },
   "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
-  "keywords": ["ard", "ai-catalog", "discovery", "preview", "cli"],
+  "keywords": ["ard", "ai-catalog", "agent-operability", "agent-discovery", "cli", "mcp", "npm", "npx", "typescript"],
   "engines": {
     "node": ">=18"
   },
