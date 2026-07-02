@@ -108,9 +108,7 @@ Do not publish prereleases under `latest`.
 
 ## Roadmap
 
-Next work focuses on deeper discovery bridges, scan workflows, and CI/drift checks.
-
-Additional package names will be announced only after they are claimed, implemented, tested, documented, and ready to publish.
+Next work focuses on deeper discovery bridges, scan workflows, CI/drift checks, and post-preview hardening.
 
 ## Security and contributing
 
