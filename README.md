@@ -108,11 +108,9 @@ Do not publish prereleases under `latest`.
 
 ## Roadmap
 
-Planned later packages are not published as empty placeholders:
+Next work focuses on deeper discovery bridges, scan workflows, and CI/drift checks.
 
-* `ard-mcp`
-* `ard-scan`
-* `ard-check`
+Additional package names will be announced only after they are claimed, implemented, tested, documented, and ready to publish.
 
 ## Security and contributing
 
