@@ -11,9 +11,9 @@ These packages are preview developer tools for inspecting and improving ARD / AI
 ## Install and use
 
 ```bash
-npx ai-discovery validate ./.well-known/ai-catalog.json
-npx ai-discovery explain
-npx ai-discovery generate --url https://example.com --out ./ai-catalog.draft.json
+npx ard-cli check ./.well-known/ai-catalog.json
+npx ard-cli scan https://example.com
+npx ard-cli explain
 ```
 
 ## Boundary
@@ -22,5 +22,5 @@ npx ai-discovery generate --url https://example.com --out ./ai-catalog.draft.jso
 - No credential capture
 - JSON output is parseable JSON only
 - Local-first unless a URL is explicitly supplied
-- `ai-discovery` validates and explains AI Catalog / ARD discovery assets such as `/.well-known/ai-catalog.json`
+- `ai-discovery` remains a local workspace while the npm package name is under review; use `ard-cli` for published CLI testing
 - For background on the emerging Agentic Resource Discovery protocol, see the external ARD specification reference at https://agenticresourcediscovery.org/.

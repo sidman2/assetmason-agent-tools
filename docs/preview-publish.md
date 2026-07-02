@@ -1,32 +1,14 @@
 # Preview publish checklist
 
-Maintainer-only checklist for manual npm preview publishing.
+Maintainer-only checklist for npm preview publishing.
 
-Publishing is manual and interactive because npm may require login, 2FA, or OTP confirmation.
+## Published / target packages
 
-## Expected package version
-
-```text
-0.1.0-preview.0
-```
-
-## Publish tag
-
-```text
-preview
-```
-
-## Packages to publish
-
-```text
-ard-kit
-ai-discovery
-ard-cli
-```
-
-Do not publish `ai-catalog`.
-
-Do not publish under `latest`.
+| Package | npm status |
+|---|---|
+| `ard-kit` | Published as `ard-kit@preview`. |
+| `ard-cli` | Publish with `--tag preview` if not already published. |
+| `ai-discovery` | Do not publish unscoped; npm blocked the name as too similar to `aidiscovery`. Rename or scope decision deferred. |
 
 ## Commands
 
@@ -35,24 +17,26 @@ npm login
 npm whoami
 
 npm publish --tag preview --workspace ard-kit
-npm publish --tag preview --workspace ai-discovery
 npm publish --tag preview --workspace ard-cli
 ```
+
+Do not retry `ai-discovery` as an unscoped publish target.
 
 ## Verification
 
 ```bash
 npm view ard-kit version dist-tags --json
-npm view ai-discovery version dist-tags --json
 npm view ard-cli version dist-tags --json
 
-npx -y ai-discovery@preview --help
 npx -y ard-cli@preview --help
 ```
 
-## Rules
+## Deferred naming options for ai-discovery
 
-* Do not store npm credentials, tokens, OTPs, or recovery codes.
-* Do not publish `ai-catalog`.
-* Do not publish under `latest`.
-* Do not publish from IDE/Codex/agent environments unless explicitly authorized later.
+Options to evaluate later:
+
+- scoped package such as `@manchanda/ai-discovery` using `npm publish --access public`
+- AssetMason organization scope if an npm org is created
+- a different unscoped name that passes npm’s similarity checks
+
+Do not make this decision in this pass.

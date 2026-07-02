@@ -20,21 +20,19 @@ For background on the emerging Agentic Resource Discovery protocol, see the exte
 3. Verify 2FA requirements for the account and package scope.
 4. Run `npm publish --dry-run --tag preview --workspace ard-kit`.
 5. Run `npm publish --dry-run --tag preview --workspace ard-cli`.
-6. Run `npm publish --dry-run --tag preview --workspace ai-discovery`.
+6. Do not retry `ai-discovery` as an unscoped npm publish target unless the name decision is explicitly revisited.
 
 ## Publish later, manually only
 
 1. Publish `ard-kit` only if the dry run looks correct.
 2. Publish `ard-cli` only if the dry run looks correct.
-3. Publish `ai-discovery` only if the dry run looks correct.
-4. If trusted publishing is adopted later, evaluate it separately. It is not required for this review pass.
+3. If trusted publishing is adopted later, evaluate it separately. It is not required for this review pass.
 
 Manual-only publish commands:
 
 ```bash
 npm publish --tag preview --workspace ard-kit
 npm publish --tag preview --workspace ard-cli
-npm publish --tag preview --workspace ai-discovery
 ```
 
 Post-publish verification:
@@ -42,14 +40,12 @@ Post-publish verification:
 ```bash
 npm view ard-kit version dist-tags --json
 npm view ard-cli version dist-tags --json
-npm view ai-discovery version dist-tags --json
 ```
 
 Manual publish order recommended:
 
 1. `ard-kit`
-2. `ai-discovery`
-3. `ard-cli`
+2. `ard-cli`
 
 ## After publish
 

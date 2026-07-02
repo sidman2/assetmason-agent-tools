@@ -8,16 +8,15 @@ AssetMason Agent Tools help developers inspect whether apps, APIs, docs, MCP ser
 
 | Package | Use it for |
 |---|---|
-| `ard-kit` | Shared schemas, validators, fixtures, and helpers. |
-| `ai-discovery` | Validate, explain, and draft `ai-catalog.json` discovery assets. |
-| `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. |
+| `ard-kit` | Shared schemas, validators, fixtures, and helpers. | Published as `ard-kit@preview`. |
+| `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Published as `ard-cli@preview`. |
+| `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Name blocked on npm; rename/scoped-package decision deferred. |
 
 ## Quickstart
 
 After preview publish:
 
 ```bash
-npx -y ai-discovery@preview --help
 npx -y ard-cli@preview --help
 ```
 
@@ -34,7 +33,6 @@ npm run build
 ## Examples
 
 ```bash
-npx -y ai-discovery@preview validate https://example.com/.well-known/ai-catalog.json
 npx -y ard-cli@preview scan https://example.com
 ```
 
@@ -44,9 +42,17 @@ These tools do not certify ARD conformance, guarantee registry indexing, guarant
 
 ## Naming
 
-* npm package / npx command: `ai-discovery`
+* npm package / npx command: `ard-cli`
 * spec artifact: `ai-catalog.json`
 * feature label: ARD / AI Catalog readiness
+
+## npm preview status
+
+`ard-kit` is published under the `preview` dist-tag.
+
+`ai-discovery` is not currently published under that unscoped name because npm blocked the name as too similar to an existing package. The local workspace remains in the repo while the package name is reconsidered.
+
+Use `ard-cli@preview` for CLI testing once published.
 
 ## Development
 
