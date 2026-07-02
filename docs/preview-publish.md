@@ -7,7 +7,7 @@ Maintainer-only checklist for npm preview publishing.
 | Package | npm status |
 |---|---|
 | `ard-kit` | Published as `ard-kit@preview`. |
-| `ard-cli` | Publish with `--tag preview` if not already published. |
+| `ard-cli` | Published as `ard-cli@preview`. |
 | `ai-discovery` | Do not publish unscoped; npm blocked the name as too similar to `aidiscovery`. Rename or scope decision deferred. |
 
 ## Commands
