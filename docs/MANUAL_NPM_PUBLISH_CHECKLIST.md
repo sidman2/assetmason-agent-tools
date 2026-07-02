@@ -4,14 +4,18 @@ Use this checklist only when a human is ready to decide on publish. Do not paste
 
 ## Prerelease publish
 
-For version `0.1.0-preview.0`, publish manually with `--tag preview`.
-Do not publish prerelease packages under the default `latest` tag.
+For version `0.1.0-preview.1`, publish manually with `--tag preview`.
+Do not publish prerelease packages under the default `latest` tag until the fixed preview is released and tagged intentionally.
 Manual release is not yet performed.
 Actual npm publish must be done by the user from a clean `main` checkout.
-Use `--tag preview` for `0.1.0-preview.0`.
-Do not publish prerelease packages under `latest`.
+Use `--tag preview` for `0.1.0-preview.1`.
+Do not publish prerelease packages under `latest` until the fixed preview is ready.
 Make GitHub repo public before or shortly after npm publish so users can inspect source/docs.
 For background on the emerging Agentic Resource Discovery protocol, see the external ARD specification reference at https://agenticresourcediscovery.org/.
+
+## ard-cli preview.1 fix
+
+`ard-cli@0.1.0-preview.0` was published with a local `file:../ard-kit` dependency and fails when installed from npm. The fix is `ard-cli@0.1.0-preview.1`, which depends on `ard-kit@0.1.0-preview.0` from the registry.
 
 ## Before publish
 

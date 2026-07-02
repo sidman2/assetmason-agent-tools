@@ -6,6 +6,8 @@ Umbrella local CLI for ARD / AI Catalog scan and check workflows.
 
 Preview package. It helps inspect readiness signals and does not certify safety, compliance, ranking, indexing, or successful invocation.
 
+`ard-cli@0.1.0-preview.1` is the fixed preview release that depends on `ard-kit@0.1.0-preview.0` from the registry rather than a local file path.
+
 These packages are preview developer tools for inspecting and improving ARD / AI Catalog readiness. They do not certify ARD conformance, guarantee registry indexing, guarantee invocation success, or provide security/compliance certification.
 
 ## Install and use

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { validateAiCatalog } from "ard-kit";
 
-const version = "0.1.0-preview.0";
+const version = "0.1.0-preview.1";
 
 function isPrivateHost(url: URL): boolean {
   return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);

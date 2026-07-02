@@ -2,6 +2,8 @@
 
 `ai-discovery` validates and explains AI Catalog / ARD discovery assets such as `/.well-known/ai-catalog.json`.
 
+`ai-discovery` remains deferred under the unscoped name; its published package decision is separate from the `ard-cli@0.1.0-preview.1` fix.
+
 ## Status
 
 Preview package. It helps generate and validate readiness signals and does not certify safety, compliance, ranking, indexing, or successful invocation.

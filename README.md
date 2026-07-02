@@ -8,8 +8,8 @@ AssetMason Agent Tools help developers inspect whether apps, APIs, docs, MCP ser
 
 | Package | Use it for | Preview status |
 |---|---|---|
-| `ard-kit` | Shared schemas, validators, fixtures, and helpers. | Published as `ard-kit@preview`. |
-| `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Published as `ard-cli@preview`. |
+| `ard-kit` | Shared schemas, validators, fixtures, and helpers. | Published as `ard-kit@0.1.0-preview.0`. |
+| `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Published as `ard-cli@0.1.0-preview.1` after the dependency fix. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Name blocked on npm; rename/scoped-package decision deferred. |
 
 ## Quickstart
@@ -48,11 +48,11 @@ These tools do not certify ARD conformance, guarantee registry indexing, guarant
 
 ## npm preview status
 
-`ard-kit` and `ard-cli` are published under the `preview` dist-tag.
+`ard-kit@0.1.0-preview.0` is published and `ard-cli@0.1.0-preview.1` is the fixed preview CLI once published.
 
 `ai-discovery` is not currently published under that unscoped name because npm blocked the name as too similar to an existing package. The local workspace remains in the repo while the package name is reconsidered.
 
-Use `ard-cli@preview` for CLI testing.
+Use `ard-cli@preview` for CLI testing after `0.1.0-preview.1` is published.
 
 ## Development
 
