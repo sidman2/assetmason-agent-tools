@@ -5,4 +5,3 @@ coverage
 tmp/review-packet/**/node_modules
 tmp/
 *.tgz
-package-lock.json
