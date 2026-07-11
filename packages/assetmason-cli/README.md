@@ -19,6 +19,9 @@ Public npx:
 ```bash
 npx -y assetmason-cli@preview --help
 npx -y assetmason-cli@preview list-scenarios
+npx -y assetmason-cli@preview select --scenario auth-redirect-bug --format json
+npx -y assetmason-cli@preview profile --scenario auth-redirect-bug --format json
+npx -y assetmason-cli@preview export --scenario auth-redirect-bug --format markdown
 npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview scan --root . --format markdown
 ```

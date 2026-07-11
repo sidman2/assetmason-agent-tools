@@ -1,5 +1,11 @@
 export type {
   CanonicalJsonValue,
+  ApprovalRequirement,
+  ContextBudget,
+  EvidenceReference,
+  MinimumApprovedResourceSet,
+  MinimumApprovedResourceSetInput,
+  MinimumToolsetEvaluation,
   ResourceArtifactValidationResult,
   ResourceCheckPacket,
   ResourceDiff,
@@ -7,6 +13,12 @@ export type {
   ResourceInventory,
   ResourceLock,
   ResourcePlan,
+  SelectionCandidate,
+  SelectionDecision,
+  SelectionPolicyConflict,
+  SelectionPolicyEnvelope,
+  SelectionPolicyRule,
+  SelectionTraceEntry,
   ResourceSelectionPolicyEnvelope,
   ResourceSourceReference,
   ResourceValidationIssue
@@ -26,3 +38,24 @@ export {
   scanResourceInventory,
   validateResourceArtifact
 } from "./resource-plan.js";
+export {
+  buildApprovalRequirement,
+  buildEvidenceReference,
+  buildSelectionScenario,
+  buildMinimumToolsetEvaluation,
+  buildSelectionPolicyConflict,
+  buildSelectionPolicyEnvelope,
+  computeSelectionDigest,
+  minimum_toolset,
+  listSelectionScenarios,
+  renderMinimumApprovedResourceSetJson,
+  renderMinimumApprovedResourceSetMarkdown,
+  renderMinimumToolsetEvaluationJson,
+  renderMinimumToolsetEvaluationMarkdown,
+  renderSelectionPolicyEnvelopeJson,
+  renderSelectionPolicyEnvelopeMarkdown,
+  selectMinimumApprovedResources,
+  validateMinimumApprovedResourceSet,
+  validateMinimumToolsetEvaluation,
+  validateSelectionPolicyEnvelope
+} from "./selection.js";

@@ -94,32 +94,43 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const read = (path) => JSON.parse(fs.readFileSync(path, 'utf8'));
-          const resourcePlan = read('packages/assetmason-resource-plan/package.json');
+          const resourcePlan = read('packages/agent-resource-plan/package.json');
+          const executionProfile = read('packages/agent-execution-profile/package.json');
           const cli = read('packages/assetmason-cli/package.json');
           const expect = (actual, expected, label) => {
             if (actual !== expected) {
               throw new Error(`${label}: expected ${expected}, got ${actual}`);
             }
           };
-          expect(resourcePlan.name, 'assetmason-resource-plan', 'resource plan name');
+          expect(resourcePlan.name, 'agent-resource-plan', 'resource plan name');
           expect(resourcePlan.version, '0.1.0-preview.0', 'resource plan version');
           expect(resourcePlan.publishConfig?.tag, 'preview', 'resource plan tag');
           expect(resourcePlan.publishConfig?.access, 'public', 'resource plan access');
-          expect(resourcePlan.repository?.directory, 'packages/assetmason-resource-plan', 'resource plan repository.directory');
+          expect(resourcePlan.repository?.directory, 'packages/agent-resource-plan', 'resource plan repository.directory');
+          expect(executionProfile.name, 'agent-execution-profile', 'execution profile name');
+          expect(executionProfile.version, '0.1.0-preview.0', 'execution profile version');
+          expect(executionProfile.publishConfig?.tag, 'preview', 'execution profile tag');
+          expect(executionProfile.publishConfig?.access, 'public', 'execution profile access');
+          expect(executionProfile.repository?.directory, 'packages/agent-execution-profile', 'execution profile repository.directory');
           expect(cli.name, 'assetmason-cli', 'cli name');
           expect(cli.version, '0.1.0-preview.0', 'cli version');
           expect(cli.publishConfig?.tag, 'preview', 'cli tag');
           expect(cli.publishConfig?.access, 'public', 'cli access');
           expect(cli.repository?.directory, 'packages/assetmason-cli', 'cli repository.directory');
-          expect(cli.dependencies?.['assetmason-resource-plan'], '0.1.0-preview.0', 'cli dependency');
+          expect(cli.dependencies?.['agent-execution-profile'], '0.1.0-preview.0', 'cli execution-profile dependency');
+          expect(cli.dependencies?.['agent-resource-plan'], '0.1.0-preview.0', 'cli dependency');
           NODE
 
       - name: Verify versions are unpublished
         shell: bash
         run: |
           set -euo pipefail
-          npm view assetmason-resource-plan@0.1.0-preview.0 version >/dev/null 2>&1 && {
-            echo "assetmason-resource-plan@0.1.0-preview.0 already exists; refusing to republish."
+          npm view agent-resource-plan@0.1.0-preview.0 version >/dev/null 2>&1 && {
+            echo "agent-resource-plan@0.1.0-preview.0 already exists; refusing to republish."
+            exit 1
+          }
+          npm view agent-execution-profile@0.1.0-preview.0 version >/dev/null 2>&1 && {
+            echo "agent-execution-profile@0.1.0-preview.0 already exists; refusing to republish."
             exit 1
           }
           npm view assetmason-cli@0.1.0-preview.0 version >/dev/null 2>&1 && {
@@ -129,7 +140,8 @@ jobs:
 
       - name: Capture pack manifests
         run: |
-          npm pack --workspace assetmason-resource-plan --dry-run --json | tee resource-plan-pack.json
+          npm pack --workspace agent-resource-plan --dry-run --json | tee resource-plan-pack.json
+          npm pack --workspace agent-execution-profile --dry-run --json | tee execution-profile-pack.json
           npm pack --workspace assetmason-cli --dry-run --json | tee cli-pack.json
 
       - name: Publish resource plan
@@ -138,9 +150,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm publish --workspace assetmason-resource-plan --access public --tag preview --provenance
-          npm view assetmason-resource-plan@0.1.0-preview.0 name version dist-tags repository license engines --json
-          npm view assetmason-resource-plan dist-tags --json
+          npm publish --workspace agent-resource-plan --access public --tag preview --provenance
+          npm view agent-resource-plan@0.1.0-preview.0 name version dist-tags repository license engines --json
+          npm view agent-resource-plan dist-tags --json
+
+      - name: Publish execution profile
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm publish --workspace agent-execution-profile --access public --tag preview --provenance
+          npm view agent-execution-profile@0.1.0-preview.0 name version dist-tags repository license engines --json
+          npm view agent-execution-profile dist-tags --json
 
       - name: Publish cli
         env:
@@ -165,9 +187,12 @@ jobs:
           npx -y assetmason-cli@preview --help
           npx -y assetmason-cli@preview list-scenarios
           npx -y assetmason-cli@preview check --scenario auth-redirect-bug --format json
+          npx -y assetmason-cli@preview profile --scenario auth-redirect-bug --format json
           npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
           npx -y assetmason-cli@preview scan --root . --format markdown
           npx -y assetmason-cli@preview lock --scenario auth-redirect-bug --format json
+          npx -y assetmason-cli@preview profile-lock --scenario auth-redirect-bug --format json
+          npx -y assetmason-cli@preview export --scenario auth-redirect-bug --format markdown
           npx -y assetmason-cli@preview handoff --scenario auth-redirect-bug
 
       - name: Upload release evidence
@@ -176,4 +201,5 @@ jobs:
           name: assetmason-preview-release-evidence
           path: |
             resource-plan-pack.json
+            execution-profile-pack.json
             cli-pack.json

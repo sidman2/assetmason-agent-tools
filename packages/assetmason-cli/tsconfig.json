@@ -4,7 +4,8 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "agent-resource-plan": ["packages/agent-resource-plan/dist/index.d.ts"]
+      "agent-resource-plan": ["packages/agent-resource-plan/dist/index.d.ts"],
+      "agent-execution-profile": ["packages/agent-execution-profile/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*"]

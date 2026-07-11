@@ -1,0 +1,60 @@
+import { sha256Canonical, sortAndDedupe } from "./stable-json.js";
+import { resolvePolicyLayers } from "./policy.js";
+import { executionProfileSemanticDigest } from "./semantic.js";
+function makeProfileId(task_or_intent, host_context, task_class) {
+    return sha256Canonical({ task_or_intent, host_context, task_class }).slice(0, 16);
+}
+function defaultRolesForTask(taskClass) {
+    const implementer = {
+        role_id: "implementer",
+        role_type: "implementer",
+        required_capabilities: ["tool_use", "test_iteration", "cost_efficient_implementation"],
+        assigned_resources: ["repo_source"],
+        permissions: { allow: [], deny: [] },
+        context_budget: { maximum_resource_count: 6, maximum_tool_schema_count: 4 },
+        verification_gates: ["tests_pass"],
+        verifier_independent: false
+    };
+    const roles = [implementer];
+    if (taskClass !== "small_fix")
+        roles.unshift({
+            role_id: "planner",
+            role_type: "planner",
+            required_capabilities: ["architecture_judgment", "deep_reasoning", "fast_repo_exploration"],
+            assigned_resources: ["resource_plan"],
+            permissions: { allow: ["repo_read"], deny: ["deployment", "production_secrets"] },
+            context_budget: { maximum_resource_count: 4, maximum_tool_schema_count: 2 },
+            verification_gates: ["plan_reviewed"],
+            verifier_independent: false
+        });
+    return roles;
+}
+function profileDigest(profile) {
+    return executionProfileSemanticDigest(profile);
+}
+export function buildExecutionProfile(input) {
+    const generated_at = input.generated_at ?? new Date().toISOString();
+    const resolved = resolvePolicyLayers(input.policy_layers);
+    const roles = input.roles ?? defaultRolesForTask(input.task_class);
+    const profile_base = {
+        profile_id: makeProfileId(input.task_or_intent, input.host_context, input.task_class),
+        task_or_intent: input.task_or_intent,
+        task_class: input.task_class,
+        host_context: input.host_context,
+        source_plan_id: input.source_plan_id,
+        source_plan_digest: input.source_plan_digest,
+        policy_layers: input.policy_layers,
+        effective_policy: resolved.effective_policy,
+        policy_conflicts: resolved.conflicts,
+        roles,
+        resource_assignments: roles.map((role) => ({ role_id: role.role_id, resources: sortAndDedupe(role.assigned_resources) })),
+        budget: {},
+        escalation: {},
+        verification_gates: sortAndDedupe([...(input.verification_gates ?? []), ...resolved.effective_policy.verification_gates, ...roles.flatMap((role) => role.verification_gates)]),
+        unknowns: sortAndDedupe(input.unknowns ?? []),
+        review_notes: sortAndDedupe(input.review_notes ?? []),
+        host_export_target: input.host_export_target
+    };
+    const profile_digest = profileDigest(profile_base);
+    return { schema_version: "0.1.0", generated_at, runtime_advisory_only: true, profile_digest, ...profile_base };
+}
