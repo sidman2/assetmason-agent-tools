@@ -24,7 +24,7 @@
     "assetmason-resource-plan": "0.1.0-preview.0"
   },
   "scripts": {
-    "build": "node ../../node_modules/typescript/bin/tsc --module NodeNext --moduleResolution NodeNext --target ES2022 --strict --esModuleInterop --skipLibCheck --resolveJsonModule --declaration --outDir dist --rootDir src src/index.ts src/main.ts src/commands.ts src/errors.ts",
+    "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "vitest run",
     "pack:dry-run": "npm pack --dry-run"
   }

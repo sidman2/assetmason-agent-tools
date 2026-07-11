@@ -20,7 +20,7 @@
   "types": "./dist/index.d.ts",
   "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
-    "build": "node ../../node_modules/typescript/bin/tsc --module NodeNext --moduleResolution NodeNext --target ES2022 --strict --esModuleInterop --skipLibCheck --resolveJsonModule --declaration --outDir dist --rootDir src src/index.ts",
+    "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "vitest run",
     "pack:dry-run": "npm pack --dry-run"
   },
