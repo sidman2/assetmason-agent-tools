@@ -4,7 +4,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "ard-kit": ["../ard-kit/dist/index.d.ts"]
+      "ard-kit": ["packages/ard-kit/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*.ts"]
