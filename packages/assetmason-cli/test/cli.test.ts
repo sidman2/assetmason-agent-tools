@@ -12,10 +12,12 @@ describe("assetmason-cli", () => {
   });
 
   it("rejects unknown commands", () => {
-    expect(runCommand(["nope"]).code).toBe(1);
+    return runCommand(["nope"]).then((result) => {
+      expect(result.code).toBe(1);
+    });
   });
 
-  it("renders markdown output", () => {
-    expect(runCommand(["plan", "--format", "markdown"]).text).toContain("# resource-plan");
+  it("renders markdown output", async () => {
+    expect((await runCommand(["plan", "--format", "markdown"])).text).toContain("# resource-plan");
   });
 });

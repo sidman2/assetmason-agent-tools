@@ -14,7 +14,7 @@ import {
   validateResourceArtifact
 } from "assetmason-resource-plan";
 
-export function runCommand(argv: string[]) {
+export async function runCommand(argv: string[]) {
   const [command, ...rest] = argv;
   const format = getOption(rest, "--format") ?? "json";
   const scenario = getOption(rest, "--scenario") ?? "auth-redirect-bug";

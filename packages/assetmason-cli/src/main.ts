@@ -1,7 +1,7 @@
 import { runCommand } from "./commands.js";
 
 export async function main(argv: string[] = process.argv.slice(2)) {
-  const { code, text } = await Promise.resolve(runCommand(argv));
+  const { code, text } = await runCommand(argv);
   const target = text.endsWith("\n") ? text : `${text}\n`;
   if (code === 0) process.stdout.write(target);
   else process.stderr.write(target);
