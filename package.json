@@ -17,7 +17,7 @@
   "scripts": {
     "build": "npm run build -w ard-kit && npm run build -w ard-cli && npm run build -w ai-discovery && npm run build -w assetmason-resource-plan && npm run build -w assetmason-cli",
     "lint": "npm run typecheck",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "node ./node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
     "test": "npm run build && vitest run",
     "pack:dry-run": "npm run pack:dry-run -ws --if-present",
     "names:check": "node scripts/names-check.mjs"
