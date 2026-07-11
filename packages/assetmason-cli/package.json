@@ -6,7 +6,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git"
+    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git",
+    "directory": "packages/assetmason-cli"
   },
   "bugs": {
     "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
@@ -20,11 +21,17 @@
     "assetmason": "bin/assetmason.js"
   },
   "files": ["dist", "bin", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public",
+    "tag": "preview",
+    "provenance": true
+  },
   "dependencies": {
     "assetmason-resource-plan": "0.1.0-preview.0"
   },
   "scripts": {
     "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
+    "prepack": "npm run build",
     "test": "vitest run",
     "pack:dry-run": "npm pack --dry-run"
   }
