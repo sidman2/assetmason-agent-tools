@@ -1,23 +1,25 @@
 # AssetMason Agent Tools
 
-Preview local-first tools for checking and improving ARD / AI Catalog readiness.
+Preview local-first tools for checking and improving ARD / AI Catalog readiness alongside the public AssetMason Agent Resource Planning surface.
 
-AssetMason Agent Tools help developers inspect whether apps, APIs, docs, MCP servers, and workflows expose source-linked machine-readable discovery signals such as `/.well-known/ai-catalog.json`.
+The public packages provide portable contracts, deterministic artifact builders, validators, scanners, fixtures, and CLI workflows. Proprietary hosted intelligence, private ranking, private graph data, and team workflows are outside this repository.
 
 ## Packages
 
 | Package | Use it for | Preview status |
 |---|---|---|
-| `ard-kit` | Shared schemas, validators, fixtures, and helpers. | Published as `ard-kit@0.1.0-preview.0`. |
-| `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Published as `ard-cli@0.1.0-preview.1` after the dependency fix. |
-| `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Name blocked on npm; rename/scoped-package decision deferred. |
+| `ard-kit` | Shared schemas, validators, fixtures, and helpers for ARD / AI Catalog readiness. | Existing public preview package. |
+| `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
+| `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
+| `assetmason-resource-plan` | Public-safe resource check, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | New preview package. |
+| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow. | New preview package. |
 
 ## Quickstart
 
 Preview CLI:
 
 ```bash
-npx -y ard-cli@preview --help
+npx -y assetmason-cli@preview --help
 ```
 
 Local development:
@@ -30,29 +32,15 @@ npm test
 npm run build
 ```
 
-## Examples
-
-```bash
-npx -y ard-cli@preview scan https://example.com
-```
-
 ## What these tools do not do
 
-These tools do not certify ARD conformance, guarantee registry indexing, guarantee ranking, guarantee successful agent invocation, provide legal/security/privacy/compliance certification, capture credentials, or send telemetry by default.
+These tools do not certify conformance, guarantee registry indexing, guarantee ranking, guarantee successful agent invocation, provide legal/security/privacy/compliance certification, capture credentials, or send telemetry by default.
 
 ## Naming
 
-* npm package / npx command: `ard-cli`
-* spec artifact: `ai-catalog.json`
-* feature label: ARD / AI Catalog readiness
-
-## npm preview status
-
-`ard-kit@0.1.0-preview.0` is published and `ard-cli@0.1.0-preview.1` is the fixed preview CLI once published.
-
-`ai-discovery` is not currently published under that unscoped name because npm blocked the name as too similar to an existing package. The local workspace remains in the repo while the package name is reconsidered.
-
-Use `ard-cli@preview` for CLI testing after `0.1.0-preview.1` is published.
+* ARD / AI Catalog package surface: `ard-kit`, `ard-cli`, `ai-discovery`
+* Agent Resource Planning package surface: `assetmason-resource-plan`, `assetmason-cli`
+* public artifact families: check, plan, lock, diff, validate, handoff
 
 ## Development
 

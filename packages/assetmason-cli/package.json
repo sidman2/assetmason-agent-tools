@@ -1,0 +1,31 @@
+{
+  "name": "assetmason-cli",
+  "version": "0.1.0-preview.0",
+  "type": "module",
+  "description": "Installed CLI for public AssetMason Agent Resource Planning workflows.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sidman2/assetmason-agent-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
+  },
+  "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
+  "keywords": ["assetmason", "agent-resource-planning", "cli", "npm", "npx", "typescript"],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "assetmason": "bin/assetmason.js"
+  },
+  "files": ["dist", "bin", "README.md", "LICENSE"],
+  "dependencies": {
+    "assetmason-resource-plan": "0.1.0-preview.0"
+  },
+  "scripts": {
+    "build": "node ../../node_modules/typescript/bin/tsc --module NodeNext --moduleResolution NodeNext --target ES2022 --strict --esModuleInterop --skipLibCheck --resolveJsonModule --declaration --outDir dist --rootDir src src/index.ts src/main.ts src/commands.ts src/errors.ts",
+    "test": "vitest run",
+    "pack:dry-run": "npm pack --dry-run"
+  }
+}
