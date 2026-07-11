@@ -2,6 +2,11 @@ name: Publish AssetMason Preview
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type publish-preview to continue
+        required: true
+        type: string
 
 concurrency:
   group: publish-assetmason-preview
@@ -25,18 +30,54 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.14.0
           registry-url: https://registry.npmjs.org/
           cache: npm
 
-      - name: Verify checkout state
+      - name: Install supported npm
+        run: npm install --global "npm@>=11.5.1 <12"
+
+      - name: Verify release tooling
+        shell: bash
         run: |
           set -euo pipefail
+          node --version
+          npm --version
+          node -e "
+            const [major, minor, patch] = process.versions.node.split('.').map(Number);
+            if (
+              major < 22 ||
+              (major === 22 && minor < 14)
+            ) {
+              throw new Error('Trusted publishing requires Node 22.14.0 or newer.');
+            }
+          "
+          npm --version | node -e "
+            let value = '';
+            process.stdin.on('data', chunk => value += chunk);
+            process.stdin.on('end', () => {
+              const [major, minor, patch] = value.trim().split('.').map(Number);
+              if (
+                major < 11 ||
+                (major === 11 && minor < 5) ||
+                (major === 11 && minor === 5 && patch < 1)
+              ) {
+                throw new Error('Trusted publishing requires npm 11.5.1 or newer.');
+              }
+            });
+          "
+
+      - name: Verify checkout state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirm }}" = "publish-preview"
           test -z "$(git status --short)"
           git rev-parse --abbrev-ref HEAD
           git rev-parse HEAD
           git rev-parse origin/main
-          git merge-base --is-ancestor 9f541a66a7e2776da73f733faeeca044d8783726 HEAD
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          git merge-base --is-ancestor 4302f50998823f65155a3e88fbd4ebc227bdc286 HEAD
 
       - name: Install dependencies
         run: npm ci
@@ -74,6 +115,7 @@ jobs:
           NODE
 
       - name: Verify versions are unpublished
+        shell: bash
         run: |
           set -euo pipefail
           npm view assetmason-resource-plan@0.1.0-preview.0 version >/dev/null 2>&1 && {
@@ -93,6 +135,7 @@ jobs:
       - name: Publish resource plan
         env:
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+        shell: bash
         run: |
           set -euo pipefail
           npm publish --workspace assetmason-resource-plan --access public --tag preview --provenance
@@ -102,6 +145,7 @@ jobs:
       - name: Publish cli
         env:
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+        shell: bash
         run: |
           set -euo pipefail
           npm publish --workspace assetmason-cli --access public --tag preview --provenance
@@ -112,6 +156,7 @@ jobs:
         env:
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
           npm_config_cache: /tmp/npm-cache
+        shell: bash
         run: |
           set -euo pipefail
           tmpdir="$(mktemp -d)"
