@@ -15,7 +15,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w ard-kit && npm run build -w ard-cli && npm run build -w ai-discovery && npm run build -w assetmason-resource-plan && npm run build -w assetmason-cli",
+    "build": "npm run build -w ard-kit && npm run build -w ard-cli && npm run build -w ai-discovery && npm run build -w agent-resource-plan && npm run build -w assetmason-cli",
     "lint": "npm run typecheck",
     "typecheck": "node ./node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
     "test": "npm run build && vitest run",

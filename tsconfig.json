@@ -6,7 +6,7 @@
     "baseUrl": ".",
     "paths": {
       "ard-kit": ["packages/ard-kit/src/index.ts"],
-      "assetmason-resource-plan": ["packages/assetmason-resource-plan/src/index.ts"],
+      "agent-resource-plan": ["packages/agent-resource-plan/src/index.ts"],
       "assetmason-cli": ["packages/assetmason-cli/src/index.ts"]
     },
     "strict": true,

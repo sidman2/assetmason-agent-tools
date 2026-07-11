@@ -1,4 +1,4 @@
-# assetmason-resource-plan
+# agent-resource-plan
 
 Portable, advisory-only contracts and deterministic builders for the public AssetMason Agent Resource Planning surface.
 
@@ -20,5 +20,5 @@ It is local-first, execution-free, credential-free, secret-safe, and designed to
 Install:
 
 ```bash
-npm install assetmason-resource-plan@preview
+npm install agent-resource-plan@preview
 ```
