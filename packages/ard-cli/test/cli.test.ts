@@ -6,4 +6,3 @@ describe("ard-cli", () => {
     expect(await main(["--help"])).toBe(0);
   });
 });
-

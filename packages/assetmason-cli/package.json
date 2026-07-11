@@ -1,8 +1,8 @@
 {
-  "name": "ard-cli",
-  "version": "0.1.0-preview.1",
+  "name": "assetmason-cli",
+  "version": "0.1.0-preview.0",
   "type": "module",
-  "description": "Umbrella CLI for ARD readiness checks and source-linked diagnostics.",
+  "description": "Installed CLI for public AssetMason Agent Resource Planning workflows.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -12,16 +12,16 @@
     "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
   },
   "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
-  "keywords": ["ard", "ai-catalog", "agent-operability", "agent-discovery", "cli", "mcp", "npm", "npx", "typescript"],
+  "keywords": ["assetmason", "agent-resource-planning", "cli", "npm", "npx", "typescript"],
   "engines": {
     "node": ">=18"
   },
   "bin": {
-    "ard-cli": "bin/ard-cli.js"
+    "assetmason": "bin/assetmason.js"
   },
   "files": ["dist", "bin", "README.md", "LICENSE"],
   "dependencies": {
-    "ard-kit": "0.1.0-preview.0"
+    "assetmason-resource-plan": "0.1.0-preview.0"
   },
   "scripts": {
     "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",

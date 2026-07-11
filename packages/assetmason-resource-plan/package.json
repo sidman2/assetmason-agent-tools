@@ -1,8 +1,8 @@
 {
-  "name": "ard-kit",
+  "name": "assetmason-resource-plan",
   "version": "0.1.0-preview.0",
   "type": "module",
-  "description": "Shared schemas, validators, fixtures, and helpers for ARD / AI Catalog readiness tools.",
+  "description": "Deterministic public contracts, scanners, validators, fixtures, and renderers for AssetMason Agent Resource Planning.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -12,7 +12,7 @@
     "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
   },
   "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
-  "keywords": ["ard", "ai-catalog", "agent-operability", "agent-discovery", "cli", "mcp", "npm", "npx", "schemas", "typescript"],
+  "keywords": ["assetmason", "agent-resource-planning", "cli", "npm", "npx", "deterministic", "schemas", "typescript"],
   "engines": {
     "node": ">=18"
   },
