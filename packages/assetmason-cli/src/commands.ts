@@ -12,7 +12,7 @@ import {
   renderResourceArtifactMarkdown,
   scanResourceInventory,
   validateResourceArtifact
-} from "assetmason-resource-plan";
+} from "agent-resource-plan";
 
 export async function runCommand(argv: string[]) {
   const [command, ...rest] = argv;

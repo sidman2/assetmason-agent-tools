@@ -17,7 +17,7 @@ import {
   validateResourceArtifact
 } from "../src/index.js";
 
-describe("assetmason-resource-plan", () => {
+describe("agent-resource-plan", () => {
   it("lists the preview scenario", () => {
     expect(listResourceScenarios()).toContain("auth-redirect-bug");
   });

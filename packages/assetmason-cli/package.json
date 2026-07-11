@@ -27,7 +27,7 @@
     "provenance": true
   },
   "dependencies": {
-    "assetmason-resource-plan": "0.1.0-preview.0"
+    "agent-resource-plan": "0.1.0-preview.0"
   },
   "scripts": {
     "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",

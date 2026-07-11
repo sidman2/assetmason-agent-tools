@@ -1,5 +1,5 @@
 {
-  "name": "assetmason-resource-plan",
+  "name": "agent-resource-plan",
   "version": "0.1.0-preview.0",
   "type": "module",
   "description": "Deterministic public contracts, scanners, validators, fixtures, and renderers for AssetMason Agent Resource Planning.",
@@ -7,7 +7,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sidman2/assetmason-agent-tools.git",
-    "directory": "packages/assetmason-resource-plan"
+    "directory": "packages/agent-resource-plan"
   },
   "bugs": {
     "url": "https://github.com/sidman2/assetmason-agent-tools/issues"

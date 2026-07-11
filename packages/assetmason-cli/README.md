@@ -6,7 +6,7 @@ Ready for npm preview publication; registry publication pending.
 
 Use this package when you want the `assetmason` binary from `npx` or a local install.
 
-It stays advisory-only and delegates all semantic behavior to `assetmason-resource-plan`.
+It stays advisory-only and delegates all semantic behavior to `agent-resource-plan`.
 
 Install:
 

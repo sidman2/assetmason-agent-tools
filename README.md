@@ -11,7 +11,7 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ard-kit` | Shared schemas, validators, fixtures, and helpers for ARD / AI Catalog readiness. | Existing public preview package. |
 | `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
-| `assetmason-resource-plan` | Public-safe resource check, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Ready for npm preview publication; registry publication pending. |
+| `agent-resource-plan` | Public-safe resource check, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Ready for npm preview publication; registry publication pending. |
 | `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow. | Ready for npm preview publication; registry publication pending. |
 
 ## Quickstart
@@ -41,7 +41,7 @@ The public packages are advisory-only. They do not provide certification, creden
 Install:
 
 ```bash
-npm install assetmason-resource-plan@preview
+npm install agent-resource-plan@preview
 npm install --save-dev assetmason-cli@preview
 ```
 
@@ -57,7 +57,7 @@ npx -y assetmason-cli@preview scan --root . --format markdown
 ## Naming
 
 * ARD / AI Catalog package surface: `ard-kit`, `ard-cli`, `ai-discovery`
-* Agent Resource Planning package surface: `assetmason-resource-plan`, `assetmason-cli`
+* Agent Resource Planning package surface: `agent-resource-plan`, `assetmason-cli`
 * public artifact families: check, plan, lock, diff, validate, handoff
 
 Preview API note: semantic versioning may change during preview, and private hosted intelligence remains outside this FOSS repository.
