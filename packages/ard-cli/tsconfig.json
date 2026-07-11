@@ -7,5 +7,5 @@
       "ard-kit": ["packages/ard-kit/dist/index.d.ts"]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*"]
 }

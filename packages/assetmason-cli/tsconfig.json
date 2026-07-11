@@ -7,5 +7,5 @@
       "assetmason-resource-plan": ["packages/assetmason-resource-plan/dist/index.d.ts"]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*"]
 }
