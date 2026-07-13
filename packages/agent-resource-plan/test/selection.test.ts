@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSelectionPolicyEnvelope,
+  buildSelectionScenario,
   buildMinimumToolsetEvaluation,
   type SelectionCandidate,
+  listSelectionScenarios,
   selectMinimumApprovedResources,
   renderMinimumToolsetEvaluationMarkdown,
   validateSelectionPolicyEnvelope
@@ -58,6 +60,7 @@ describe("minimum approved resource selection", () => {
     { resource_id: "docs", resource_kind: "docs", tool_name: "help-reader", capability: ["read", "docs"], source: { kind: "fixture", label: "docs" } },
     { resource_id: "browser-qa", resource_kind: "tool", tool_name: "browser", capability: ["read", "browser"], source: { kind: "fixture", label: "browser" }, ask_first: true },
     { resource_id: "forbidden-debugger", resource_kind: "tool", tool_name: "debugger", capability: ["read"], source: { kind: "fixture", label: "debugger" }, evidence_status: "missing" },
+    { resource_id: "stale-docs", resource_kind: "docs", tool_name: "docs-reader", capability: ["read"], source: { kind: "fixture", label: "stale docs" }, evidence_status: "stale" },
     { resource_id: "local-sim", resource_kind: "tool", tool_name: "sim", capability: ["read"], source: { kind: "fixture", label: "sim" }, sandbox_only: true }
   ];
 
@@ -74,9 +77,13 @@ describe("minimum approved resource selection", () => {
     expect(selection.denied_resources).toEqual(["forbidden-debugger"]);
     expect(selection.ask_first_resources).toEqual(["browser-qa"]);
     expect(selection.sandbox_only_resources).toEqual(["local-sim"]);
-    expect(selection.selection_trace.map((entry) => entry.resource_id)).toEqual(["browser-qa", "docs", "forbidden-debugger", "local-sim"]);
+    expect(selection.unknown_resources).toEqual(["stale-docs"]);
+    expect(selection.selection_trace.map((entry) => entry.resource_id)).toEqual(["browser-qa", "docs", "forbidden-debugger", "local-sim", "stale-docs"]);
     expect(selection.selection_trace.find((entry) => entry.resource_id === "docs")?.decision).toBe("selected");
-    expect(selection.selection_trace.find((entry) => entry.resource_id === "forbidden-debugger")?.reason_code).toBe("forbidden_resource");
+    expect(selection.selection_trace.find((entry) => entry.resource_id === "forbidden-debugger")?.decision).toBe("denied");
+    expect(selection.selection_trace.find((entry) => entry.resource_id === "forbidden-debugger")?.reason_code).toBe("denied_resource");
+    expect(selection.selection_trace.find((entry) => entry.resource_id === "stale-docs")?.decision).toBe("unknown");
+    expect(selection.selection_trace.find((entry) => entry.resource_id === "stale-docs")?.reason_code).toBe("stale_evidence");
   });
 
   it("stays deterministic under candidate reordering", () => {
@@ -99,6 +106,24 @@ describe("minimum approved resource selection", () => {
     expect(reverse.selected_resources).toEqual(forward.selected_resources);
   });
 
+  it("pins expected selections for all public-safe scenarios", () => {
+    const expectedSelections: Record<string, string[]> = {
+      "auth-redirect-bug": ["docs"],
+      "overloaded-mcp-config": ["docs"],
+      "docs-rag-task": ["docs"],
+      "browser-qa-task": [],
+      "architecture-sensitive-feature": ["docs"],
+      "billing-migration-sensitive-task": ["docs"],
+      "official-sdk-vs-custom": ["docs"],
+      "stale-or-missing-evidence": ["docs"]
+    };
+
+    expect(listSelectionScenarios()).toEqual(Object.keys(expectedSelections));
+    for (const scenario of listSelectionScenarios()) {
+      expect(buildSelectionScenario(scenario).selected_resources).toEqual(expectedSelections[scenario]);
+    }
+  });
+
   it("builds a comparison evaluation", () => {
     const selection = selectMinimumApprovedResources({
       candidates: [...candidates],
@@ -109,6 +134,8 @@ describe("minimum approved resource selection", () => {
     });
     const evaluation = buildMinimumToolsetEvaluation(selection, selection);
     expect(evaluation.deterministicRepeatability).toBe(true);
+    expect(evaluation.requiredResourceRecall).toBe(1);
+    expect(evaluation.unnecessaryResourcePrecision).toBe(1);
     expect(renderMinimumToolsetEvaluationMarkdown(evaluation)).toContain("minimum-toolset-evaluation");
   });
 });

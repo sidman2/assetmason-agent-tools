@@ -83,11 +83,7 @@ jobs:
         run: npm ci
 
       - name: Validate repo
-        run: |
-          npm run typecheck
-          npm test
-          npm run build
-          npm run pack:dry-run
+        run: npm run verify:public
 
       - name: Validate package manifests
         run: |

@@ -71,8 +71,8 @@ function decisionRank(decision: SelectionDecision): number {
 }
 
 function selectDecision(candidate: SelectionCandidate, envelope: SelectionPolicyEnvelope, requiredCapabilities: string[]): { decision: SelectionDecision; reason_code: string; human_explanation: string } {
-  if (envelope.denied_resources.includes(candidate.resource_id) || candidate.evidence_status === "missing") {
-    return { decision: "denied", reason_code: "forbidden_resource", human_explanation: "Resource is explicitly denied or missing required evidence." };
+  if (envelope.denied_resources.includes(candidate.resource_id)) {
+    return { decision: "denied", reason_code: "denied_resource", human_explanation: "Resource is explicitly denied by policy." };
   }
   if (candidate.ask_first || envelope.ask_first_resources.includes(candidate.resource_id)) {
     return { decision: "ask_first", reason_code: "approval_required", human_explanation: "Resource requires explicit review before selection." };
@@ -80,14 +80,21 @@ function selectDecision(candidate: SelectionCandidate, envelope: SelectionPolicy
   if (candidate.sandbox_only || envelope.sandbox_only_resources.includes(candidate.resource_id)) {
     return { decision: "sandbox_only", reason_code: "sandbox_only", human_explanation: "Resource is limited to sandbox-only use." };
   }
+  if (candidate.evidence_status === "missing" || candidate.evidence_status === "stale") {
+    return {
+      decision: "unknown",
+      reason_code: candidate.evidence_status === "missing" ? "missing_evidence" : "stale_evidence",
+      human_explanation: candidate.evidence_status === "missing" ? "Required evidence is missing." : "Evidence is stale and needs review."
+    };
+  }
   const satisfies = requiredCapabilities.every((capability) => candidate.capability.includes(capability));
   if (!satisfies) return { decision: "deferred", reason_code: "unnecessary_for_task", human_explanation: "Resource does not satisfy the required capability set." };
-  if (candidate.evidence_status === "stale") return { decision: "unknown", reason_code: "stale_evidence", human_explanation: "Evidence is stale and needs review." };
   return { decision: "selected", reason_code: "required_capability", human_explanation: "Resource satisfies the required capability set." };
 }
 
 export function selectMinimumApprovedResources(input: MinimumApprovedResourceSetInput): MinimumApprovedResourceSet {
   const sortedCandidates = [...input.candidates].sort((a, b) => a.resource_id.localeCompare(b.resource_id));
+  const requiredCapabilities = [...new Set(input.requiredCapabilities)].sort();
   const trace: SelectionTraceEntry[] = [];
   const selected: SelectionCandidate[] = [];
   const denied: string[] = [];
@@ -95,44 +102,68 @@ export function selectMinimumApprovedResources(input: MinimumApprovedResourceSet
   const askFirst: string[] = [];
   const sandboxOnly: string[] = [];
   const unknown: string[] = [];
+  const uncoveredCapabilities = new Set(requiredCapabilities);
+  const selectedTools = new Set<string>();
 
   for (const candidate of sortedCandidates) {
     const result = selectDecision(candidate, input.envelope, input.requiredCapabilities);
-    const entry: SelectionTraceEntry = {
-      resource_id: candidate.resource_id,
-      decision: result.decision,
-      reason_code: result.reason_code,
-      human_explanation: result.human_explanation,
-      policy_layer: "selection-policy-envelope",
-      evidence_refs: [candidate.source, ...input.evidence]
-    };
+    let decision = result.decision;
+    let reason_code = result.reason_code;
+    let human_explanation = result.human_explanation;
+    const coversUncoveredCapability = requiredCapabilities.some((capability) => uncoveredCapabilities.has(capability) && candidate.capability.includes(capability));
+    const wouldExceedResourceBudget =
+      typeof input.envelope.context_budget.maximum_resource_count === "number" && selected.length >= input.envelope.context_budget.maximum_resource_count;
+    const wouldExceedToolSchemaBudget =
+      typeof input.envelope.context_budget.maximum_tool_schema_count === "number" &&
+      candidate.tool_name !== undefined &&
+      !selectedTools.has(candidate.tool_name) &&
+      selectedTools.size >= input.envelope.context_budget.maximum_tool_schema_count;
+
+    if (result.decision === "deferred" && coversUncoveredCapability && !wouldExceedResourceBudget && !wouldExceedToolSchemaBudget) {
+      decision = "selected";
+      reason_code = "minimum_cover_selected";
+      human_explanation = "Resource is part of the minimum covering set.";
+    } else if (result.decision === "selected" && (!coversUncoveredCapability || wouldExceedResourceBudget || wouldExceedToolSchemaBudget)) {
+      decision = "deferred";
+      reason_code = wouldExceedResourceBudget || wouldExceedToolSchemaBudget ? "budget_ceiling_reached" : "already_covered";
+      human_explanation = wouldExceedResourceBudget || wouldExceedToolSchemaBudget ? "Selection stopped at the configured budget ceiling." : "Resource was already covered by a better candidate.";
+    }
+
+    const entry: SelectionTraceEntry = { resource_id: candidate.resource_id, decision, reason_code, human_explanation, policy_layer: "selection-policy-envelope", evidence_refs: [candidate.source, ...input.evidence] };
     trace.push(entry);
-    if (result.decision === "selected") selected.push(candidate);
-    if (result.decision === "denied") denied.push(candidate.resource_id);
-    if (result.decision === "deferred") deferred.push(candidate.resource_id);
-    if (result.decision === "ask_first") askFirst.push(candidate.resource_id);
-    if (result.decision === "sandbox_only") sandboxOnly.push(candidate.resource_id);
-    if (result.decision === "unknown") unknown.push(candidate.resource_id);
+    if (decision === "selected") {
+      selected.push(candidate);
+      selectedTools.add(candidate.tool_name ?? candidate.resource_id);
+      for (const capability of requiredCapabilities) {
+        if (candidate.capability.includes(capability)) uncoveredCapabilities.delete(capability);
+      }
+    }
+    if (decision === "denied") denied.push(candidate.resource_id);
+    if (decision === "deferred") deferred.push(candidate.resource_id);
+    if (decision === "ask_first") askFirst.push(candidate.resource_id);
+    if (decision === "sandbox_only") sandboxOnly.push(candidate.resource_id);
+    if (decision === "unknown") unknown.push(candidate.resource_id);
   }
 
+  for (const capability of uncoveredCapabilities) unknown.push(`uncovered:${capability}`);
   const selectedResources = selected.map((candidate) => candidate.resource_id);
-  const selectedTools = [...new Set(selected.map((candidate) => candidate.tool_name).filter((value): value is string => Boolean(value)))].sort();
+  const selectedToolList = [...new Set(selected.map((candidate) => candidate.tool_name).filter((value): value is string => Boolean(value)))].sort();
   const budgetBefore = input.envelope.context_budget;
   const budgetAfter: ContextBudget = {
     maximum_resource_count: selectedResources.length,
-    maximum_tool_schema_count: selectedTools.length,
+    maximum_tool_schema_count: selectedToolList.length,
     maximum_attempt_count: budgetBefore.maximum_attempt_count,
     maximum_duration_minutes: budgetBefore.maximum_duration_minutes
   };
   const selection: MinimumApprovedResourceSet = {
     schema_version: "0.1.0",
-    selection_id: computeSelectionDigest({ hostContext: input.hostContext, selectedResources, selectedTools, taskClass: input.envelope.task_class }),
+    selection_id: computeSelectionDigest({ hostContext: input.hostContext, selectedResources, selectedTools: selectedToolList, taskClass: input.envelope.task_class }),
     selection_digest: "",
     task_class: input.envelope.task_class,
     host_context: input.hostContext,
     candidate_resources: sortedCandidates.map((candidate) => candidate.resource_id),
     selected_resources: selectedResources,
-    selected_tools: selectedTools,
+    selected_tools: selectedToolList,
     denied_resources: denied,
     deferred_resources: deferred,
     ask_first_resources: askFirst,
@@ -148,7 +179,7 @@ export function selectMinimumApprovedResources(input: MinimumApprovedResourceSet
       deferred_count: deferred.length,
       unknown_count: unknown.length,
       resource_reduction_ratio: sortedCandidates.length === 0 ? 0 : 1 - selectedResources.length / sortedCandidates.length,
-      tool_schema_reduction_ratio: selectedTools.length === 0 ? 0 : 1 - selectedTools.length / Math.max(1, sortedCandidates.filter((candidate) => candidate.tool_name).length)
+      tool_schema_reduction_ratio: selectedToolList.length === 0 ? 0 : 1 - selectedToolList.length / Math.max(1, sortedCandidates.filter((candidate) => candidate.tool_name).length)
     },
     required_approvals: input.envelope.required_approvals,
     verification_gates: input.envelope.required_verification_gates,
@@ -182,17 +213,22 @@ export function renderMinimumApprovedResourceSetMarkdown(input: MinimumApprovedR
 }
 
 export function buildMinimumToolsetEvaluation(selectionA: MinimumApprovedResourceSet, selectionB: MinimumApprovedResourceSet): MinimumToolsetEvaluation {
+  const expectedSelected = new Set(selectionA.selected_resources);
+  const actualSelected = new Set(selectionB.selected_resources);
+  const truePositiveSelections = [...actualSelected].filter((resource) => expectedSelected.has(resource));
+  const falsePositiveSelections = [...actualSelected].filter((resource) => !expectedSelected.has(resource));
+  const falseNegativeSelections = [...expectedSelected].filter((resource) => !actualSelected.has(resource));
   const exactExpectedSelectionMatch = stableJson(selectionA.selected_resources) === stableJson(selectionB.selected_resources);
-  const requiredResourceRecall = selectionA.selected_resources.length === 0 ? 1 : selectionB.selected_resources.filter((resource) => selectionA.selected_resources.includes(resource)).length / selectionA.selected_resources.length;
-  const unnecessaryResourcePrecision = selectionB.selected_resources.length === 0 ? 1 : selectionB.selected_resources.length / selectionB.candidate_resources.length;
+  const requiredResourceRecall = expectedSelected.size === 0 ? 1 : truePositiveSelections.length / expectedSelected.size;
+  const unnecessaryResourcePrecision = actualSelected.size === 0 ? 1 : truePositiveSelections.length / actualSelected.size;
   return {
     kind: "minimum-toolset-evaluation",
     advisoryOnly: true,
     exactExpectedSelectionMatch,
     requiredResourceRecall,
     unnecessaryResourcePrecision,
-    denialClarity: selectionB.denied_resources.length / Math.max(1, selectionB.candidate_resources.length),
-    unknownClarity: selectionB.unknown_resources.length / Math.max(1, selectionB.candidate_resources.length),
+    denialClarity: selectionB.denied_resources.length / Math.max(1, selectionB.denied_resources.length + falsePositiveSelections.length + falseNegativeSelections.length),
+    unknownClarity: selectionB.unknown_resources.length / Math.max(1, selectionB.unknown_resources.length + falsePositiveSelections.length + falseNegativeSelections.length),
     contextBudgetReduction: selectionB.metrics.resource_reduction_ratio,
     deterministicRepeatability: stableJson(selectionA) === stableJson(selectionB),
     scenarioCount: 1

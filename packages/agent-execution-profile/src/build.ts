@@ -8,11 +8,14 @@ function makeProfileId(task_or_intent: string, host_context: string, task_class:
 }
 
 function defaultRolesForTask(taskClass: string): AgentRoleCard[] {
+  const plannerResources = ["resource_plan", "source_plan"];
+  const implementerResources = ["repo_source"];
+  const verifierResources = ["test_results"];
   const implementer: AgentRoleCard = {
     role_id: "implementer",
     role_type: "implementer",
     required_capabilities: ["tool_use", "test_iteration", "cost_efficient_implementation"],
-    assigned_resources: ["repo_source"],
+    assigned_resources: implementerResources,
     permissions: { allow: [], deny: [] },
     context_budget: { maximum_resource_count: 6, maximum_tool_schema_count: 4 },
     verification_gates: ["tests_pass"],
@@ -23,12 +26,24 @@ function defaultRolesForTask(taskClass: string): AgentRoleCard[] {
     role_id: "planner",
     role_type: "planner",
     required_capabilities: ["architecture_judgment", "deep_reasoning", "fast_repo_exploration"],
-    assigned_resources: ["resource_plan"],
-    permissions: { allow: ["repo_read"], deny: ["deployment", "production_secrets"] },
+    assigned_resources: plannerResources,
+    permissions: { allow: [], deny: ["deployment", "production_secrets"] },
     context_budget: { maximum_resource_count: 4, maximum_tool_schema_count: 2 },
     verification_gates: ["plan_reviewed"],
     verifier_independent: false
   });
+  if (taskClass === "architecture_sensitive" || taskClass === "billing_sensitive") {
+    roles.push({
+      role_id: "verifier",
+      role_type: "verifier",
+      required_capabilities: ["independent_verification", "security_reasoning"],
+      assigned_resources: verifierResources,
+      permissions: { allow: [], deny: ["deployment", "production_secrets", "production_write"] },
+      context_budget: { maximum_resource_count: 3, maximum_tool_schema_count: 1 },
+      verification_gates: ["regression_tests_pass", "rollback_plan_present"],
+      verifier_independent: true
+    });
+  }
   return roles;
 }
 
