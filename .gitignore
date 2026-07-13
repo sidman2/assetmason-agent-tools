@@ -5,3 +5,4 @@ coverage
 tmp/review-packet/**/node_modules
 tmp/
 *.tgz
+packages/agent-execution-profile/src/**/*.js

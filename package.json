@@ -15,12 +15,17 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w ard-kit && npm run build -w ard-cli && npm run build -w ai-discovery && npm run build -w agent-resource-plan && npm run build -w assetmason-cli",
+    "build": "npm run build -w ard-kit && npm run build -w ard-cli && npm run build -w ai-discovery && npm run build -w agent-resource-plan && npm run build -w agent-execution-profile && npm run build -w assetmason-cli",
     "lint": "npm run typecheck",
     "typecheck": "node ./node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
     "test": "npm run build && vitest run",
     "pack:dry-run": "npm run pack:dry-run -ws --if-present",
-    "names:check": "node scripts/names-check.mjs"
+    "names:check": "node scripts/names-check.mjs",
+    "generated-source:check": "node scripts/generated-source-guard.mjs",
+    "parity:execution-profile": "npx tsx scripts/execution-profile-parity.mjs",
+    "parity:execution-profile:freshness": "node scripts/execution-profile-freshness.mjs",
+    "verify:public": "npm run generated-source:check && npm run stale:check && npm run typecheck && npm test && npm run pack:dry-run -w agent-resource-plan && npm run pack:dry-run -w agent-execution-profile && npm run pack:dry-run -w assetmason-cli && node scripts/ci-pack-smoke.mjs",
+    "stale:check": "node scripts/stale-package-refs.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",

@@ -1,39 +1,40 @@
 {
-  "name": "assetmason-cli",
+  "name": "agent-execution-profile",
   "version": "0.1.0-preview.0",
   "type": "module",
-  "description": "Installed CLI for public AssetMason Agent Resource Planning workflows.",
+  "description": "Deterministic advisory execution-profile contracts, builders, validators, renderers, and host exports for AssetMason.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sidman2/assetmason-agent-tools.git",
-    "directory": "packages/assetmason-cli"
+    "directory": "packages/agent-execution-profile"
   },
   "bugs": {
     "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
   },
   "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
-  "keywords": ["assetmason", "agent-resource-planning", "cli", "npm", "npx", "typescript"],
+  "keywords": ["assetmason", "agent-execution-profile", "advisory", "deterministic", "typescript"],
   "engines": {
     "node": ">=18"
   },
-  "bin": {
-    "assetmason": "bin/assetmason.js"
-  },
-  "files": ["dist", "bin", "README.md", "LICENSE"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE"],
   "publishConfig": {
     "access": "public",
     "tag": "preview",
     "provenance": true
-  },
-  "dependencies": {
-    "agent-execution-profile": "0.1.0-preview.0",
-    "agent-resource-plan": "0.1.0-preview.0"
   },
   "scripts": {
     "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
     "prepack": "npm run build",
     "test": "vitest run",
     "pack:dry-run": "npm pack --dry-run"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   }
 }

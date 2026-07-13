@@ -11,8 +11,9 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ard-kit` | Shared schemas, validators, fixtures, and helpers for ARD / AI Catalog readiness. | Existing public preview package. |
 | `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
-| `agent-resource-plan` | Public-safe resource check, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Ready for npm preview publication; registry publication pending. |
-| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow. | Ready for npm preview publication; registry publication pending. |
+| `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Ready for npm preview publication; registry publication pending. |
+| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `select` and selection validation. | Ready for npm preview publication; registry publication pending. |
+| `agent-execution-profile` | Conditional future public package for static execution-profile contracts, host exports, locks, diffs, and receipt validation. | Public extraction gated on private source parity. |
 
 ## Quickstart
 
@@ -50,6 +51,8 @@ Public commands:
 ```bash
 npx -y assetmason-cli@preview --help
 npx -y assetmason-cli@preview list-scenarios
+npx -y assetmason-cli@preview select --scenario auth-redirect-bug --format json
+npx -y assetmason-cli@preview profile --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview scan --root . --format markdown
 ```
@@ -58,7 +61,7 @@ npx -y assetmason-cli@preview scan --root . --format markdown
 
 * ARD / AI Catalog package surface: `ard-kit`, `ard-cli`, `ai-discovery`
 * Agent Resource Planning package surface: `agent-resource-plan`, `assetmason-cli`
-* public artifact families: check, plan, lock, diff, validate, handoff
+* public artifact families: check, select, plan, lock, diff, validate, handoff
 
 Preview API note: semantic versioning may change during preview, and private hosted intelligence remains outside this FOSS repository.
 
