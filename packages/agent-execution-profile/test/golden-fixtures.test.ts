@@ -98,17 +98,28 @@ const cases = [
 
 describe("execution-profile golden fixtures", () => {
   function clonePolicyLayers(layers: typeof cases[number]["input"]["policy_layers"]): import("../src/types.js").PolicyLayer[] {
-    return layers.map((layer) => ({
-      layer: layer.layer,
-      summary: layer.summary,
-      preferences: layer.preferences
+    return layers.map((layer) => {
+      const typedLayer = layer as {
+        layer: import("../src/types.js").PolicyLayer["layer"];
+        summary?: string;
+        preferences?: {
+          preferred_resources?: readonly string[];
+          capability_requirements?: readonly string[];
+        };
+        unknowns?: readonly string[];
+      };
+      return {
+      layer: typedLayer.layer,
+      summary: typedLayer.summary,
+      preferences: typedLayer.preferences
         ? {
-            preferred_resources: [...(layer.preferences.preferred_resources ?? [])],
-            capability_requirements: [...(layer.preferences.capability_requirements ?? [])]
+            preferred_resources: [...(typedLayer.preferences.preferred_resources ?? [])],
+            capability_requirements: [...(typedLayer.preferences.capability_requirements ?? [])]
           }
         : undefined,
-      unknowns: layer.unknowns ? [...layer.unknowns] : undefined
-    }));
+      unknowns: typedLayer.unknowns ? [...typedLayer.unknowns] : undefined
+      };
+    });
   }
 
   for (const testCase of cases) {

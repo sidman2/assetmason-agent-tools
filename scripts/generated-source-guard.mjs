@@ -1,34 +1,33 @@
-import { execFileSync } from "node:child_process";
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 
-const targets = [
-  "packages/agent-execution-profile/src/**/*.js",
-  "packages/agent-resource-plan/src/**/*.js"
+const root = process.cwd();
+const watchedDirs = [
+  join(root, "packages", "agent-execution-profile", "src"),
+  join(root, "packages", "agent-resource-plan", "src")
 ];
 
-const args = [
-  "rg",
-  "-n",
-  targets.join("|"),
-  ".",
-  "-g",
-  "!**/dist/**",
-  "-g",
-  "!**/node_modules/**",
-  "-g",
-  "!**/*.md",
-  "-g",
-  "!**/README*"
-];
+function walk(dir, matches) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walk(fullPath, matches);
+    } else if (entry.isFile() && fullPath.endsWith(".js")) {
+      matches.push(fullPath);
+    }
+  }
+}
 
-try {
-  const output = execFileSync(args[0], args.slice(1), { encoding: "utf8" }).trim();
-  if (output) {
-    process.stderr.write(`${output}\n`);
-    process.exit(1);
+const matches = [];
+for (const dir of watchedDirs) {
+  try {
+    if (statSync(dir).isDirectory()) walk(dir, matches);
+  } catch {
+    continue;
   }
-} catch (error) {
-  if (error?.status === 1) {
-    process.exit(0);
-  }
-  throw error;
+}
+
+if (matches.length > 0) {
+  process.stderr.write(`${matches.join("\n")}\n`);
+  process.exit(1);
 }
