@@ -13,11 +13,11 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
 | `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Ready for npm preview publication; registry publication pending. |
 | `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `select` and selection validation. | Ready for npm preview publication; registry publication pending. |
-| `agent-execution-profile` | Conditional future public package for static execution-profile contracts, host exports, locks, diffs, and receipt validation. | Public extraction gated on private source parity. |
+| `agent-execution-profile` | Public-safe execution-profile contracts, host exports, locks, diffs, and receipt validation. | Ready for npm preview publication; registry publication pending. |
 
 ## Quickstart
 
-Preview CLI:
+Planned preview CLI:
 
 ```bash
 npx -y assetmason-cli@preview --help
@@ -39,14 +39,14 @@ These tools do not certify conformance, guarantee registry indexing, guarantee r
 
 The public packages are advisory-only. They do not provide certification, credential custody, runtime execution, or model inference.
 
-Install:
+Install after preview publication:
 
 ```bash
 npm install agent-resource-plan@preview
 npm install --save-dev assetmason-cli@preview
 ```
 
-Public commands:
+Planned preview commands:
 
 ```bash
 npx -y assetmason-cli@preview --help
@@ -56,6 +56,8 @@ npx -y assetmason-cli@preview profile --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview scan --root . --format markdown
 ```
+
+These commands become available after the preview packages are published and registry verification succeeds.
 
 ## Naming
 
