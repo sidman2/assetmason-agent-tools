@@ -17,39 +17,63 @@ export async function runCommand(argv: string[]) {
   const [command, ...rest] = argv;
   const format = getOption(rest, "--format") ?? "json";
   const scenario = getOption(rest, "--scenario") ?? "auth-redirect-bug";
-  const resourcePlan = await loadResourcePlanModule();
-  const executionProfile = await loadExecutionProfileModule();
   if (!command || command === "--help" || command === "-h") return { code: 0, text: helpText() };
-  if (command === "list-scenarios") return { code: 0, text: `${[...resourcePlan.listResourceScenarios(), ...resourcePlan.listSelectionScenarios()].join("\n")}\n` };
-  if (command === "check") return render(resourcePlan.buildBeforeBuildPacket(scenario), format, resourcePlan);
-  if (command === "plan") return render(resourcePlan.buildResourcePlan(scenario), format, resourcePlan);
-  if (command === "select") return renderSelection(resourcePlan.buildSelectionScenario(scenario), format, resourcePlan);
-  if (command === "profile") return renderExecutionProfile(executionProfile.buildExecutionProfile({
-    task_or_intent: scenario,
-    task_class: "small_fix",
-    host_context: "assetmason-cli",
-    policy_layers: []
-  }), format, executionProfile);
-  if (command === "profile-lock") return renderExecutionProfileLock(executionProfile.buildExecutionProfileLock(executionProfile.buildExecutionProfile({
-    task_or_intent: scenario,
-    task_class: "small_fix",
-    host_context: "assetmason-cli",
-    policy_layers: []
-  })), format, executionProfile);
+  if (command === "list-scenarios") {
+    const resourcePlan = await loadResourcePlanModule();
+    return { code: 0, text: `${[...resourcePlan.listResourceScenarios(), ...resourcePlan.listSelectionScenarios()].join("\n")}\n` };
+  }
+  if (command === "check") {
+    const resourcePlan = await loadResourcePlanModule();
+    return render(resourcePlan.buildBeforeBuildPacket(scenario), format, resourcePlan);
+  }
+  if (command === "plan") {
+    const resourcePlan = await loadResourcePlanModule();
+    return render(resourcePlan.buildResourcePlan(scenario), format, resourcePlan);
+  }
+  if (command === "select") {
+    const resourcePlan = await loadResourcePlanModule();
+    return renderSelection(resourcePlan.buildSelectionScenario(scenario), format, resourcePlan);
+  }
+  if (command === "profile") {
+    const executionProfile = await loadExecutionProfileModule();
+    return renderExecutionProfile(executionProfile.buildExecutionProfile({
+      task_or_intent: scenario,
+      task_class: "small_fix",
+      host_context: "assetmason-cli",
+      policy_layers: []
+    }), format, executionProfile);
+  }
+  if (command === "profile-lock") {
+    const executionProfile = await loadExecutionProfileModule();
+    return renderExecutionProfileLock(executionProfile.buildExecutionProfileLock(executionProfile.buildExecutionProfile({
+      task_or_intent: scenario,
+      task_class: "small_fix",
+      host_context: "assetmason-cli",
+      policy_layers: []
+    })), format, executionProfile);
+  }
   if (command === "profile-diff") {
     const before = getOption(rest, "--before");
     const after = getOption(rest, "--after");
     if (!before || !after) return error("profile-diff requires --before and --after");
+    const executionProfile = await loadExecutionProfileModule();
     return loadAndDiff(before, after, format, executionProfile, "profile-diff");
   }
-  if (command === "export") return renderExecutionProfileExport(executionProfile.buildGenericHostExportArtifact(executionProfile.buildExecutionProfile({
-    task_or_intent: scenario,
-    task_class: "small_fix",
-    host_context: "assetmason-cli",
-    policy_layers: []
-  })), format, executionProfile);
-  if (command === "scan") return render(resourcePlan.scanResourceInventory(getOption(rest, "--root") ?? "."), format, resourcePlan);
+  if (command === "export") {
+    const executionProfile = await loadExecutionProfileModule();
+    return renderExecutionProfileExport(executionProfile.buildGenericHostExportArtifact(executionProfile.buildExecutionProfile({
+      task_or_intent: scenario,
+      task_class: "small_fix",
+      host_context: "assetmason-cli",
+      policy_layers: []
+    })), format, executionProfile);
+  }
+  if (command === "scan") {
+    const resourcePlan = await loadResourcePlanModule();
+    return render(resourcePlan.scanResourceInventory(getOption(rest, "--root") ?? "."), format, resourcePlan);
+  }
   if (command === "lock") {
+    const resourcePlan = await loadResourcePlanModule();
     const fromPlan = getOption(rest, "--from-plan");
     if (fromPlan) return loadPlanAndLock(fromPlan, getOption(rest, "--out"), format, resourcePlan);
     return render(resourcePlan.buildResourceLock(resourcePlan.buildResourcePlan(scenario), resourcePlan.buildResourceInventory(".")), format, resourcePlan);
@@ -58,8 +82,11 @@ export async function runCommand(argv: string[]) {
     const before = getOption(rest, "--before");
     const after = getOption(rest, "--after");
     if (!before || !after) return error("diff requires --before and --after");
+    const resourcePlan = await loadResourcePlanModule();
     return loadAndDiff(before, after, format, resourcePlan);
   }
+  const resourcePlan = await loadResourcePlanModule();
+  const executionProfile = await loadExecutionProfileModule();
   if (command === "validate") return validateArtifact(getOption(rest, "--file") ?? "", getOption(rest, "--kind"), resourcePlan, executionProfile);
   if (command === "handoff") return render({ kind: "host-handoff", scenario, advisoryOnly: true, note: "Review the plan locally and hand off only public-safe findings." }, format, resourcePlan);
   return error(`Unknown command: ${command}`);
