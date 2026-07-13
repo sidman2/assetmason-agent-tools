@@ -1,36 +1,47 @@
-import { execFileSync } from "node:child_process";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 
-const patterns = ["assetmason-resource-plan", "packages/assetmason-resource-plan"];
-const args = [
-  "rg",
-  "-n",
-  patterns.join("|"),
-  "package.json",
-  "package-lock.json",
-  "packages",
-  ".github/workflows",
-  "tsconfig.json",
-  "-g",
-  "!**/*.md",
-  "-g",
-  "!**/README*",
-  "-g",
-  "!**/docs/**",
-  "-g",
-  "!**/CHANGELOG*",
-  "-g",
-  "!**/history/**"
+const root = process.cwd();
+const searchRoots = [
+  join(root, "package.json"),
+  join(root, "package-lock.json"),
+  join(root, "packages"),
+  join(root, ".github", "workflows"),
+  join(root, "tsconfig.json")
 ];
+const stalePattern = /assetmason-resource-plan|packages\/assetmason-resource-plan/;
+const ignorePattern = /(^|\/)(README[^/]*|CHANGELOG[^/]*|.*\.md|docs|history)(\/|$)/i;
 
-try {
-  const output = execFileSync(args[0], args.slice(1), { encoding: "utf8" }).trim();
-  if (output) {
-    process.stderr.write(`${output}\n`);
-    process.exit(1);
+function collectFiles(target, files) {
+  const stats = statSync(target);
+  if (stats.isFile()) {
+    files.push(target);
+    return;
   }
-} catch (error) {
-  if (error?.status === 1) {
-    process.exit(0);
+  if (!stats.isDirectory()) return;
+  for (const entry of readdirSync(target, { withFileTypes: true })) {
+    collectFiles(join(target, entry.name), files);
   }
-  throw error;
+}
+
+const files = [];
+for (const target of searchRoots) {
+  try {
+    collectFiles(target, files);
+  } catch {
+    continue;
+  }
+}
+
+const matches = [];
+for (const file of files) {
+  const normalized = file.replaceAll("\\", "/");
+  if (ignorePattern.test(normalized)) continue;
+  const content = readFileSync(file, "utf8");
+  if (stalePattern.test(content)) matches.push(file);
+}
+
+if (matches.length > 0) {
+  process.stderr.write(`${matches.join("\n")}\n`);
+  process.exit(1);
 }
