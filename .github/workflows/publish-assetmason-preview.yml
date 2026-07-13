@@ -77,7 +77,7 @@ jobs:
           git rev-parse HEAD
           git rev-parse origin/main
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
-          git merge-base --is-ancestor 4302f50998823f65155a3e88fbd4ebc227bdc286 HEAD
+          git merge-base --is-ancestor a7c74c9a82ada62c8a753f0e7e32f958dbe4e3f8 HEAD
 
       - name: Install dependencies
         run: npm ci
