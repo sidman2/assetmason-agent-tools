@@ -1,4 +1,5 @@
-import { argv, exit, stderr } from "node:process";
+import { argv, stderr } from "node:process";
+import { pathToFileURL } from "node:url";
 
 const registryUrl = "https://registry.npmjs.org/";
 
@@ -74,7 +75,8 @@ async function main() {
   const spec = argv[2];
   if (!spec) {
     stderr.write("Usage: node scripts/release-version-guard.mjs <package@version>\n");
-    exit(2);
+    process.exitCode = 2;
+    return;
   }
 
   const result = await checkExactVersion(spec);
@@ -83,9 +85,9 @@ async function main() {
   }
 
   stderr.write(`${result.label}: ${result.message}\n`);
-  exit(result.label === "PACKAGE_EXISTS_VERSION_ABSENT" ? 0 : 1);
+  process.exitCode = result.label === "PACKAGE_EXISTS_VERSION_ABSENT" ? 0 : 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main();
 }

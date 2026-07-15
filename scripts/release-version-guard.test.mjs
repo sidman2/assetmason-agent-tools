@@ -1,6 +1,10 @@
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { checkExactVersion } from "./release-version-guard.mjs";
 
+const scriptPath = join(dirname(fileURLToPath(import.meta.url)), "release-version-guard.mjs");
 const response = (status, body = "") => ({
   status,
   text: async () => body
@@ -51,5 +55,16 @@ describe("release-version-guard", () => {
 
     expect(result.ok).toBe(false);
     expect(result.label).toBe("MALFORMED_RESPONSE");
+  });
+
+  it("executes the CLI entrypoint and prints usage without a package spec", () => {
+    try {
+      execFileSync(process.execPath, [scriptPath], { encoding: "utf8" });
+      throw new Error("expected the CLI to exit with code 2");
+    } catch (error) {
+      expect(error.status).toBe(2);
+      expect(error.stderr).toContain("Usage: node scripts/release-version-guard.mjs <package@version>");
+      expect(error.stdout ?? "").toBe("");
+    }
   });
 });
