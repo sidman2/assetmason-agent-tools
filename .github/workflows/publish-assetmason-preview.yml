@@ -139,7 +139,16 @@ jobs:
         run: |
           set -euo pipefail
           npm publish --workspace agent-resource-plan --access public --tag preview --provenance
-          npm view agent-resource-plan@0.1.0-preview.1 name version dist-tags repository license engines --json
+          npm view agent-resource-plan dist-tags --json
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            if npm view agent-resource-plan@0.1.0-preview.1 name version dist-tags repository license engines --json; then
+              break
+            fi
+            if [ "$attempt" -eq 12 ]; then
+              exit 1
+            fi
+            sleep 5
+          done
           npm view agent-resource-plan dist-tags --json
 
       - name: Publish execution profile
@@ -149,7 +158,16 @@ jobs:
         run: |
           set -euo pipefail
           npm publish --workspace agent-execution-profile --access public --tag preview --provenance
-          npm view agent-execution-profile@0.1.0-preview.1 name version dist-tags repository license engines --json
+          npm view agent-execution-profile dist-tags --json
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            if npm view agent-execution-profile@0.1.0-preview.1 name version dist-tags repository license engines --json; then
+              break
+            fi
+            if [ "$attempt" -eq 12 ]; then
+              exit 1
+            fi
+            sleep 5
+          done
           npm view agent-execution-profile dist-tags --json
 
       - name: Publish cli
@@ -159,7 +177,16 @@ jobs:
         run: |
           set -euo pipefail
           npm publish --workspace assetmason-cli --access public --tag preview --provenance
-          npm view assetmason-cli@0.1.0-preview.1 name version dist-tags repository license engines bin dependencies --json
+          npm view assetmason-cli dist-tags --json
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            if npm view assetmason-cli@0.1.0-preview.1 name version dist-tags repository license engines bin dependencies --json; then
+              break
+            fi
+            if [ "$attempt" -eq 12 ]; then
+              exit 1
+            fi
+            sleep 5
+          done
           npm view assetmason-cli dist-tags --json
 
       - name: Public smoke tests
