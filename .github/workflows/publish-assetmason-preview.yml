@@ -122,18 +122,9 @@ jobs:
         run: |
           set -euo pipefail
           cd "$(mktemp -d)"
-          npm view agent-resource-plan@0.1.0-preview.1 version >/dev/null 2>&1 && {
-            echo "agent-resource-plan@0.1.0-preview.1 already exists; refusing to republish."
-            exit 1
-          }
-          npm view agent-execution-profile@0.1.0-preview.1 version >/dev/null 2>&1 && {
-            echo "agent-execution-profile@0.1.0-preview.1 already exists; refusing to republish."
-            exit 1
-          }
-          npm view assetmason-cli@0.1.0-preview.1 version >/dev/null 2>&1 && {
-            echo "assetmason-cli@0.1.0-preview.1 already exists; refusing to republish."
-            exit 1
-          }
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-resource-plan@0.1.0-preview.1
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-execution-profile@0.1.0-preview.1
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" assetmason-cli@0.1.0-preview.1
 
       - name: Capture pack manifests
         run: |
