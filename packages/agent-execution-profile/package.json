@@ -1,6 +1,6 @@
 {
   "name": "agent-execution-profile",
-  "version": "0.1.0-preview.1",
+  "version": "0.1.0-preview.2",
   "type": "module",
   "description": "Deterministic advisory execution-profile contracts, builders, validators, renderers, and host exports for AssetMason.",
   "license": "MIT",

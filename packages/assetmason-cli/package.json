@@ -1,6 +1,6 @@
 {
   "name": "assetmason-cli",
-  "version": "0.1.0-preview.1",
+  "version": "0.1.0-preview.2",
   "type": "module",
   "description": "Installed CLI for public AssetMason Agent Resource Planning workflows.",
   "license": "MIT",
@@ -27,8 +27,8 @@
     "provenance": true
   },
   "dependencies": {
-    "agent-execution-profile": "0.1.0-preview.1",
-    "agent-resource-plan": "0.1.0-preview.1"
+    "agent-execution-profile": "0.1.0-preview.2",
+    "agent-resource-plan": "0.1.0-preview.2"
   },
   "scripts": {
     "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
