@@ -4,6 +4,8 @@ Deterministic advisory execution-profile contracts, builders, validators, render
 
 This package is public-safe and execution-free. It does not run tools, proxy inference, hold credentials, or enforce runtime behavior on a host.
 
+Publicly available as `agent-execution-profile@0.1.0-preview.2` on the `preview` channel with provenance from the trusted GitHub Actions OIDC workflow.
+
 It covers:
 
 - execution profiles

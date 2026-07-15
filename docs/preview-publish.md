@@ -7,7 +7,7 @@ Maintainer-only checklist for npm preview publishing.
 | Package | npm status |
 |---|---|
 | `ard-kit` | Published as `ard-kit@0.1.0-preview.0`. |
-| `ard-cli` | Publish as `ard-cli@0.1.0-preview.1` after the runtime dependency fix. |
+| `ard-cli` | Published as `ard-cli@0.1.0-preview.1` after the runtime dependency fix. |
 | `ai-discovery` | Do not publish unscoped; npm blocked the name as too similar to `aidiscovery`. Rename or scope decision deferred. |
 
 ## Commands
@@ -35,6 +35,16 @@ npm dist-tag add ard-cli@0.1.0-preview.1 latest
 ```
 
 Do not republish `0.1.0-preview.0`.
+
+## AssetMason preview.2 publication
+
+The public AssetMason package set is published and synchronized on the `preview` dist-tag:
+
+- `agent-resource-plan@0.1.0-preview.2`
+- `agent-execution-profile@0.1.0-preview.2`
+- `assetmason-cli@0.1.0-preview.2`
+
+`preview` is the supported prerelease channel. `preview.2` is a prerelease, not stable. `latest` remains at its actual live registry value. Public npx commands are available, and the public packages use trusted publishing via GitHub Actions OIDC. Provenance was requested and observed from the package metadata and publication workflow evidence.
 
 ## Verification
 
