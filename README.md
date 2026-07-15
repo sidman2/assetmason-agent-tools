@@ -11,13 +11,13 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ard-kit` | Shared schemas, validators, fixtures, and helpers for ARD / AI Catalog readiness. | Existing public preview package. |
 | `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
-| `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Ready for npm preview publication; registry publication pending. |
-| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `select` and selection validation. | Ready for npm preview publication; registry publication pending. |
-| `agent-execution-profile` | Public-safe execution-profile contracts, host exports, locks, diffs, and receipt validation. | Ready for npm preview publication; registry publication pending. |
+| `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Publicly available as `0.1.0-preview.2` on the `preview` channel. |
+| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `select` and selection validation. | Publicly available as `0.1.0-preview.2` on the `preview` channel. |
+| `agent-execution-profile` | Public-safe execution-profile contracts, host exports, locks, diffs, and receipt validation. | Publicly available as `0.1.0-preview.2` on the `preview` channel. |
 
 ## Quickstart
 
-Planned preview CLI:
+Public preview CLI:
 
 ```bash
 npx -y assetmason-cli@preview --help
@@ -39,14 +39,14 @@ These tools do not certify conformance, guarantee registry indexing, guarantee r
 
 The public packages are advisory-only. They do not provide certification, credential custody, runtime execution, or model inference.
 
-Install after preview publication:
+Install from the public preview channel:
 
 ```bash
 npm install agent-resource-plan@preview
 npm install --save-dev assetmason-cli@preview
 ```
 
-Planned preview commands:
+Public npx commands:
 
 ```bash
 npx -y assetmason-cli@preview --help
@@ -57,7 +57,7 @@ npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview scan --root . --format markdown
 ```
 
-These commands become available after the preview packages are published and registry verification succeeds.
+These commands are available through the published `preview` dist-tag.
 
 ## Naming
 
@@ -65,7 +65,7 @@ These commands become available after the preview packages are published and reg
 * Agent Resource Planning package surface: `agent-resource-plan`, `assetmason-cli`
 * public artifact families: check, select, plan, lock, diff, validate, handoff
 
-Preview API note: semantic versioning may change during preview, and private hosted intelligence remains outside this FOSS repository.
+Preview API note: semantic versioning may change during preview, `preview.2` is a prerelease rather than a stable release, and private hosted intelligence remains outside this FOSS repository. `latest` remains at its actual live registry value.
 
 ## Development
 
