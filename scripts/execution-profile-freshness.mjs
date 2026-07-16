@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const repoRoot = process.cwd();
-const reportPath = resolve(repoRoot, "tmp", "review-packet", "pr6-closeout", "parity", "parity-report.json");
+const reportPath = resolve(repoRoot, "tmp", "agent-runs", "execution-profile-parity", "parity-report.json");
 const sourceManifest = JSON.parse(readFileSync(resolve(repoRoot, "scripts", "execution-profile-source-manifest.json"), "utf8"));
 
 function fail(message) {
@@ -22,14 +22,14 @@ const expectedScenarioIds = [
 ];
 
 let report;
+if (!expectedSourceSha) {
+  fail("freshness check failed: set ASSETMASON_PRIVATE_SOURCE_SHA to verify the private source revision");
+}
+
 try {
   report = JSON.parse(readFileSync(reportPath, "utf8"));
 } catch {
   fail(`freshness check failed: missing parity report at ${reportPath}`);
-}
-
-if (!expectedSourceSha) {
-  fail("freshness check failed: set ASSETMASON_PRIVATE_SOURCE_SHA to verify the private source revision");
 }
 
 if (report.source_sha !== expectedSourceSha) {

@@ -1,9 +1,0 @@
-{"step":"parity-config","result":"pass","evidence":["scripts/execution-profile-parity.mjs","scripts/execution-profile-freshness.mjs"]}
-{"step":"generated-source-check","result":"pass","command":"npm run generated-source:check"}
-{"step":"stale-check","result":"pass","command":"npm run stale:check"}
-{"step":"typecheck","result":"pass","command":"npm run typecheck"}
-{"step":"build","result":"pass","command":"npm run build"}
-{"step":"test","result":"pass","command":"npm test"}
-{"step":"pack-dry-run","result":"pass","command":"npm run pack:dry-run -w agent-resource-plan; npm run pack:dry-run -w agent-execution-profile; npm run pack:dry-run -w assetmason-cli"}
-{"step":"ci-pack-smoke","result":"pass","command":"node scripts/ci-pack-smoke.mjs"}
-{"step":"verify-public","result":"pass","command":"npm run verify:public"}

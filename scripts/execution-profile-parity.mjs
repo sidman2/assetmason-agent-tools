@@ -3,16 +3,16 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { buildExecutionProfile } from "../packages/agent-execution-profile/src/build.ts";
-import { buildExecutionProfileLock } from "../packages/agent-execution-profile/src/lock.ts";
-import { buildGenericHostExportArtifact } from "../packages/agent-execution-profile/src/hosts/generic.ts";
-import { buildCodexHostExportArtifact } from "../packages/agent-execution-profile/src/hosts/codex.ts";
-import { buildClaudeCodeHostExportArtifact } from "../packages/agent-execution-profile/src/hosts/claude-code.ts";
-import { diffExecutionProfile, diffExecutionProfileLock } from "../packages/agent-execution-profile/src/diff.ts";
-import { validateExecutionProfile, validateExecutionProfileLock, validateExecutionProfileDiff, validateHostExport } from "../packages/agent-execution-profile/src/validate.ts";
+import { buildExecutionProfile } from "agent-execution-profile";
+import { buildExecutionProfileLock } from "agent-execution-profile";
+import { buildGenericHostExportArtifact } from "agent-execution-profile";
+import { buildCodexHostExportArtifact } from "agent-execution-profile";
+import { buildClaudeCodeHostExportArtifact } from "agent-execution-profile";
+import { diffExecutionProfile, diffExecutionProfileLock } from "agent-execution-profile";
+import { validateExecutionProfile, validateExecutionProfileLock, validateExecutionProfileDiff, validateHostExport } from "agent-execution-profile";
 
 const repoRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
-const outputDir = resolve(repoRoot, "tmp", "review-packet", "pr6-closeout", "parity");
+const outputDir = resolve(repoRoot, "tmp", "agent-runs", "execution-profile-parity");
 const sourceManifest = JSON.parse(await readFile(resolve(repoRoot, "scripts", "execution-profile-source-manifest.json"), "utf8"));
 const sourceConfig = {
   manifest_version: sourceManifest.manifest_version,
