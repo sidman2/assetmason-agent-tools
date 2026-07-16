@@ -1,0 +1,8 @@
+{
+  "manifest_version": 1,
+  "parity_contract": "execution-profile-private-source-v1",
+  "private_source_root_env": "ASSETMASON_PRIVATE_SOURCE_ROOT",
+  "private_source_sha_env": "ASSETMASON_PRIVATE_SOURCE_SHA",
+  "parity_mode_env": "ASSETMASON_PARITY_MODE",
+  "default_parity_mode": "public"
+}
