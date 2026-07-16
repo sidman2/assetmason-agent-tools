@@ -1,0 +1,1 @@
+Release gate merged. Preview publication partially succeeded: agent-resource-plan@0.1.0-preview.1 is live; the workflow failed on immediate registry readback before the remaining two packages published. Recovery fix branch created and PR #10 opened. Partial-publication recovery escalated to preview.2 with PR #11 opened.

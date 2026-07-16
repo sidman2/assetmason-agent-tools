@@ -1,0 +1,29 @@
+{
+  "repository": "sidman2/assetmason-agent-tools",
+  "branch": "codex/policy-aware-resource-selection",
+  "local_head": "57c74f347440f9cc598b91ef73100f389879cb11",
+  "pr6": {
+    "number": 6,
+    "state": "open",
+    "head": "57c74f347440f9cc598b91ef73100f389879cb11"
+  },
+  "pr5": {
+    "number": 5,
+    "state": "open",
+    "head": "0ac7db4b9cecdccc09c3286ed8f8e7f410a11983",
+    "unique_work_present": true
+  },
+  "checks": {
+    "generated_source": "passed",
+    "stale_refs": "passed",
+    "targeted_vitest": "passed",
+    "repo_tests": "passed",
+    "pack_dry_run": "passed",
+    "installed_tarball_smoke": "passed"
+  },
+  "source_hygiene": {
+    "agent_resource_plan_src_js_tracked": false,
+    "agent_execution_profile_src_js_tracked": false
+  },
+  "published": false
+}

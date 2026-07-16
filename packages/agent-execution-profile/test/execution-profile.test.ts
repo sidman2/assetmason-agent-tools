@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { buildExecutionProfile } from "../src/build.js";
 import { buildExecutionProfileLock, executionProfileLockDigest } from "../src/lock.js";
-import { diffExecutionProfile, diffExecutionProfileLock, renderExecutionProfileMarkdown, renderExecutionProfileLockMarkdown, renderOutcomeReceiptMarkdown } from "../src/index.js";
+import { diffExecutionProfile, diffExecutionProfileLock, renderExecutionProfileMarkdown, renderExecutionProfileLockMarkdown, renderExecutionProfileDiffMarkdown, renderOutcomeReceiptMarkdown } from "../src/index.js";
 import { buildGenericHostExportArtifact } from "../src/hosts/generic.js";
-import { validateExecutionProfile, validateExecutionProfileLock, validateExecutionProfileDiff, validateHostExport } from "../src/validate.js";
+import { validateExecutionProfile, validateExecutionProfileLock, validateExecutionProfileDiff, validateHostExport, validateOutcomeReceipt } from "../src/validate.js";
 
 const profile = buildExecutionProfile({
   task_or_intent: "auth redirect bug",
@@ -31,12 +31,24 @@ describe("agent-execution-profile", () => {
   it("diffs and validates the diff shape", () => {
     const diff = diffExecutionProfile(profile, profile);
     expect(validateExecutionProfileDiff(diff)).toBe(true);
+    expect(renderExecutionProfileDiffMarkdown(diff)).toContain("Agent Execution Profile Diff");
     expect(diffExecutionProfileLock(buildExecutionProfileLock(profile), buildExecutionProfileLock(profile)).drift_status).toBe("clean");
   });
 
   it("builds and validates a host export", () => {
     const exportArtifact = buildGenericHostExportArtifact(profile);
     expect(validateHostExport(exportArtifact)).toBe(true);
+    expect(validateOutcomeReceipt({
+      schema_version: "0.1.0",
+      receipt_id: "receipt-1",
+      profile_id: profile.profile_id,
+      profile_digest: profile.profile_digest,
+      resolved_roles: ["implementer"],
+      verification_results: [{ gate: "tests_pass", passed: true }],
+      warnings: [],
+      unknowns: [],
+      local_only: true
+    })).toBe(true);
     expect(
       renderOutcomeReceiptMarkdown({
         schema_version: "0.1.0",

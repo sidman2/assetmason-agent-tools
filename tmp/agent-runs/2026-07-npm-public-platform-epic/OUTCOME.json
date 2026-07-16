@@ -1,0 +1,8 @@
+{
+  "terminal_code": "RELEASE_CANDIDATE_NOT_PUBLISHED",
+  "publication_performed": false,
+  "notes": [
+    "public verification passed via component checks",
+    "private parity remains explicit and not run without configured inputs"
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "NPM-001",
+    "lane": "P0 Truth, portability and parity control",
+    "status": "in_progress",
+    "summary": "Replace hard-coded private path and stale source SHA with explicit configuration."
+  },
+  {
+    "id": "NPM-003",
+    "lane": "P0 Truth, portability and parity control",
+    "status": "in_progress",
+    "summary": "Create durable run-state artifacts."
+  },
+  {
+    "id": "NPM-106",
+    "lane": "P7 CI, documentation and release-candidate closeout",
+    "status": "in_progress",
+    "summary": "Run the public verification and packaging smoke checks."
+  }
+]

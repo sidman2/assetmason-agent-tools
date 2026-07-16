@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildApprovalRequirement,
+  buildEvidenceReference,
   buildSelectionPolicyEnvelope,
   buildSelectionScenario,
   buildMinimumToolsetEvaluation,
+  computeSelectionDigest,
   type SelectionCandidate,
   listSelectionScenarios,
   selectMinimumApprovedResources,
+  renderMinimumApprovedResourceSetJson,
+  renderSelectionPolicyEnvelopeJson,
   renderMinimumToolsetEvaluationMarkdown,
+  validateMinimumApprovedResourceSet,
+  validateMinimumToolsetEvaluation,
   validateSelectionPolicyEnvelope
 } from "../src/index.js";
 
@@ -52,6 +59,27 @@ describe("selection policy envelope", () => {
 
   it("hashes semantic material deterministically", () => {
     expect(envelope.envelope_digest).toBe(buildSelectionPolicyEnvelope({ ...envelope, envelope_digest: "" }).envelope_digest);
+    expect(computeSelectionDigest({ a: 1, b: 2 })).toBe(computeSelectionDigest({ b: 2, a: 1 }));
+    expect(renderSelectionPolicyEnvelopeJson(envelope)).toContain('"envelope_id": "selection-envelope-auth-redirect-bug"');
+  });
+});
+
+describe("selection helper constructors", () => {
+  it("builds approval and evidence references", () => {
+    expect(buildApprovalRequirement("review", "public review required")).toEqual({
+      approval_id: "review",
+      reason: "public review required",
+      review_status: "not_requested"
+    });
+    expect(buildEvidenceReference("fixture label")).toEqual({
+      kind: "fixture",
+      label: "fixture label"
+    });
+    expect(buildEvidenceReference("public label", "https://example.com/evidence")).toEqual({
+      kind: "public",
+      label: "public label",
+      href: "https://example.com/evidence"
+    });
   });
 });
 
@@ -84,6 +112,8 @@ describe("minimum approved resource selection", () => {
     expect(selection.selection_trace.find((entry) => entry.resource_id === "forbidden-debugger")?.reason_code).toBe("denied_resource");
     expect(selection.selection_trace.find((entry) => entry.resource_id === "stale-docs")?.decision).toBe("unknown");
     expect(selection.selection_trace.find((entry) => entry.resource_id === "stale-docs")?.reason_code).toBe("stale_evidence");
+    expect(validateMinimumApprovedResourceSet(selection).ok).toBe(true);
+    expect(renderMinimumApprovedResourceSetJson(selection)).toContain('"selected_resources": [');
   });
 
   it("stays deterministic under candidate reordering", () => {
@@ -136,6 +166,7 @@ describe("minimum approved resource selection", () => {
     expect(evaluation.deterministicRepeatability).toBe(true);
     expect(evaluation.requiredResourceRecall).toBe(1);
     expect(evaluation.unnecessaryResourcePrecision).toBe(1);
+    expect(validateMinimumToolsetEvaluation(evaluation).ok).toBe(true);
     expect(renderMinimumToolsetEvaluationMarkdown(evaluation)).toContain("minimum-toolset-evaluation");
   });
 });
