@@ -2,6 +2,12 @@
 
 Maintainer-only checklist for npm preview publishing.
 
+## Unreleased notes
+
+- Hardened execution-profile parity and freshness so public mode writes into ignored run-state and private mode fails closed when required inputs are missing.
+- Added a focused portability test for the public parity report path.
+- Clarified the root README so the public preview docs match the current advisory-only parity behavior.
+
 ## Published / target packages
 
 | Package | npm status |
