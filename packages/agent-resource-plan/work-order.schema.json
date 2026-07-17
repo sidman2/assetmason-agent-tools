@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sidman2/assetmason-agent-tools/packages/agent-resource-plan/work-order.schema.json",
+  "title": "AssetMason WorkOrder",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "0.1.0" },
+    "work_order_id": { "type": "string", "minLength": 1 },
+    "task_text": { "type": "string", "minLength": 1 },
+    "task_class": {
+      "type": "string",
+      "enum": ["small_fix", "architecture_sensitive", "billing_sensitive", "migration_sensitive", "docs", "browser_qa", "other"]
+    },
+    "acceptance_criteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_state": { "type": "string", "enum": ["known", "partial", "unknown"] },
+        "items": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "required": ["knowledge_state", "items"]
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository_ref": { "type": "string", "minLength": 1 },
+        "revision_state": { "type": "string", "enum": ["known", "unknown"] },
+        "revision": { "type": "string", "minLength": 1 },
+        "scope_state": { "type": "string", "enum": ["known", "unknown"] },
+        "scope": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "required": ["revision_state", "scope_state"]
+    },
+    "selected_host": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_state": { "type": "string", "enum": ["known", "unknown"] },
+        "host_id": { "type": "string", "minLength": 1 }
+      },
+      "required": ["knowledge_state"]
+    },
+    "expected_duration_or_risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expected_duration_minutes": { "type": "integer", "minimum": 0 },
+        "risk_signals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "brownfield_or_unfamiliar_repository",
+              "integration_or_provider_change",
+              "migration_or_major_dependency_upgrade",
+              "cross_service_or_cross_layer",
+              "permission_sensitive",
+              "external_or_irreversible_effect",
+              "publish_deploy_or_production_change",
+              "large_review_burden",
+              "high_rollback_cost",
+              "unattended_or_long_running",
+              "other"
+            ]
+          }
+        }
+      }
+    },
+    "user_constraints": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "prohibited_scope": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "required_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["required", "optional", "unknown"] }
+        },
+        "required": ["evidence_id", "description", "status"]
+      }
+    },
+    "spec_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "locked": { "type": "boolean" },
+    "runtime_advisory_only": { "const": true }
+  },
+  "required": [
+    "schema_version",
+    "work_order_id",
+    "task_text",
+    "task_class",
+    "acceptance_criteria",
+    "repository",
+    "selected_host",
+    "required_evidence",
+    "runtime_advisory_only"
+  ]
+}
