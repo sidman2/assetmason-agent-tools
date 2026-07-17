@@ -21,10 +21,18 @@ export type {
   SelectionTraceEntry,
   ResourceSelectionPolicyEnvelope,
   ResourceSourceReference,
-  ResourceValidationIssue
+  ResourceValidationIssue,
+  WorkOrder,
+  WorkOrderEvidenceRequirement,
+  WorkOrderKnowledgeState,
+  WorkOrderRiskSignal,
+  WorkOrderTaskClass,
+  WorkOrderValidationIssue,
+  WorkOrderValidationResult
 } from "./types.js";
 export {
   buildBeforeBuildPacket,
+  buildWorkOrder,
   buildResourceDiff,
   buildResourceInventory,
   buildResourceLock,
@@ -35,8 +43,11 @@ export {
   listResourceScenarios,
   renderResourceArtifactMarkdown,
   renderResourceArtifactJson,
+  renderWorkOrderMarkdown,
+  renderWorkOrderJson,
   scanResourceInventory,
-  validateResourceArtifact
+  validateResourceArtifact,
+  validateWorkOrder
 } from "./resource-plan.js";
 export {
   buildApprovalRequirement,

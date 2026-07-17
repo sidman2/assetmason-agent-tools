@@ -1,0 +1,35 @@
+{
+  "status": "approved",
+  "source_repository": "assetmason-owner-contract-bundle",
+  "source_sha": "66565e5955cfeefaba0b3e1a404e7601cc6a63062efd87c55e7cbc20c47b9380",
+  "source_pr": null,
+  "approval": {
+    "kind": "explicit",
+    "evidence": [
+      "I approve AssetMason WorkOrder canonical contract v0.1.0 from the attached v102 dependency bundle."
+    ]
+  },
+  "contracts": [
+    {
+      "name": "WorkOrder",
+      "status": "approved",
+      "source_paths": [
+        "WORKORDER_CANONICAL_CONTRACT_PROPOSED_v102.md",
+        "work-order.schema.json",
+        "work-order.reference-types.ts"
+      ],
+      "schema_version": "0.1.0",
+      "public_adaptations": [
+        "additive agent-resource-plan export",
+        "nested/reference only; no new root artifact",
+        "no existing digest or command changes",
+        "optional additive file validation only",
+        "no publication/version/dist-tag changes"
+      ],
+      "evidence_gate": "not_required",
+      "notes": [
+        "Approved for additive non-release implementation only."
+      ]
+    }
+  ]
+}
