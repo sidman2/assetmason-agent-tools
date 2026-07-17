@@ -12,6 +12,7 @@ import { buildResourceInventory, buildResourceLock, buildResourcePlan } from "ag
 describe("assetmason-cli", () => {
   it("prints help", async () => {
     expect(await main(["--help"])).toBe(0);
+    expect((await runCommand(["--help"])).text).toContain("work-order");
   });
 
   it("prints list scenarios", async () => {
@@ -222,5 +223,25 @@ describe("assetmason-cli", () => {
 
     expect((await runCommand(["validate", "--file", planPath, "--kind", "resource-plan"])).code).toBe(0);
     expect((await runCommand(["validate", "--file", lockPath, "--kind", "resource-lock"])).code).toBe(0);
+  });
+
+  it("validates WorkOrder artifacts through the CLI", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "assetmason-cli-"));
+    const workOrder = {
+      schema_version: "0.1.0",
+      work_order_id: "wo-cli-validate",
+      task_text: "Validate a WorkOrder fixture through the CLI.",
+      task_class: "small_fix",
+      acceptance_criteria: { knowledge_state: "known", items: ["parse", "validate"] },
+      repository: { revision_state: "known", revision: "abc123", scope_state: "unknown" },
+      selected_host: { knowledge_state: "known", host_id: "assetmason-cli" },
+      required_evidence: [{ evidence_id: "cli-workorder", description: "CLI validates WorkOrder JSON", status: "required" }],
+      runtime_advisory_only: true
+    };
+    const workOrderPath = join(dir, "work-order.json");
+    writeFileSync(workOrderPath, JSON.stringify(workOrder, null, 2), "utf8");
+
+    expect((await runCommand(["validate", "--file", workOrderPath, "--kind", "work-order"])).code).toBe(0);
+    expect((await runCommand(["validate", "--file", workOrderPath, "--kind", "resource-plan"])).code).toBe(1);
   });
 });

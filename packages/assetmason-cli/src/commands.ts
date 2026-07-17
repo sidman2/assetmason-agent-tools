@@ -106,7 +106,7 @@ function helpText(): string {
     "assetmason scan --root <dir> --format json|markdown",
     "assetmason lock --scenario <name> --format json|markdown",
     "assetmason diff --before <file> --after <file> --format json|markdown",
-    "assetmason validate --file <file> [--kind resource-plan|resource-lock|selection-policy-envelope|minimum-approved-resource-set|minimum-toolset-evaluation|execution-profile|execution-profile-lock|execution-profile-diff|host-export|outcome-receipt]",
+    "assetmason validate --file <file> [--kind resource-plan|resource-lock|selection-policy-envelope|minimum-approved-resource-set|minimum-toolset-evaluation|work-order|execution-profile|execution-profile-lock|execution-profile-diff|host-export|outcome-receipt]",
     "assetmason handoff --scenario <name>"
   ].join("\n") + "\n";
 }
@@ -160,9 +160,11 @@ async function validateArtifact(filePath: string, kind?: string, resourcePlan?: 
     kind === "selection-policy-envelope"
       ? resourcePlan.validateSelectionPolicyEnvelope(artifact)
       : kind === "minimum-approved-resource-set"
-        ? resourcePlan.validateMinimumApprovedResourceSet(artifact)
+      ? resourcePlan.validateMinimumApprovedResourceSet(artifact)
         : kind === "minimum-toolset-evaluation"
           ? resourcePlan.validateMinimumToolsetEvaluation(artifact)
+          : kind === "work-order"
+            ? resourcePlan.validateWorkOrder(artifact)
           : kind === "execution-profile"
             ? { ok: executionProfile.validateExecutionProfile(artifact), issues: [] }
             : kind === "execution-profile-lock"
