@@ -80,6 +80,109 @@ describe("agent-resource-plan", () => {
     expect(renderWorkOrderMarkdown(workOrder)).toContain("## Required Evidence");
   });
 
+  it("normalizes and canonicalizes work orders for digest and rendering", () => {
+    const workOrder = buildWorkOrder({
+      schema_version: "0.1.0",
+      work_order_id: "  wo-104  ",
+      task_text: "  Line one.\r\nLine two.  ",
+      task_class: "small_fix",
+      acceptance_criteria: { knowledge_state: "known", items: ["  second  ", "first", "first"] },
+      repository: {
+        repository_ref: "  repo-ref  ",
+        revision_state: "known",
+        revision: "  rev-2  ",
+        scope_state: "known",
+        scope: ["zeta", "alpha", "alpha"]
+      },
+      selected_host: { knowledge_state: "known", host_id: "  host-1  " },
+      expected_duration_or_risk: {
+        expected_duration_minutes: 0,
+        risk_signals: ["other", "permission_sensitive", "other"]
+      },
+      user_constraints: ["  beta  ", "alpha", "alpha"],
+      prohibited_scope: ["  deny-b  ", "deny-a", "deny-a"],
+      required_evidence: [{ evidence_id: "  ev-1  ", description: "  proof\r\nline  ", status: "required" }],
+      runtime_advisory_only: true
+    });
+
+    expect(workOrder.work_order_id).toBe("wo-104");
+    expect(workOrder.task_text).toBe("Line one.\nLine two.");
+    expect(workOrder.acceptance_criteria.items).toEqual(["second", "first", "first"]);
+    expect(workOrder.repository.scope).toEqual(["alpha", "zeta"]);
+    expect(workOrder.expected_duration_or_risk?.risk_signals).toEqual(["other", "permission_sensitive"]);
+    expect(workOrder.user_constraints).toEqual(["alpha", "beta"]);
+    expect(workOrder.prohibited_scope).toEqual(["deny-a", "deny-b"]);
+    expect(workOrder.required_evidence[0]).toEqual({ evidence_id: "ev-1", description: "proof\nline", status: "required" });
+    expect(renderWorkOrderJson(workOrder)).toContain('"work_order_id": "wo-104"');
+    expect(renderWorkOrderJson(workOrder)).toContain('"task_text": "Line one.\\nLine two."');
+  });
+
+  it("rejects unknown properties, locked digests, and secret-like public values", () => {
+    const result = validateWorkOrder({
+      schema_version: "0.1.0",
+      work_order_id: "wo-105",
+      task_text: "token=sk-test-1234567890",
+      task_class: "small_fix",
+      acceptance_criteria: { knowledge_state: "known", items: ["ok"], extra: true },
+      repository: { revision_state: "known", revision: "abc123", scope_state: "unknown", extra: true },
+      selected_host: { knowledge_state: "known", host_id: "host-1", extra: true },
+      required_evidence: [{ evidence_id: "ev-1", description: "ok", status: "required", extra: true }],
+      locked: true,
+      runtime_advisory_only: true,
+      extra: true
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((issue) => issue.code === "work_order.unknown_property" && issue.path === "extra")).toBe(true);
+    expect(result.errors.some((issue) => issue.code === "work_order.acceptance_criteria.unknown_property")).toBe(true);
+    expect(result.errors.some((issue) => issue.code === "work_order.repository.unknown_property")).toBe(true);
+    expect(result.errors.some((issue) => issue.code === "work_order.selected_host.unknown_property")).toBe(true);
+    expect(result.errors.some((issue) => issue.code === "work_order.required_evidence.unknown_property")).toBe(true);
+    expect(result.errors.some((issue) => issue.code === "work_order.spec_digest")).toBe(true);
+    expect(result.errors.some((issue) => String(issue.message).includes("sk-test-1234567890"))).toBe(false);
+  });
+
+  it("enforces conditional field parity for known nested states", () => {
+    const result = validateWorkOrder({
+      schema_version: "0.1.0",
+      work_order_id: "wo-106",
+      task_text: "Check conditionals",
+      task_class: "small_fix",
+      acceptance_criteria: { knowledge_state: "known", items: ["ok"] },
+      repository: { revision_state: "known", scope_state: "known" },
+      selected_host: { knowledge_state: "known" },
+      required_evidence: [],
+      runtime_advisory_only: true
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((issue) => issue.path === "repository.revision")).toBe(true);
+    expect(result.errors.some((issue) => issue.path === "repository.scope")).toBe(true);
+    expect(result.errors.some((issue) => issue.path === "selected_host.host_id")).toBe(true);
+  });
+
+  it("keeps schema and types parity on the public WorkOrder surface", () => {
+    const allowedTopLevel = [
+      "schema_version",
+      "work_order_id",
+      "task_text",
+      "task_class",
+      "acceptance_criteria",
+      "repository",
+      "selected_host",
+      "expected_duration_or_risk",
+      "user_constraints",
+      "prohibited_scope",
+      "required_evidence",
+      "spec_digest",
+      "locked",
+      "runtime_advisory_only"
+    ];
+
+    const schemaKeys = ["schema_version", "work_order_id", "task_text", "task_class", "acceptance_criteria", "repository", "selected_host", "expected_duration_or_risk", "user_constraints", "prohibited_scope", "required_evidence", "spec_digest", "locked", "runtime_advisory_only"];
+    expect(schemaKeys).toEqual(allowedTopLevel);
+  });
+
   it("reports path-aware validation issues", () => {
     const result = validateWorkOrder({
       schema_version: "0.1.0",

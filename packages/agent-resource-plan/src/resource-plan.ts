@@ -18,6 +18,24 @@ import type {
 } from "./types.js";
 
 const ignoredNames = new Set([".git", "node_modules", "dist", "coverage", "tmp"]);
+const workOrderTaskClasses = new Set(["small_fix", "architecture_sensitive", "billing_sensitive", "migration_sensitive", "docs", "browser_qa", "other"]);
+const workOrderKnowledgeStates = new Set(["known", "partial", "unknown"]);
+const workOrderRepositoryStates = new Set(["known", "unknown"]);
+const workOrderHostStates = new Set(["known", "unknown"]);
+const workOrderEvidenceStatuses = new Set(["required", "optional", "unknown"]);
+const workOrderRiskSignals = new Set([
+  "brownfield_or_unfamiliar_repository",
+  "integration_or_provider_change",
+  "migration_or_major_dependency_upgrade",
+  "cross_service_or_cross_layer",
+  "permission_sensitive",
+  "external_or_irreversible_effect",
+  "publish_deploy_or_production_change",
+  "large_review_burden",
+  "high_rollback_cost",
+  "unattended_or_long_running",
+  "other"
+]);
 const scenarioCatalog: Record<string, { description: string; sources: ResourceSourceReference[]; actions: string[] }> = {
   "auth-redirect-bug": {
     description: "Public-safe preview scenario for advisory resource planning.",
@@ -166,9 +184,82 @@ function pushIssue(issues: ResourceValidationIssue[], level: ResourceValidationI
   issues.push({ level, code, message, path });
 }
 
+function normalizeText(value: string): string {
+  return value.replace(/\r\n?/g, "\n").trim();
+}
+
+function dedupeSorted(values: string[]): string[] {
+  return [...new Set(values.map((value) => normalizeText(value)))].sort((a, b) => a.localeCompare(b));
+}
+
+function normalizeWorkOrder(input: WorkOrder): WorkOrder {
+  const acceptance = input.acceptance_criteria;
+  const repository = input.repository;
+  const selectedHost = input.selected_host;
+  const expected = input.expected_duration_or_risk;
+  return {
+    ...input,
+    task_text: normalizeText(input.task_text),
+    work_order_id: normalizeText(input.work_order_id),
+    acceptance_criteria: {
+      ...acceptance,
+      items: acceptance.items.map((item) => normalizeText(item))
+    },
+    repository: {
+      ...repository,
+      repository_ref: repository.repository_ref !== undefined ? normalizeText(repository.repository_ref) : undefined,
+      revision: repository.revision !== undefined ? normalizeText(repository.revision) : undefined,
+      scope: repository.scope ? dedupeSorted(repository.scope) : repository.scope
+    },
+    selected_host: {
+      ...selectedHost,
+      host_id: selectedHost.host_id !== undefined ? normalizeText(selectedHost.host_id) : undefined
+    },
+    expected_duration_or_risk: expected
+      ? {
+          ...expected,
+          risk_signals: expected.risk_signals ? dedupeSorted(expected.risk_signals) as WorkOrder["expected_duration_or_risk"] extends infer E ? E extends { risk_signals?: infer R } ? R : never : never : expected.risk_signals
+        }
+      : undefined,
+    user_constraints: input.user_constraints ? dedupeSorted(input.user_constraints) : input.user_constraints,
+    prohibited_scope: input.prohibited_scope ? dedupeSorted(input.prohibited_scope) : input.prohibited_scope,
+    required_evidence: input.required_evidence.map((entry) => ({
+      ...entry,
+      evidence_id: normalizeText(entry.evidence_id),
+      description: normalizeText(entry.description)
+    }))
+  };
+}
+
+function workOrderDigestCandidate(value: unknown): unknown {
+  if (typeof value !== "object" || value === null) return value;
+  const workOrder = value as Record<string, unknown>;
+  if (!Array.isArray(workOrder.required_evidence) || !workOrder.acceptance_criteria || !workOrder.repository || !workOrder.selected_host) {
+    const { spec_digest, ...rest } = workOrder;
+    return rest;
+  }
+  return { ...normalizeWorkOrder(workOrder as WorkOrder), spec_digest: undefined };
+}
+
+function computeWorkOrderDigest(value: unknown): string {
+  return computeResourceArtifactDigest(workOrderDigestCandidate(value));
+}
+
+function isSecretLike(value: string): boolean {
+  return [
+    /(?:^|[\s"'`])(?:sk|pk|rk|ghp|gho|ghu|ghs|xox[baprs]-|ya29\.)[A-Za-z0-9_\-]{8,}/i,
+    /(?:api[_-]?key|secret|password|passwd|token|session|cookie)\s*[:=]\s*[^,\s]+/i,
+    /-----BEGIN [A-Z ]+PRIVATE KEY-----/
+  ].some((pattern) => pattern.test(value));
+}
+
+function hasUnknownProperties(value: Record<string, unknown>, allowedKeys: string[]): string[] {
+  return Object.keys(value).filter((key) => !allowedKeys.includes(key));
+}
+
 export function buildWorkOrder(input: Omit<WorkOrder, "spec_digest"> & { spec_digest?: string }): WorkOrder {
   const workOrder: WorkOrder = { ...input, spec_digest: "" as WorkOrder["spec_digest"] };
-  return { ...workOrder, spec_digest: computeResourceArtifactDigest({ ...workOrder, spec_digest: undefined }) as WorkOrder["spec_digest"] };
+  return { ...normalizeWorkOrder(workOrder), spec_digest: computeWorkOrderDigest(workOrder) as WorkOrder["spec_digest"] };
 }
 
 export function validateWorkOrder(input: unknown): WorkOrderValidationResult {
@@ -179,34 +270,39 @@ export function validateWorkOrder(input: unknown): WorkOrderValidationResult {
   const workOrder = input as Record<string, unknown>;
   const errors: WorkOrderValidationResult["errors"] = [];
   const warnings: WorkOrderValidationResult["warnings"] = [];
+  const allowedRootKeys = ["schema_version", "work_order_id", "task_text", "task_class", "acceptance_criteria", "repository", "selected_host", "expected_duration_or_risk", "user_constraints", "prohibited_scope", "required_evidence", "spec_digest", "locked", "runtime_advisory_only"];
+  for (const key of hasUnknownProperties(workOrder, allowedRootKeys)) pushIssue(errors, "error", "work_order.unknown_property", `Unknown property '${key}' is not allowed`, key);
   const requiredStringFields: Array<keyof Pick<WorkOrder, "schema_version" | "work_order_id" | "task_text">> = ["schema_version", "work_order_id", "task_text"];
   for (const field of requiredStringFields) {
     if (typeof workOrder[field] !== "string" || String(workOrder[field]).length === 0) pushIssue(errors, "error", `work_order.${String(field)}`, `${String(field)} must be a non-empty string`, String(field));
   }
   if (workOrder.schema_version !== "0.1.0") pushIssue(errors, "error", "work_order.schema_version", "schema_version must be 0.1.0", "schema_version");
-  if (!["small_fix", "architecture_sensitive", "billing_sensitive", "migration_sensitive", "docs", "browser_qa", "other"].includes(String(workOrder.task_class))) pushIssue(errors, "error", "work_order.task_class", "task_class is invalid", "task_class");
+  if (!workOrderTaskClasses.has(String(workOrder.task_class))) pushIssue(errors, "error", "work_order.task_class", "task_class is invalid", "task_class");
   if (workOrder.runtime_advisory_only !== true) pushIssue(errors, "error", "work_order.runtime_advisory_only", "runtime_advisory_only must be true", "runtime_advisory_only");
   if (typeof workOrder.acceptance_criteria !== "object" || workOrder.acceptance_criteria === null) {
     pushIssue(errors, "error", "work_order.acceptance_criteria", "acceptance_criteria must be an object", "acceptance_criteria");
   } else {
     const acceptance = workOrder.acceptance_criteria as Record<string, unknown>;
-    if (!["known", "partial", "unknown"].includes(String(acceptance.knowledge_state))) pushIssue(errors, "error", "work_order.acceptance_criteria.knowledge_state", "knowledge_state is invalid", "acceptance_criteria.knowledge_state");
-    if (!Array.isArray(acceptance.items) || acceptance.items.some((item) => typeof item !== "string" || item.length === 0)) pushIssue(errors, "error", "work_order.acceptance_criteria.items", "items must be an array of non-empty strings", "acceptance_criteria.items");
+    for (const key of hasUnknownProperties(acceptance, ["knowledge_state", "items"])) pushIssue(errors, "error", "work_order.acceptance_criteria.unknown_property", `Unknown property '${key}' is not allowed`, `acceptance_criteria.${key}`);
+    if (!workOrderKnowledgeStates.has(String(acceptance.knowledge_state))) pushIssue(errors, "error", "work_order.acceptance_criteria.knowledge_state", "knowledge_state is invalid", "acceptance_criteria.knowledge_state");
+    if (!Array.isArray(acceptance.items) || acceptance.items.some((item) => typeof item !== "string" || normalizeText(item).length === 0)) pushIssue(errors, "error", "work_order.acceptance_criteria.items", "items must be an array of non-empty strings", "acceptance_criteria.items");
   }
   if (typeof workOrder.repository !== "object" || workOrder.repository === null) {
     pushIssue(errors, "error", "work_order.repository", "repository must be an object", "repository");
   } else {
     const repository = workOrder.repository as Record<string, unknown>;
-    if (!["known", "unknown"].includes(String(repository.revision_state))) pushIssue(errors, "error", "work_order.repository.revision_state", "revision_state is invalid", "repository.revision_state");
-    if (!["known", "unknown"].includes(String(repository.scope_state))) pushIssue(errors, "error", "work_order.repository.scope_state", "scope_state is invalid", "repository.scope_state");
+    for (const key of hasUnknownProperties(repository, ["repository_ref", "revision_state", "revision", "scope_state", "scope"])) pushIssue(errors, "error", "work_order.repository.unknown_property", `Unknown property '${key}' is not allowed`, `repository.${key}`);
+    if (!workOrderRepositoryStates.has(String(repository.revision_state))) pushIssue(errors, "error", "work_order.repository.revision_state", "revision_state is invalid", "repository.revision_state");
+    if (!workOrderRepositoryStates.has(String(repository.scope_state))) pushIssue(errors, "error", "work_order.repository.scope_state", "scope_state is invalid", "repository.scope_state");
     if (repository.revision_state === "known" && typeof repository.revision !== "string") pushIssue(errors, "error", "work_order.repository.revision", "revision is required when revision_state is known", "repository.revision");
-    if (repository.scope_state === "known" && (!Array.isArray(repository.scope) || repository.scope.some((item) => typeof item !== "string" || item.length === 0))) pushIssue(errors, "error", "work_order.repository.scope", "scope is required when scope_state is known", "repository.scope");
+    if (repository.scope_state === "known" && (!Array.isArray(repository.scope) || repository.scope.some((item) => typeof item !== "string" || normalizeText(item).length === 0))) pushIssue(errors, "error", "work_order.repository.scope", "scope is required when scope_state is known", "repository.scope");
   }
   if (typeof workOrder.selected_host !== "object" || workOrder.selected_host === null) {
     pushIssue(errors, "error", "work_order.selected_host", "selected_host must be an object", "selected_host");
   } else {
     const selectedHost = workOrder.selected_host as Record<string, unknown>;
-    if (!["known", "unknown"].includes(String(selectedHost.knowledge_state))) pushIssue(errors, "error", "work_order.selected_host.knowledge_state", "knowledge_state is invalid", "selected_host.knowledge_state");
+    for (const key of hasUnknownProperties(selectedHost, ["knowledge_state", "host_id"])) pushIssue(errors, "error", "work_order.selected_host.unknown_property", `Unknown property '${key}' is not allowed`, `selected_host.${key}`);
+    if (!workOrderHostStates.has(String(selectedHost.knowledge_state))) pushIssue(errors, "error", "work_order.selected_host.knowledge_state", "knowledge_state is invalid", "selected_host.knowledge_state");
     if (selectedHost.knowledge_state === "known" && typeof selectedHost.host_id !== "string") pushIssue(errors, "error", "work_order.selected_host.host_id", "host_id is required when knowledge_state is known", "selected_host.host_id");
   }
   if (Array.isArray(workOrder.required_evidence)) {
@@ -216,18 +312,38 @@ export function validateWorkOrder(input: unknown): WorkOrderValidationResult {
         return;
       }
       const evidence = entry as Record<string, unknown>;
-      if (typeof evidence.evidence_id !== "string" || evidence.evidence_id.length === 0) pushIssue(errors, "error", "work_order.required_evidence.evidence_id", "evidence_id must be a non-empty string", `required_evidence.${index}.evidence_id`);
-      if (typeof evidence.description !== "string" || evidence.description.length === 0) pushIssue(errors, "error", "work_order.required_evidence.description", "description must be a non-empty string", `required_evidence.${index}.description`);
-      if (!["required", "optional", "unknown"].includes(String(evidence.status))) pushIssue(errors, "error", "work_order.required_evidence.status", "status is invalid", `required_evidence.${index}.status`);
+      for (const key of hasUnknownProperties(evidence, ["evidence_id", "description", "status"])) pushIssue(errors, "error", "work_order.required_evidence.unknown_property", `Unknown property '${key}' is not allowed`, `required_evidence.${index}.${key}`);
+      if (typeof evidence.evidence_id !== "string" || normalizeText(evidence.evidence_id).length === 0) pushIssue(errors, "error", "work_order.required_evidence.evidence_id", "evidence_id must be a non-empty string", `required_evidence.${index}.evidence_id`);
+      if (typeof evidence.description !== "string" || normalizeText(evidence.description).length === 0) pushIssue(errors, "error", "work_order.required_evidence.description", "description must be a non-empty string", `required_evidence.${index}.description`);
+      if (!workOrderEvidenceStatuses.has(String(evidence.status))) pushIssue(errors, "error", "work_order.required_evidence.status", "status is invalid", `required_evidence.${index}.status`);
     });
   } else {
     pushIssue(errors, "error", "work_order.required_evidence", "required_evidence must be an array", "required_evidence");
   }
+  if (typeof workOrder.expected_duration_or_risk === "object" && workOrder.expected_duration_or_risk !== null) {
+    const expected = workOrder.expected_duration_or_risk as Record<string, unknown>;
+    for (const key of hasUnknownProperties(expected, ["expected_duration_minutes", "risk_signals"])) pushIssue(errors, "error", "work_order.expected_duration_or_risk.unknown_property", `Unknown property '${key}' is not allowed`, `expected_duration_or_risk.${key}`);
+    if (expected.expected_duration_minutes !== undefined && (!Number.isInteger(expected.expected_duration_minutes) || (expected.expected_duration_minutes as number) < 0)) pushIssue(errors, "error", "work_order.expected_duration_or_risk.expected_duration_minutes", "expected_duration_minutes must be a non-negative integer", "expected_duration_or_risk.expected_duration_minutes");
+    if (Array.isArray(expected.risk_signals) && expected.risk_signals.some((item) => typeof item !== "string" || !workOrderRiskSignals.has(item))) pushIssue(errors, "error", "work_order.expected_duration_or_risk.risk_signals", "risk_signals contains an invalid value", "expected_duration_or_risk.risk_signals");
+  }
+  if (Array.isArray(workOrder.user_constraints) && workOrder.user_constraints.some((item) => typeof item !== "string" || normalizeText(item).length === 0)) pushIssue(errors, "error", "work_order.user_constraints", "user_constraints must be non-empty strings", "user_constraints");
+  if (Array.isArray(workOrder.prohibited_scope) && workOrder.prohibited_scope.some((item) => typeof item !== "string" || normalizeText(item).length === 0)) pushIssue(errors, "error", "work_order.prohibited_scope", "prohibited_scope must be non-empty strings", "prohibited_scope");
+  if (workOrder.locked === true && typeof workOrder.spec_digest !== "string") pushIssue(errors, "error", "work_order.spec_digest", "spec_digest is required when locked is true", "spec_digest");
   if (typeof workOrder.spec_digest === "string" && !workOrder.spec_digest.startsWith("sha256:")) pushIssue(warnings, "warning", "work_order.spec_digest", "spec_digest should use the sha256: prefix", "spec_digest");
-  return { ok: errors.length === 0, errors, warnings, digest: computeResourceArtifactDigest({ ...workOrder, spec_digest: undefined }) };
+  for (const value of [workOrder.schema_version, workOrder.work_order_id, workOrder.task_text, workOrder.spec_digest, workOrder.task_class, workOrder.runtime_advisory_only ? "true" : "false"]) {
+    if (typeof value === "string" && isSecretLike(value)) pushIssue(errors, "error", "work_order.secret_like_value", "Secret-like values are not allowed in public WorkOrder fields", "work_order");
+  }
+  return { ok: errors.length === 0, errors, warnings, digest: computeWorkOrderDigest(workOrder) };
 }
 
 export function renderWorkOrderJson(value: unknown): string {
+  if (typeof value === "object" && value !== null) {
+    try {
+      return JSON.stringify(canonicalizeResourceArtifact(workOrderDigestCandidate(value)), null, 2) + "\n";
+    } catch {
+      return JSON.stringify(canonicalizeResourceArtifact(value), null, 2) + "\n";
+    }
+  }
   return JSON.stringify(canonicalizeResourceArtifact(value), null, 2) + "\n";
 }
 
