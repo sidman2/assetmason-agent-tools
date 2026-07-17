@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.1.0",
+  "work_order_id": "wo-fixture-invalid-conditional",
+  "task_text": "Conditional fields should be required.",
+  "task_class": "small_fix",
+  "acceptance_criteria": {
+    "knowledge_state": "known",
+    "items": [
+      "revision and scope required when known"
+    ]
+  },
+  "repository": {
+    "revision_state": "known",
+    "scope_state": "known"
+  },
+  "selected_host": {
+    "knowledge_state": "known"
+  },
+  "required_evidence": [],
+  "runtime_advisory_only": true
+}

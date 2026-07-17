@@ -1,0 +1,31 @@
+{
+  "schema_version": "0.1.0",
+  "work_order_id": "wo-fixture-locked",
+  "task_text": "Inspect the locked fixture.",
+  "task_class": "small_fix",
+  "acceptance_criteria": {
+    "knowledge_state": "known",
+    "items": [
+      "spec digest required"
+    ]
+  },
+  "repository": {
+    "revision_state": "known",
+    "revision": "def456",
+    "scope_state": "unknown"
+  },
+  "selected_host": {
+    "knowledge_state": "known",
+    "host_id": "agent-resource-plan"
+  },
+  "required_evidence": [
+    {
+      "evidence_id": "locked-digest",
+      "description": "Locked fixture includes a digest",
+      "status": "required"
+    }
+  ],
+  "locked": true,
+  "spec_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "runtime_advisory_only": true
+}
