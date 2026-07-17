@@ -20,9 +20,11 @@ describe("work-order fixtures", () => {
 
   it("keeps the locked fixture digest-shaped", () => {
     const fixture = loadFixture("locked.json");
-    const result = validateWorkOrder(fixture);
+    const workOrder = buildWorkOrder(fixture);
+    const result = validateWorkOrder(workOrder);
     expect(result.ok).toBe(true);
-    expect(result.digest).toMatch(/^[a-f0-9]{64}$/);
+    expect(workOrder.spec_digest).toMatch(/^sha256:[a-f0-9]{64}$/);
+    expect(result.digest).toBe(workOrder.spec_digest);
   });
 
   it("rejects invalid fixture boundaries", () => {

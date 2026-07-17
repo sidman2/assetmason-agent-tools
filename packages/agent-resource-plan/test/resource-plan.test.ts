@@ -21,6 +21,18 @@ import {
   validateWorkOrder
 } from "../src/index.js";
 
+const workOrderBase = {
+  schema_version: "0.1.0" as const,
+  work_order_id: "wo-103" as const,
+  task_text: "Implement the additive WorkOrder contract." as const,
+  task_class: "small_fix" as const,
+  acceptance_criteria: { knowledge_state: "known" as const, items: ["export the type", "render JSON and markdown"] },
+  repository: { revision_state: "known" as const, revision: "abc123", scope_state: "unknown" as const },
+  selected_host: { knowledge_state: "known" as const, host_id: "agent-resource-plan" },
+  required_evidence: [{ evidence_id: "bundle-sha", description: "Verify bundle SHA-256", status: "required" as const }],
+  runtime_advisory_only: true as const
+} satisfies Parameters<typeof buildWorkOrder>[0];
+
 describe("agent-resource-plan", () => {
   it("lists the preview scenario", () => {
     expect(listResourceScenarios()).toContain("auth-redirect-bug");
@@ -62,19 +74,10 @@ describe("agent-resource-plan", () => {
   });
 
   it("builds and validates a work order deterministically", () => {
-    const workOrder = buildWorkOrder({
-      schema_version: "0.1.0",
-      work_order_id: "wo-103",
-      task_text: "Implement the additive WorkOrder contract.",
-      task_class: "small_fix",
-      acceptance_criteria: { knowledge_state: "known", items: ["export the type", "render JSON and markdown"] },
-      repository: { revision_state: "known", revision: "abc123", scope_state: "unknown" },
-      selected_host: { knowledge_state: "known", host_id: "agent-resource-plan" },
-      required_evidence: [{ evidence_id: "bundle-sha", description: "Verify bundle SHA-256", status: "required" }],
-      runtime_advisory_only: true
-    });
+    const workOrder = buildWorkOrder(workOrderBase);
 
-    expect(workOrder.spec_digest).toBe(computeResourceArtifactDigest({ ...workOrder, spec_digest: undefined }));
+    expect(workOrder.spec_digest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(workOrder.spec_digest).toBe(`sha256:${computeResourceArtifactDigest({ ...workOrder, spec_digest: undefined })}`);
     expect(validateWorkOrder(workOrder).ok).toBe(true);
     expect(renderWorkOrderJson(workOrder)).toContain('"work_order_id": "wo-103"');
     expect(renderWorkOrderMarkdown(workOrder)).toContain("## Required Evidence");
@@ -119,16 +122,14 @@ describe("agent-resource-plan", () => {
 
   it("rejects unknown properties, locked digests, and secret-like public values", () => {
     const result = validateWorkOrder({
-      schema_version: "0.1.0",
+      ...workOrderBase,
       work_order_id: "wo-105",
       task_text: "token=sk-test-1234567890",
-      task_class: "small_fix",
       acceptance_criteria: { knowledge_state: "known", items: ["ok"], extra: true },
       repository: { revision_state: "known", revision: "abc123", scope_state: "unknown", extra: true },
       selected_host: { knowledge_state: "known", host_id: "host-1", extra: true },
       required_evidence: [{ evidence_id: "ev-1", description: "ok", status: "required", extra: true }],
       locked: true,
-      runtime_advisory_only: true,
       extra: true
     });
 
@@ -140,6 +141,52 @@ describe("agent-resource-plan", () => {
     expect(result.errors.some((issue) => issue.code === "work_order.required_evidence.unknown_property")).toBe(true);
     expect(result.errors.some((issue) => issue.code === "work_order.spec_digest")).toBe(true);
     expect(result.errors.some((issue) => String(issue.message).includes("sk-test-1234567890"))).toBe(false);
+  });
+
+  it("fails closed on locked digest format and equality mismatches", () => {
+    const missing = validateWorkOrder({ ...workOrderBase, locked: true });
+    const unprefixed = validateWorkOrder({ ...workOrderBase, locked: true, spec_digest: "deadbeef" });
+    const malformed = validateWorkOrder({ ...workOrderBase, locked: true, spec_digest: "sha256:xyz" });
+    const mismatched = validateWorkOrder({ ...workOrderBase, locked: true, spec_digest: "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" });
+    const exact = buildWorkOrder({ ...workOrderBase, locked: true });
+
+    expect(missing.ok).toBe(false);
+    expect(unprefixed.ok).toBe(false);
+    expect(malformed.ok).toBe(false);
+    expect(mismatched.ok).toBe(false);
+    expect(exact.spec_digest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(validateWorkOrder(exact).ok).toBe(true);
+  });
+
+  it("treats nested secret-like public values as validation errors without echoing them", () => {
+    const secret = "token=sk-test-1234567890";
+    const result = validateWorkOrder({
+      ...workOrderBase,
+      acceptance_criteria: { knowledge_state: "known", items: ["ok", `nested ${secret}`] },
+      repository: { revision_state: "known", revision: secret, scope_state: "known", scope: [secret] },
+      selected_host: { knowledge_state: "known", host_id: secret },
+      required_evidence: [{ evidence_id: secret, description: secret, status: "required" }],
+      user_constraints: [secret],
+      prohibited_scope: [secret],
+      spec_digest: `sha256:${secret}`,
+      locked: true
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((issue) => issue.code === "work_order.secret_like_value")).toBe(true);
+    expect(result.errors.some((issue) => String(issue.message).includes(secret))).toBe(false);
+    expect(result.errors.some((issue) => String(issue.path).includes(secret))).toBe(false);
+  });
+
+  it("keeps non-WorkOrder digests byte-for-byte unchanged", () => {
+    const plan = buildResourcePlan("auth-redirect-bug");
+    const inventory = buildResourceInventory(".");
+    const lock = buildResourceLock(plan, inventory);
+    const diff = buildResourceDiff({ a: 1 }, { a: 2 });
+
+    expect(plan.digest).toMatch(/^[0-9a-f]{64}$/);
+    expect(lock.digest).toMatch(/^[0-9a-f]{64}$/);
+    expect(diff.digest).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it("enforces conditional field parity for known nested states", () => {

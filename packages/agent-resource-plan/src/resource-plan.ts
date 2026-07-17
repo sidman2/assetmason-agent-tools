@@ -242,7 +242,7 @@ function workOrderDigestCandidate(value: unknown): unknown {
 }
 
 function computeWorkOrderDigest(value: unknown): string {
-  return computeResourceArtifactDigest(workOrderDigestCandidate(value));
+  return `sha256:${computeResourceArtifactDigest(workOrderDigestCandidate(value))}`;
 }
 
 function isSecretLike(value: string): boolean {
@@ -255,6 +255,15 @@ function isSecretLike(value: string): boolean {
 
 function hasUnknownProperties(value: Record<string, unknown>, allowedKeys: string[]): string[] {
   return Object.keys(value).filter((key) => !allowedKeys.includes(key));
+}
+
+function scanWorkOrderPublicSecrets(value: unknown, path: string[] = []): Array<{ path: string; value: string }> {
+  if (typeof value === "string") return isSecretLike(value) ? [{ path: path.join("."), value }] : [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => scanWorkOrderPublicSecrets(item, [...path, String(index)]));
+  }
+  if (typeof value !== "object" || value === null) return [];
+  return Object.entries(value as Record<string, unknown>).flatMap(([key, nested]) => scanWorkOrderPublicSecrets(nested, [...path, key]));
 }
 
 export function buildWorkOrder(input: Omit<WorkOrder, "spec_digest"> & { spec_digest?: string }): WorkOrder {
@@ -328,12 +337,35 @@ export function validateWorkOrder(input: unknown): WorkOrderValidationResult {
   }
   if (Array.isArray(workOrder.user_constraints) && workOrder.user_constraints.some((item) => typeof item !== "string" || normalizeText(item).length === 0)) pushIssue(errors, "error", "work_order.user_constraints", "user_constraints must be non-empty strings", "user_constraints");
   if (Array.isArray(workOrder.prohibited_scope) && workOrder.prohibited_scope.some((item) => typeof item !== "string" || normalizeText(item).length === 0)) pushIssue(errors, "error", "work_order.prohibited_scope", "prohibited_scope must be non-empty strings", "prohibited_scope");
-  if (workOrder.locked === true && typeof workOrder.spec_digest !== "string") pushIssue(errors, "error", "work_order.spec_digest", "spec_digest is required when locked is true", "spec_digest");
-  if (typeof workOrder.spec_digest === "string" && !workOrder.spec_digest.startsWith("sha256:")) pushIssue(warnings, "warning", "work_order.spec_digest", "spec_digest should use the sha256: prefix", "spec_digest");
-  for (const value of [workOrder.schema_version, workOrder.work_order_id, workOrder.task_text, workOrder.spec_digest, workOrder.task_class, workOrder.runtime_advisory_only ? "true" : "false"]) {
-    if (typeof value === "string" && isSecretLike(value)) pushIssue(errors, "error", "work_order.secret_like_value", "Secret-like values are not allowed in public WorkOrder fields", "work_order");
+  const computedDigest = computeWorkOrderDigest(workOrder);
+  if (typeof workOrder.spec_digest === "string") {
+    if (!/^sha256:[0-9a-f]{64}$/.test(workOrder.spec_digest)) {
+      pushIssue(errors, "error", "work_order.spec_digest", "spec_digest must be a sha256 digest", "spec_digest");
+    } else if (workOrder.spec_digest !== computedDigest) {
+      pushIssue(errors, "error", "work_order.spec_digest", "spec_digest does not match the canonical WorkOrder digest", "spec_digest");
+    }
+  } else if (workOrder.locked === true) {
+    pushIssue(errors, "error", "work_order.spec_digest", "spec_digest is required when locked is true", "spec_digest");
   }
-  return { ok: errors.length === 0, errors, warnings, digest: computeWorkOrderDigest(workOrder) };
+  for (const issue of scanWorkOrderPublicSecrets({
+    schema_version: workOrder.schema_version,
+    work_order_id: workOrder.work_order_id,
+    task_text: workOrder.task_text,
+    task_class: workOrder.task_class,
+    acceptance_criteria: workOrder.acceptance_criteria,
+    repository: workOrder.repository,
+    selected_host: workOrder.selected_host,
+    expected_duration_or_risk: workOrder.expected_duration_or_risk,
+    user_constraints: workOrder.user_constraints,
+    prohibited_scope: workOrder.prohibited_scope,
+    required_evidence: workOrder.required_evidence,
+    spec_digest: workOrder.spec_digest,
+    locked: workOrder.locked,
+    runtime_advisory_only: workOrder.runtime_advisory_only
+  }, ["work_order"])) {
+    pushIssue(errors, "error", "work_order.secret_like_value", "Secret-like values are not allowed in public WorkOrder fields", issue.path || "work_order");
+  }
+  return { ok: errors.length === 0, errors, warnings, digest: computedDigest };
 }
 
 export function renderWorkOrderJson(value: unknown): string {
