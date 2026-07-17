@@ -8,13 +8,17 @@ import {
   buildResourceInventory,
   buildResourceLock,
   buildResourcePlan,
+  buildWorkOrder,
   canonicalizeResourceArtifact,
   computeResourceArtifactDigest,
   diffResourceArtifacts,
   listResourceScenarios,
   renderResourceArtifactMarkdown,
+  renderWorkOrderJson,
+  renderWorkOrderMarkdown,
   scanResourceInventory,
-  validateResourceArtifact
+  validateResourceArtifact,
+  validateWorkOrder
 } from "../src/index.js";
 
 describe("agent-resource-plan", () => {
@@ -55,6 +59,43 @@ describe("agent-resource-plan", () => {
   it("validates artifact shape", () => {
     expect(validateResourceArtifact({ kind: "resource-plan" }).ok).toBe(true);
     expect(validateResourceArtifact(null).ok).toBe(false);
+  });
+
+  it("builds and validates a work order deterministically", () => {
+    const workOrder = buildWorkOrder({
+      schema_version: "0.1.0",
+      work_order_id: "wo-103",
+      task_text: "Implement the additive WorkOrder contract.",
+      task_class: "small_fix",
+      acceptance_criteria: { knowledge_state: "known", items: ["export the type", "render JSON and markdown"] },
+      repository: { revision_state: "known", revision: "abc123", scope_state: "unknown" },
+      selected_host: { knowledge_state: "known", host_id: "agent-resource-plan" },
+      required_evidence: [{ evidence_id: "bundle-sha", description: "Verify bundle SHA-256", status: "required" }],
+      runtime_advisory_only: true
+    });
+
+    expect(workOrder.spec_digest).toBe(computeResourceArtifactDigest({ ...workOrder, spec_digest: undefined }));
+    expect(validateWorkOrder(workOrder).ok).toBe(true);
+    expect(renderWorkOrderJson(workOrder)).toContain('"work_order_id": "wo-103"');
+    expect(renderWorkOrderMarkdown(workOrder)).toContain("## Required Evidence");
+  });
+
+  it("reports path-aware validation issues", () => {
+    const result = validateWorkOrder({
+      schema_version: "0.1.0",
+      work_order_id: "wo-103",
+      task_text: "Missing nested fields",
+      task_class: "small_fix",
+      acceptance_criteria: { knowledge_state: "known", items: [] },
+      repository: { revision_state: "known", scope_state: "known" },
+      selected_host: { knowledge_state: "known" },
+      required_evidence: [],
+      runtime_advisory_only: true
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((issue) => issue.path === "repository.revision")).toBe(true);
+    expect(result.errors.some((issue) => issue.path === "selected_host.host_id")).toBe(true);
   });
 
   it("scans and redacts secret-shaped keys", () => {

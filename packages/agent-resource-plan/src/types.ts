@@ -1,5 +1,78 @@
 export type CanonicalJsonValue = null | boolean | number | string | CanonicalJsonValue[] | { [key: string]: CanonicalJsonValue };
 
+export const WORK_ORDER_SCHEMA_VERSION = "0.1.0" as const;
+
+export type WorkOrderKnowledgeState = "known" | "partial" | "unknown";
+
+export type WorkOrderTaskClass =
+  | "small_fix"
+  | "architecture_sensitive"
+  | "billing_sensitive"
+  | "migration_sensitive"
+  | "docs"
+  | "browser_qa"
+  | "other";
+
+export type WorkOrderRiskSignal =
+  | "brownfield_or_unfamiliar_repository"
+  | "integration_or_provider_change"
+  | "migration_or_major_dependency_upgrade"
+  | "cross_service_or_cross_layer"
+  | "permission_sensitive"
+  | "external_or_irreversible_effect"
+  | "publish_deploy_or_production_change"
+  | "large_review_burden"
+  | "high_rollback_cost"
+  | "unattended_or_long_running"
+  | "other";
+
+export type WorkOrderEvidenceRequirement = {
+  evidence_id: string;
+  description: string;
+  status: "required" | "optional" | "unknown";
+};
+
+export type WorkOrder = {
+  schema_version: typeof WORK_ORDER_SCHEMA_VERSION;
+  work_order_id: string;
+  task_text: string;
+  task_class: WorkOrderTaskClass;
+  acceptance_criteria: {
+    knowledge_state: WorkOrderKnowledgeState;
+    items: string[];
+  };
+  repository: {
+    repository_ref?: string;
+    revision_state: "known" | "unknown";
+    revision?: string;
+    scope_state: "known" | "unknown";
+    scope?: string[];
+  };
+  selected_host: {
+    knowledge_state: "known" | "unknown";
+    host_id?: string;
+  };
+  expected_duration_or_risk?: {
+    expected_duration_minutes?: number;
+    risk_signals?: WorkOrderRiskSignal[];
+  };
+  user_constraints?: string[];
+  prohibited_scope?: string[];
+  required_evidence: WorkOrderEvidenceRequirement[];
+  locked?: boolean;
+  spec_digest?: `sha256:${string}`;
+  runtime_advisory_only: true;
+};
+
+export type WorkOrderValidationIssue = ResourceValidationIssue;
+
+export type WorkOrderValidationResult = {
+  ok: boolean;
+  errors: WorkOrderValidationIssue[];
+  warnings: WorkOrderValidationIssue[];
+  digest: string;
+};
+
 export type ResourceSourceReference = {
   kind: "public" | "local" | "fixture";
   label: string;
