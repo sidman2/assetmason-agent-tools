@@ -1,0 +1,47 @@
+{
+  "schema_version": "0.1.0",
+  "work_order_id": "wo-fixture-canonical",
+  "task_text": "Review the fixture/schema lane.",
+  "task_class": "docs",
+  "acceptance_criteria": {
+    "knowledge_state": "known",
+    "items": [
+      "fixture parses",
+      "validator accepts",
+      "renderer is deterministic"
+    ]
+  },
+  "repository": {
+    "revision_state": "known",
+    "revision": "abc123",
+    "scope_state": "known",
+    "scope": [
+      "packages/agent-resource-plan",
+      "packages/assetmason-cli"
+    ]
+  },
+  "selected_host": {
+    "knowledge_state": "known",
+    "host_id": "codex"
+  },
+  "expected_duration_or_risk": {
+    "expected_duration_minutes": 15,
+    "risk_signals": [
+      "brownfield_or_unfamiliar_repository"
+    ]
+  },
+  "user_constraints": [
+    "keep APIs stable"
+  ],
+  "prohibited_scope": [
+    "npm publish"
+  ],
+  "required_evidence": [
+    {
+      "evidence_id": "fixture-json",
+      "description": "Fixture JSON exists and parses",
+      "status": "required"
+    }
+  ],
+  "runtime_advisory_only": true
+}

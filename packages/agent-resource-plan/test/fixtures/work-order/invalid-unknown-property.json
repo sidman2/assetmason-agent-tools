@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "work_order_id": "wo-fixture-invalid-unknown",
+  "task_text": "Unknown property should fail.",
+  "task_class": "small_fix",
+  "acceptance_criteria": {
+    "knowledge_state": "known",
+    "items": [
+      "unknown property rejected"
+    ],
+    "extra": true
+  },
+  "repository": {
+    "revision_state": "known",
+    "revision": "abc123",
+    "scope_state": "unknown"
+  },
+  "selected_host": {
+    "knowledge_state": "known",
+    "host_id": "codex"
+  },
+  "required_evidence": [],
+  "runtime_advisory_only": true
+}
