@@ -19,7 +19,7 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": ["dist", "README.md", "LICENSE", "work-order.schema.json"],
   "publishConfig": {
     "access": "public",
     "tag": "preview",
@@ -35,6 +35,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./work-order.schema.json": "./work-order.schema.json"
   }
 }
