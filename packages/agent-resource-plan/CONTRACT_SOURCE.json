@@ -2,7 +2,13 @@
   "status": "approved",
   "source_repository": "assetmason-owner-contract-bundle",
   "source_sha": "66565e5955cfeefaba0b3e1a404e7601cc6a63062efd87c55e7cbc20c47b9380",
+  "controller_bundle_sha256": "9890458f4cedcdf2bfc6ee382bd8c70aa0d3aa5ac2092f845d4ce718c94d9fbf",
   "source_pr": null,
+  "source_hashes": {
+    "WORKORDER_CANONICAL_CONTRACT_PROPOSED_v102.md": "ba3aa0b7ba4dc1ecef9019e4aaff17aebf5918cafd47e485452a1acd7422bd70",
+    "work-order.schema.json": "c92ca5aad244dbaa3aa69bfdb0fca55e380898500a7457866ef59e2c9a4a39d6",
+    "work-order.reference-types.ts": "d6fcdf76bb0408bc11beef2e47292c481105665046c97d4713b4105298cdb16e"
+  },
   "approval": {
     "kind": "explicit",
     "evidence": [
