@@ -55,12 +55,15 @@ npx -y assetmason-cli@preview select --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview profile --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview validate --file ./example.json --kind execution-profile
+npx -y assetmason-cli@preview validate --file ./work-order.json --kind work-order
 npx -y assetmason-cli@preview scan --root . --format markdown
 ```
 
 These commands are available through the published `preview` dist-tag.
 
 Execution-profile parity and freshness checks stay advisory for public use: public mode writes its report under ignored `tmp/agent-runs/execution-profile-parity/`, and private parity only runs when `ASSETMASON_PRIVATE_SOURCE_ROOT` and `ASSETMASON_PRIVATE_SOURCE_SHA` are set.
+
+Verification evidence for the public preview surface is captured in `scripts/release-evidence.mjs`, which records the current `verify:public` command chain, package versions, and workflow paths without mutating repository state.
 
 ## Naming
 
