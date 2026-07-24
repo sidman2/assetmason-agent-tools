@@ -52,6 +52,10 @@ The public AssetMason package set is published and synchronized on the `preview`
 
 `preview` is the supported prerelease channel. `preview.2` is a prerelease, not stable. `latest` remains at its actual live registry value. Public npx commands are available, and the public packages use trusted publishing via GitHub Actions OIDC. Provenance was requested and observed from the package metadata and publication workflow evidence.
 
+## Reconciliation workflow example
+
+The repository also includes a reusable reconciliation workflow example for `assetmason reconcile`. It is separate from preview publishing and does not post comments or trigger package publication.
+
 ## Verification
 
 ```bash

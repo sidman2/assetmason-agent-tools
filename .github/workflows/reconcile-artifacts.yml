@@ -1,0 +1,62 @@
+name: Reconcile AssetMason Artifacts
+
+on:
+  workflow_call:
+    inputs:
+      plan_path:
+        description: Path to the plan artifact.
+        required: true
+        type: string
+      receipt_path:
+        description: Path to the outcome receipt artifact.
+        required: true
+        type: string
+      lock_path:
+        description: Optional path to the lock artifact.
+        required: false
+        type: string
+      output_format:
+        description: Render format for the reconciliation result.
+        required: false
+        type: string
+        default: json
+      artifact_name:
+        description: Name for the uploaded artifact.
+        required: false
+        type: string
+        default: reconciliation
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: |
+          npm run build -w agent-resource-plan
+          npm run build -w agent-execution-profile
+          npm run build -w assetmason-cli
+
+      - name: Reconcile artifacts
+        run: |
+          args=(
+            reconcile
+            --plan "${{ inputs.plan_path }}"
+            --receipt "${{ inputs.receipt_path }}"
+            --format "${{ inputs.output_format }}"
+          )
+          if [ -n "${{ inputs.lock_path }}" ]; then
+            args+=(--lock "${{ inputs.lock_path }}")
+          fi
+          npm exec --workspace assetmason-cli -- assetmason "${args[@]}" > reconciliation.${{ inputs.output_format }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: reconciliation.${{ inputs.output_format }}
