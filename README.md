@@ -84,6 +84,10 @@ npm run build
 npm run pack:dry-run
 ```
 
+## Workflow Example
+
+See [`docs/reconcile-workflow.md`](docs/reconcile-workflow.md) for a reusable reconciliation workflow example, command transcript, exit-code table, and privacy boundary notes.
+
 ## Security
 
 See [`SECURITY.md`](SECURITY.md).
