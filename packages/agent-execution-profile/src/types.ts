@@ -205,6 +205,8 @@ export type PlanActualDiff = {
   resource_drift: string[];
   scope_or_digest_drift: string[];
   completion_claim_state: PlanActualCompletionClaimState;
+  rule_codes: string[];
+  rule_explanations: string[];
   source_artifact_refs: string[];
 };
 

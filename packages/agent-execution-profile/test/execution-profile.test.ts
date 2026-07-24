@@ -69,7 +69,8 @@ describe("agent-execution-profile", () => {
       reconciliationId: "recon-1",
       plan: { plan_ref: "plan-1", required_evidence: ["tests"], completion_claimed: true },
       lock: { lock_ref: "lock-1" },
-      receipt: { receipt_ref: "receipt-1" },
+      receipt: { receipt_ref: "receipt-1", observed_evidence_refs: ["tests"] },
+      requiredEvidenceRefs: ["tests"],
       declaredAcceptanceItems: ["tests", "docs"],
       observedEvidenceRefs: ["evidence-tests"],
       missingEvidence: [],
@@ -83,6 +84,7 @@ describe("agent-execution-profile", () => {
 
     expect(validatePlanActualDiff(diff)).toBe(true);
     expect(diff.overall_state).toBe("unknown");
+    expect(diff.rule_codes).toContain("evidence.unknown");
     expect(renderPlanActualDiffMarkdown(diff)).toContain("Plan Actual Diff");
   });
 
@@ -92,6 +94,7 @@ describe("agent-execution-profile", () => {
       plan: { plan_ref: "plan-2" },
       lock: { lock_ref: "lock-2" },
       receipt: { receipt_ref: "receipt-2" },
+      requiredEvidenceRefs: ["tests"],
       missingEvidence: ["tests"],
       contradictedEvidence: ["claim"],
       resourceDrift: ["locked resource changed"],
@@ -102,5 +105,24 @@ describe("agent-execution-profile", () => {
     expect(diff.overall_state).toBe("drifted");
     expect(diff.missing_evidence).toEqual(["tests"]);
     expect(diff.contradicted_evidence).toEqual(["claim"]);
+    expect(diff.rule_codes).toContain("evidence.missing");
+    expect(diff.rule_codes).toContain("evidence.contradicted");
+  });
+
+  it("marks drift on plan lock mismatch and missing receipt", () => {
+    const diff = buildPlanActualDiff({
+      reconciliationId: "recon-3",
+      plan: { plan_ref: "plan-3", plan_digest: "digest-a" },
+      lock: { lock_ref: "lock-3", plan_ref: "plan-x", resourcePlanDigest: "digest-b" },
+      requiredEvidenceRefs: ["tests"],
+      completionClaimed: true
+    });
+
+    expect(validatePlanActualDiff(diff)).toBe(true);
+    expect(diff.overall_state).toBe("drifted");
+    expect(diff.rule_codes).toContain("receipt.missing");
+    expect(diff.rule_codes).toContain("lock.plan.mismatch");
+    expect(diff.rule_codes).toContain("digest.mismatch");
+    expect(diff.rule_codes).toContain("completion.claimed-without-evidence");
   });
 });

@@ -49,6 +49,8 @@ export function renderPlanActualDiffMarkdown(diff: PlanActualDiff) {
     `- contradicted_evidence: ${diff.contradicted_evidence.join(", ") || "none"}`,
     `- explicit_unknowns: ${diff.explicit_unknowns.join(", ") || "none"}`,
     `- resource_drift: ${diff.resource_drift.join(", ") || "none"}`,
-    `- scope_or_digest_drift: ${diff.scope_or_digest_drift.join(", ") || "none"}`
+    `- scope_or_digest_drift: ${diff.scope_or_digest_drift.join(", ") || "none"}`,
+    `- rule_codes: ${diff.rule_codes.join(", ") || "none"}`,
+    `- rule_explanations: ${diff.rule_explanations.join(", ") || "none"}`
   ]);
 }

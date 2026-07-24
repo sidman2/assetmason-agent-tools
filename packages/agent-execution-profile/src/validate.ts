@@ -77,5 +77,7 @@ export function validatePlanActualDiff(diff: unknown) {
     && isStringArray(diff.resource_drift)
     && isStringArray(diff.scope_or_digest_drift)
     && ["claimed", "unclaimed", "unknown"].includes(String(diff.completion_claim_state))
+    && isStringArray(diff.rule_codes)
+    && isStringArray(diff.rule_explanations)
     && isStringArray(diff.source_artifact_refs);
 }
