@@ -13,6 +13,7 @@ describe("assetmason-cli", () => {
   it("prints help", async () => {
     expect(await main(["--help"])).toBe(0);
     expect((await runCommand(["--help"])).text).toContain("work-order");
+    expect((await runCommand(["--help"])).text).toContain("reconcile --plan");
   });
 
   it("prints list scenarios", async () => {
@@ -243,5 +244,48 @@ describe("assetmason-cli", () => {
 
     expect((await runCommand(["validate", "--file", workOrderPath, "--kind", "work-order"])).code).toBe(0);
     expect((await runCommand(["validate", "--file", workOrderPath, "--kind", "resource-plan"])).code).toBe(1);
+  });
+
+  it("reconciles plan, lock, and receipt artifacts through the CLI", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "assetmason-cli-"));
+    const plan = buildResourcePlan("auth-redirect-bug");
+    const lock = buildResourceLock(plan, buildResourceInventory("."));
+    const receipt = {
+      schema_version: "0.1.0",
+      receipt_id: "receipt-cli-1",
+      profile_id: plan.digest,
+      profile_digest: lock.digest,
+      actual_host: "assetmason-cli",
+      resolved_roles: [],
+      attempt_count: 0,
+      verification_results: [{ gate: "tests", passed: true }],
+      warnings: [],
+      unknowns: [],
+      local_only: true
+    };
+    const planPath = join(dir, "plan.json");
+    const lockPath = join(dir, "lock.json");
+    const receiptPath = join(dir, "receipt.json");
+    writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf8");
+    writeFileSync(lockPath, JSON.stringify(lock, null, 2), "utf8");
+    writeFileSync(receiptPath, JSON.stringify(receipt, null, 2), "utf8");
+
+    const result = await runCommand(["reconcile", "--plan", planPath, "--lock", lockPath, "--receipt", receiptPath, "--format", "json"]);
+    expect(result.code).toBe(0);
+    expect(result.text).toContain("\"schema_version\": \"0.1.0\"");
+    expect(result.text).toContain("\"reconciliation_id\": \"receipt-cli-1\"");
+  });
+
+  it("initializes a receipt scaffold through the CLI", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "assetmason-cli-"));
+    const plan = buildResourcePlan("auth-redirect-bug");
+    const planPath = join(dir, "plan.json");
+    writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf8");
+
+    const result = await runCommand(["receipt-init", "--plan", planPath, "--format", "json"]);
+    expect(result.code).toBe(0);
+    expect(result.text).toContain("\"schema_version\": \"0.1.0\"");
+    expect(result.text).toContain("\"warnings\": [");
+    expect(result.text).toContain("Receipt scaffold is incomplete");
   });
 });
