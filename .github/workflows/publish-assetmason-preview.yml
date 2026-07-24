@@ -99,22 +99,22 @@ jobs:
             }
           };
           expect(resourcePlan.name, 'agent-resource-plan', 'resource plan name');
-          expect(resourcePlan.version, '0.1.0-preview.2', 'resource plan version');
+          expect(resourcePlan.version, '0.1.0-preview.3', 'resource plan version');
           expect(resourcePlan.publishConfig?.tag, 'preview', 'resource plan tag');
           expect(resourcePlan.publishConfig?.access, 'public', 'resource plan access');
           expect(resourcePlan.repository?.directory, 'packages/agent-resource-plan', 'resource plan repository.directory');
           expect(executionProfile.name, 'agent-execution-profile', 'execution profile name');
-          expect(executionProfile.version, '0.1.0-preview.2', 'execution profile version');
+          expect(executionProfile.version, '0.1.0-preview.3', 'execution profile version');
           expect(executionProfile.publishConfig?.tag, 'preview', 'execution profile tag');
           expect(executionProfile.publishConfig?.access, 'public', 'execution profile access');
           expect(executionProfile.repository?.directory, 'packages/agent-execution-profile', 'execution profile repository.directory');
           expect(cli.name, 'assetmason-cli', 'cli name');
-          expect(cli.version, '0.1.0-preview.2', 'cli version');
+          expect(cli.version, '0.1.0-preview.3', 'cli version');
           expect(cli.publishConfig?.tag, 'preview', 'cli tag');
           expect(cli.publishConfig?.access, 'public', 'cli access');
           expect(cli.repository?.directory, 'packages/assetmason-cli', 'cli repository.directory');
-          expect(cli.dependencies?.['agent-execution-profile'], '0.1.0-preview.2', 'cli execution-profile dependency');
-          expect(cli.dependencies?.['agent-resource-plan'], '0.1.0-preview.2', 'cli dependency');
+          expect(cli.dependencies?.['agent-execution-profile'], '0.1.0-preview.3', 'cli execution-profile dependency');
+          expect(cli.dependencies?.['agent-resource-plan'], '0.1.0-preview.3', 'cli dependency');
           NODE
 
       - name: Verify versions are unpublished
@@ -122,9 +122,9 @@ jobs:
         run: |
           set -euo pipefail
           cd "$(mktemp -d)"
-          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-resource-plan@0.1.0-preview.2
-          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-execution-profile@0.1.0-preview.2
-          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" assetmason-cli@0.1.0-preview.2
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-resource-plan@0.1.0-preview.3
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-execution-profile@0.1.0-preview.3
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" assetmason-cli@0.1.0-preview.3
 
       - name: Capture pack manifests
         run: |

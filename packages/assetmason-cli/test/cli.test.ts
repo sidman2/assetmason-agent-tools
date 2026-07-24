@@ -276,6 +276,117 @@ describe("assetmason-cli", () => {
     expect(result.text).toContain("\"reconciliation_id\": \"receipt-cli-1\"");
   });
 
+  it("reconciles the remaining evidence scenarios through the CLI", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "assetmason-cli-"));
+    const plan = {
+      schema_version: "0.1.0",
+      plan_id: "plan-cli-scenarios",
+      plan_ref: "plan-cli-scenarios",
+      digest: "digest-plan-cli-scenarios",
+      required_evidence: [{ evidence_id: "tests" }, { evidence_id: "docs" }],
+      acceptance_criteria: { items: ["tests", "docs"] }
+    };
+    const lock = {
+      schema_version: "0.1.0",
+      lock_ref: "lock-cli-scenarios",
+      plan_ref: "plan-cli-scenarios",
+      resourcePlanDigest: "digest-plan-cli-scenarios"
+    };
+    const planPath = join(dir, "plan.json");
+    const lockPath = join(dir, "lock.json");
+    writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf8");
+    writeFileSync(lockPath, JSON.stringify(lock, null, 2), "utf8");
+
+    const cases = [
+      {
+        name: "evidence-complete and no-addition/reuse-only",
+        receipt: {
+          schema_version: "0.1.0",
+          receipt_id: "receipt-complete",
+          profile_id: "plan-cli-scenarios",
+          profile_digest: "digest-plan-cli-scenarios",
+          actual_host: "assetmason-cli",
+          resolved_roles: [],
+          attempt_count: 0,
+          verification_results: [{ gate: "tests", passed: true }, { gate: "docs", passed: true }],
+          warnings: [],
+          unknowns: [],
+          local_only: true
+        },
+        expectedCodes: [],
+        expectedState: "matched"
+      },
+      {
+        name: "missing required evidence",
+        receipt: {
+          schema_version: "0.1.0",
+          receipt_id: "receipt-missing",
+          profile_id: "plan-cli-scenarios",
+          profile_digest: "digest-plan-cli-scenarios",
+          actual_host: "assetmason-cli",
+          resolved_roles: [],
+          attempt_count: 0,
+          verification_results: [{ gate: "tests", passed: true }],
+          warnings: [],
+          unknowns: [],
+          local_only: true
+        },
+        expectedCodes: ["evidence.missing"],
+        expectedState: "drifted"
+      },
+      {
+        name: "contradicted evidence",
+        receipt: {
+          schema_version: "0.1.0",
+          receipt_id: "receipt-contradicted",
+          profile_id: "plan-cli-scenarios",
+          profile_digest: "digest-plan-cli-scenarios",
+          actual_host: "assetmason-cli",
+          resolved_roles: [],
+          attempt_count: 0,
+          verification_results: [{ gate: "tests", passed: true }],
+          contradicted_evidence_refs: ["docs"],
+          warnings: [],
+          unknowns: [],
+          local_only: true
+        },
+        expectedCodes: ["evidence.contradicted", "evidence.missing"],
+        expectedState: "drifted"
+      },
+      {
+        name: "unknown external evidence and extra irrelevant evidence",
+        receipt: {
+          schema_version: "0.1.0",
+          receipt_id: "receipt-unknown",
+          profile_id: "plan-cli-scenarios",
+          profile_digest: "digest-plan-cli-scenarios",
+          actual_host: "assetmason-cli",
+          resolved_roles: [],
+          attempt_count: 0,
+          verification_results: [{ gate: "tests", passed: true }, { gate: "noise", passed: true }],
+          warnings: [],
+          unknowns: ["external evidence source unknown"],
+          local_only: true
+        },
+        expectedCodes: ["evidence.unknown"],
+        expectedState: "drifted"
+      }
+    ] as const;
+
+    for (const testCase of cases) {
+      const receiptPath = join(dir, `${testCase.receipt.receipt_id}.json`);
+      writeFileSync(receiptPath, JSON.stringify(testCase.receipt, null, 2), "utf8");
+
+      const result = await runCommand(["reconcile", "--plan", planPath, "--lock", lockPath, "--receipt", receiptPath, "--format", "json"]);
+      expect(result.code).toBe(0);
+      expect(result.text).toContain(`\"reconciliation_id\": \"${testCase.receipt.receipt_id}\"`);
+      expect(result.text).toContain(`\"overall_state\": \"${testCase.expectedState}\"`);
+      for (const code of testCase.expectedCodes) {
+        expect(result.text).toContain(`\"${code}\"`);
+      }
+    }
+  });
+
   it("initializes a receipt scaffold through the CLI", async () => {
     const dir = mkdtempSync(join(tmpdir(), "assetmason-cli-"));
     const plan = buildResourcePlan("auth-redirect-bug");
@@ -287,5 +398,7 @@ describe("assetmason-cli", () => {
     expect(result.text).toContain("\"schema_version\": \"0.1.0\"");
     expect(result.text).toContain("\"warnings\": [");
     expect(result.text).toContain("Receipt scaffold is incomplete");
+    expect(result.text).toContain("\"verification_results\": []");
+    expect(result.text).toContain("\"user_accepted\": false");
   });
 });
