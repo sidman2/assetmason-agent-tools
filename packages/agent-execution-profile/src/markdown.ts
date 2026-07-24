@@ -1,3 +1,4 @@
+import { canonicalize } from "./stable-json.js";
 import type { ExecutionProfile, ExecutionProfileDiff, ExecutionProfileLock, OutcomeReceipt, PlanActualDiff } from "./types.js";
 
 function lines(title: string, body: string[]) {
@@ -53,4 +54,8 @@ export function renderPlanActualDiffMarkdown(diff: PlanActualDiff) {
     `- rule_codes: ${diff.rule_codes.join(", ") || "none"}`,
     `- rule_explanations: ${diff.rule_explanations.join(", ") || "none"}`
   ]);
+}
+
+export function renderPlanActualDiffJson(diff: PlanActualDiff) {
+  return JSON.stringify(canonicalize(diff), null, 2) + "\n";
 }

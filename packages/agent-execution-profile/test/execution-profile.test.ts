@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildExecutionProfile } from "../src/build.js";
 import { buildExecutionProfileLock, executionProfileLockDigest } from "../src/lock.js";
-import { buildPlanActualDiff, diffExecutionProfile, diffExecutionProfileLock, renderExecutionProfileMarkdown, renderExecutionProfileLockMarkdown, renderExecutionProfileDiffMarkdown, renderOutcomeReceiptMarkdown, renderPlanActualDiffMarkdown } from "../src/index.js";
+import { buildPlanActualDiff, diffExecutionProfile, diffExecutionProfileLock, renderExecutionProfileMarkdown, renderExecutionProfileLockMarkdown, renderExecutionProfileDiffMarkdown, renderOutcomeReceiptMarkdown, renderPlanActualDiffMarkdown, renderPlanActualDiffJson } from "../src/index.js";
 import { buildGenericHostExportArtifact } from "../src/hosts/generic.js";
 import { validateExecutionProfile, validateExecutionProfileLock, validateExecutionProfileDiff, validateHostExport, validateOutcomeReceipt, validatePlanActualDiff } from "../src/validate.js";
 
@@ -86,6 +86,7 @@ describe("agent-execution-profile", () => {
     expect(diff.overall_state).toBe("unknown");
     expect(diff.rule_codes).toContain("evidence.unknown");
     expect(renderPlanActualDiffMarkdown(diff)).toContain("Plan Actual Diff");
+    expect(renderPlanActualDiffJson(diff)).toContain("\"reconciliation_id\": \"recon-1\"");
   });
 
   it("marks drift when evidence is missing or contradicted", () => {
