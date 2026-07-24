@@ -1,4 +1,4 @@
-import type { ExecutionProfile, ExecutionProfileDiff, ExecutionProfileLock, HostExportArtifact, OutcomeReceipt, PolicyLayer } from "./types.js";
+import type { ExecutionProfile, ExecutionProfileDiff, ExecutionProfileLock, HostExportArtifact, OutcomeReceipt, PlanActualDiff, PolicyLayer } from "./types.js";
 
 function isArray(value: unknown): value is unknown[] {
   return Array.isArray(value);
@@ -55,4 +55,27 @@ export function validateHostExport(exported: unknown) {
 
 export function validateOutcomeReceipt(receipt: unknown) {
   return isObject(receipt) && receipt.schema_version === "0.1.0" && receipt.local_only === true && typeof receipt.receipt_id === "string" && typeof receipt.profile_id === "string" && typeof receipt.profile_digest === "string" && isStringArray(receipt.resolved_roles) && isArray(receipt.verification_results) && isStringArray(receipt.warnings) && isStringArray(receipt.unknowns);
+}
+
+export function validatePlanActualDiff(diff: unknown) {
+  return isObject(diff)
+    && diff.schema_version === "0.1.0"
+    && typeof diff.reconciliation_id === "string"
+    && (diff.generated_at === undefined || typeof diff.generated_at === "string")
+    && (diff.plan_ref === undefined || typeof diff.plan_ref === "string")
+    && (diff.plan_digest === undefined || typeof diff.plan_digest === "string")
+    && (diff.lock_ref === undefined || typeof diff.lock_ref === "string")
+    && (diff.lock_digest === undefined || typeof diff.lock_digest === "string")
+    && (diff.receipt_ref === undefined || typeof diff.receipt_ref === "string")
+    && (diff.receipt_digest === undefined || typeof diff.receipt_digest === "string")
+    && ["matched", "drifted", "unknown"].includes(String(diff.overall_state))
+    && isStringArray(diff.declared_acceptance_items)
+    && isStringArray(diff.observed_evidence_refs)
+    && isStringArray(diff.missing_evidence)
+    && isStringArray(diff.contradicted_evidence)
+    && isStringArray(diff.explicit_unknowns)
+    && isStringArray(diff.resource_drift)
+    && isStringArray(diff.scope_or_digest_drift)
+    && ["claimed", "unclaimed", "unknown"].includes(String(diff.completion_claim_state))
+    && isStringArray(diff.source_artifact_refs);
 }

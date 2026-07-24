@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { buildExecutionProfile } from "../src/build.js";
 import { buildExecutionProfileLock, executionProfileLockDigest } from "../src/lock.js";
-import { diffExecutionProfile, diffExecutionProfileLock, renderExecutionProfileMarkdown, renderExecutionProfileLockMarkdown, renderExecutionProfileDiffMarkdown, renderOutcomeReceiptMarkdown } from "../src/index.js";
+import { buildPlanActualDiff, diffExecutionProfile, diffExecutionProfileLock, renderExecutionProfileMarkdown, renderExecutionProfileLockMarkdown, renderExecutionProfileDiffMarkdown, renderOutcomeReceiptMarkdown, renderPlanActualDiffMarkdown } from "../src/index.js";
 import { buildGenericHostExportArtifact } from "../src/hosts/generic.js";
-import { validateExecutionProfile, validateExecutionProfileLock, validateExecutionProfileDiff, validateHostExport, validateOutcomeReceipt } from "../src/validate.js";
+import { validateExecutionProfile, validateExecutionProfileLock, validateExecutionProfileDiff, validateHostExport, validateOutcomeReceipt, validatePlanActualDiff } from "../src/validate.js";
 
 const profile = buildExecutionProfile({
   task_or_intent: "auth redirect bug",
@@ -62,5 +62,45 @@ describe("agent-execution-profile", () => {
         local_only: true
       })
     ).toContain("Outcome Receipt");
+  });
+
+  it("builds, validates, and renders a deterministic plan-actual diff", () => {
+    const diff = buildPlanActualDiff({
+      reconciliationId: "recon-1",
+      plan: { plan_ref: "plan-1", required_evidence: ["tests"], completion_claimed: true },
+      lock: { lock_ref: "lock-1" },
+      receipt: { receipt_ref: "receipt-1" },
+      declaredAcceptanceItems: ["tests", "docs"],
+      observedEvidenceRefs: ["evidence-tests"],
+      missingEvidence: [],
+      contradictedEvidence: [],
+      explicitUnknowns: ["external deployment"],
+      resourceDrift: [],
+      scopeOrDigestDrift: [],
+      completionClaimState: "claimed",
+      sourceArtifactRefs: ["plan:plan-1", "lock:lock-1", "receipt:receipt-1"]
+    });
+
+    expect(validatePlanActualDiff(diff)).toBe(true);
+    expect(diff.overall_state).toBe("unknown");
+    expect(renderPlanActualDiffMarkdown(diff)).toContain("Plan Actual Diff");
+  });
+
+  it("marks drift when evidence is missing or contradicted", () => {
+    const diff = buildPlanActualDiff({
+      reconciliationId: "recon-2",
+      plan: { plan_ref: "plan-2" },
+      lock: { lock_ref: "lock-2" },
+      receipt: { receipt_ref: "receipt-2" },
+      missingEvidence: ["tests"],
+      contradictedEvidence: ["claim"],
+      resourceDrift: ["locked resource changed"],
+      completionClaimState: "claimed"
+    });
+
+    expect(validatePlanActualDiff(diff)).toBe(true);
+    expect(diff.overall_state).toBe("drifted");
+    expect(diff.missing_evidence).toEqual(["tests"]);
+    expect(diff.contradicted_evidence).toEqual(["claim"]);
   });
 });

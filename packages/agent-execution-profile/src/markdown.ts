@@ -1,4 +1,4 @@
-import type { ExecutionProfile, ExecutionProfileDiff, ExecutionProfileLock, OutcomeReceipt } from "./types.js";
+import type { ExecutionProfile, ExecutionProfileDiff, ExecutionProfileLock, OutcomeReceipt, PlanActualDiff } from "./types.js";
 
 function lines(title: string, body: string[]) {
   return [`# ${title}`, "", ...body].join("\n") + "\n";
@@ -36,4 +36,19 @@ export function renderClaudeCodeHostExportMarkdown(profile: ExecutionProfile) {
 
 export function renderOutcomeReceiptMarkdown(receipt: OutcomeReceipt) {
   return lines("Outcome Receipt", [`- receipt_id: ${receipt.receipt_id}`, `- resolved_roles: ${receipt.resolved_roles.join(", ")}`]);
+}
+
+export function renderPlanActualDiffMarkdown(diff: PlanActualDiff) {
+  return lines("Plan Actual Diff", [
+    `- reconciliation_id: ${diff.reconciliation_id}`,
+    `- overall_state: ${diff.overall_state}`,
+    `- completion_claim_state: ${diff.completion_claim_state}`,
+    `- declared_acceptance_items: ${diff.declared_acceptance_items.join(", ") || "none"}`,
+    `- observed_evidence_refs: ${diff.observed_evidence_refs.join(", ") || "none"}`,
+    `- missing_evidence: ${diff.missing_evidence.join(", ") || "none"}`,
+    `- contradicted_evidence: ${diff.contradicted_evidence.join(", ") || "none"}`,
+    `- explicit_unknowns: ${diff.explicit_unknowns.join(", ") || "none"}`,
+    `- resource_drift: ${diff.resource_drift.join(", ") || "none"}`,
+    `- scope_or_digest_drift: ${diff.scope_or_digest_drift.join(", ") || "none"}`
+  ]);
 }

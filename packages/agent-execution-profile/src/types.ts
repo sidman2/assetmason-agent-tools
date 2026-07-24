@@ -1,6 +1,7 @@
 export const EXECUTION_PROFILE_SCHEMA_VERSION = "0.1.0" as const;
 export const EXECUTION_PROFILE_LOCK_SCHEMA_VERSION = "0.1.0" as const;
 export const EXECUTION_PROFILE_DIFF_SCHEMA_VERSION = "0.1.0" as const;
+export const PLAN_ACTUAL_DIFF_SCHEMA_VERSION = "0.1.0" as const;
 export const OUTCOME_RECEIPT_SCHEMA_VERSION = "0.1.0" as const;
 
 export type CapabilityRequirement =
@@ -179,6 +180,32 @@ export type ExecutionProfileDiff = {
   changed_fields: string[];
   human_readable_reasons: string[];
   runtime_advisory_only: true;
+};
+
+export type PlanActualEvidenceState = "present" | "missing" | "contradicted" | "unknown";
+export type PlanActualCompletionClaimState = "claimed" | "unclaimed" | "unknown";
+export type PlanActualOverallState = "matched" | "drifted" | "unknown";
+
+export type PlanActualDiff = {
+  schema_version: typeof PLAN_ACTUAL_DIFF_SCHEMA_VERSION;
+  reconciliation_id: string;
+  generated_at?: string;
+  plan_ref?: string;
+  plan_digest?: string;
+  lock_ref?: string;
+  lock_digest?: string;
+  receipt_ref?: string;
+  receipt_digest?: string;
+  overall_state: PlanActualOverallState;
+  declared_acceptance_items: string[];
+  observed_evidence_refs: string[];
+  missing_evidence: string[];
+  contradicted_evidence: string[];
+  explicit_unknowns: string[];
+  resource_drift: string[];
+  scope_or_digest_drift: string[];
+  completion_claim_state: PlanActualCompletionClaimState;
+  source_artifact_refs: string[];
 };
 
 export type HostExportArtifact = {
