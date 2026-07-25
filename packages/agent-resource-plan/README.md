@@ -2,7 +2,7 @@
 
 Portable, advisory-only contracts and deterministic builders for the public AssetMason Agent Resource Planning surface.
 
-Publicly available as `agent-resource-plan@0.1.0-preview.2` on the `preview` channel.
+Source-prepared as `agent-resource-plan@0.1.0-preview.3`. The live `preview` channel currently resolves to `agent-resource-plan@0.1.0-preview.2`.
 
 This library provides public-safe artifact contracts for:
 
@@ -20,7 +20,7 @@ This library provides public-safe artifact contracts for:
 
 It is local-first, execution-free, credential-free, secret-safe, and designed to be used directly from Node or through the companion CLI.
 
-The public package is published with provenance via the trusted GitHub Actions OIDC workflow.
+The public package is published with provenance via the trusted GitHub Actions OIDC workflow when the release gate is intentionally run.
 
 Install:
 

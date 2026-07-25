@@ -2,7 +2,7 @@
 
 Installed CLI for the public AssetMason Agent Resource Planning workflow.
 
-Publicly available as `assetmason-cli@0.1.0-preview.2` on the `preview` channel.
+Source-prepared as `assetmason-cli@0.1.0-preview.3`. The live `preview` channel currently resolves to `assetmason-cli@0.1.0-preview.2`.
 
 Use this package when you want the `assetmason` binary from `npx` or a local install.
 
@@ -26,4 +26,4 @@ npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview scan --root . --format markdown
 ```
 
-The public package is advisory-only and published with provenance through the trusted GitHub Actions OIDC workflow.
+The public package is advisory-only and is published with provenance through the trusted GitHub Actions OIDC workflow when the release gate is intentionally run.
