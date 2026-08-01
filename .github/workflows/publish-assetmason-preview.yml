@@ -141,7 +141,7 @@ jobs:
           npm publish --workspace agent-resource-plan --access public --tag preview --provenance
           npm view agent-resource-plan dist-tags --json
           for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            if npm view agent-resource-plan@0.1.0-preview.2 name version dist-tags repository license engines --json; then
+            if npm view agent-resource-plan@0.1.0-preview.3 name version dist-tags repository license engines --json; then
               break
             fi
             if [ "$attempt" -eq 12 ]; then
@@ -160,7 +160,7 @@ jobs:
           npm publish --workspace agent-execution-profile --access public --tag preview --provenance
           npm view agent-execution-profile dist-tags --json
           for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            if npm view agent-execution-profile@0.1.0-preview.2 name version dist-tags repository license engines --json; then
+            if npm view agent-execution-profile@0.1.0-preview.3 name version dist-tags repository license engines --json; then
               break
             fi
             if [ "$attempt" -eq 12 ]; then
@@ -179,7 +179,7 @@ jobs:
           npm publish --workspace assetmason-cli --access public --tag preview --provenance
           npm view assetmason-cli dist-tags --json
           for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            if npm view assetmason-cli@0.1.0-preview.2 name version dist-tags repository license engines bin dependencies --json; then
+            if npm view assetmason-cli@0.1.0-preview.3 name version dist-tags repository license engines bin dependencies --json; then
               break
             fi
             if [ "$attempt" -eq 12 ]; then
