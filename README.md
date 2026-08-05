@@ -11,9 +11,9 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ard-kit` | Shared schemas, validators, fixtures, and helpers for ARD / AI Catalog readiness. | Existing public preview package. |
 | `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
-| `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Publicly available as `0.1.0-preview.2` on the `preview` channel. |
-| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `select` and selection validation. | Publicly available as `0.1.0-preview.2` on the `preview` channel. |
-| `agent-execution-profile` | Public-safe execution-profile contracts, host exports, locks, diffs, and receipt validation. | Publicly available as `0.1.0-preview.2` on the `preview` channel. |
+| `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
+| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `doctor`, `context`, `explain-context`, `check`, `select`, and validation. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
+| `agent-execution-profile` | Public-safe execution-profile contracts, host exports, locks, diffs, and receipt validation. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
 
 ## Quickstart
 
@@ -51,6 +51,11 @@ Public npx commands:
 ```bash
 npx -y assetmason-cli@preview --help
 npx -y assetmason-cli@preview list-scenarios
+npx -y assetmason-cli@preview doctor --root . --format json
+npx -y assetmason-cli@preview context --root . --task "update the CLI" --format json
+npx -y assetmason-cli@preview context --root . --task "update the CLI" --diff codex claude-code --format json
+npx -y assetmason-cli@preview explain-context --root . --entry packages/assetmason-cli/src/commands.ts --format json
+npx -y assetmason-cli@preview check --root . --task "update the CLI" --format json
 npx -y assetmason-cli@preview select --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview profile --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
@@ -71,7 +76,7 @@ Verification evidence for the public preview surface is captured in `scripts/rel
 * Agent Resource Planning package surface: `agent-resource-plan`, `assetmason-cli`
 * public artifact families: check, select, plan, lock, diff, validate, handoff
 
-Preview API note: semantic versioning may change during preview, `preview.2` is a prerelease rather than a stable release, and private hosted intelligence remains outside this FOSS repository. `latest` remains at its actual live registry value.
+Preview API note: semantic versioning may change during preview, `preview.3` is a prerelease rather than a stable release, and private hosted intelligence remains outside this FOSS repository. `latest` remains at its actual live registry value.
 
 ## Development
 

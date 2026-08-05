@@ -2,7 +2,7 @@
 
 Portable, advisory-only contracts and deterministic builders for the public AssetMason Agent Resource Planning surface.
 
-Source-prepared as `agent-resource-plan@0.1.0-preview.3`. The live `preview` channel currently resolves to `agent-resource-plan@0.1.0-preview.2`.
+Source-prepared as `agent-resource-plan@0.1.0-preview.3`. The live `preview` channel currently resolves to `agent-resource-plan@0.1.0-preview.3`.
 
 This library provides public-safe artifact contracts for:
 
