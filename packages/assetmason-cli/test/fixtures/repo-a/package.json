@@ -1,0 +1,10 @@
+{
+  "name": "fixture-repo-a",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "verify:public": "node ./scripts/verify.mjs"
+  }
+}
