@@ -31,4 +31,19 @@ npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview scan --root . --format markdown
 ```
 
+## Local runtime consumer seam
+
+The CLI exposes a file-backed, machine-readable local runtime without requiring a server or account. A consumer should treat the JSON output as the authority and keep `ResourcePlan`, `ResourceLock`, and `OutcomeReceipt` as the only canonical root artifacts.
+
+```bash
+assetmason run --root . --task "bounded local task" --isolated --format json
+assetmason checkpoint --root . --run <run-id> --format json
+assetmason pause --root . --run <run-id> --format json
+assetmason resume --root . --run <run-id> --format json
+assetmason receipt --root . --run <run-id> --format json
+assetmason handoff --root . --run <run-id> --format json
+```
+
+Runtime records are stored under `.assetmason/runtime/` and include schema version, stable task/run/workspace identity, append-only event offsets, worktree binding, checkpoint provenance, and an explicit next safe resume action. `adapter` reports capability truth; `generic-command` is not cross-agent support, and an installed worker is never treated as launchable unless its probe succeeds.
+
 The public package is advisory-only and is published with provenance through the trusted GitHub Actions OIDC workflow when the release gate is intentionally run.
