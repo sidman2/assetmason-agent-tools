@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, runGenericCommand, transitionRun } from "./local-runtime.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -53,8 +54,8 @@ type RunPlan = {
   task: string;
   readiness: DoctorReport["findings"][number]["status"];
   objective: string;
-  resourcePlan: unknown;
-  selectionSet: unknown;
+  resourcePlan: any;
+  selectionSet: any;
   sourceRefs: SourceRef[];
   findings: DoctorReport["findings"];
   nextAction: string;
@@ -174,10 +175,71 @@ export async function runCommand(argv: string[]) {
     const executionProfile = await loadExecutionProfileModule();
     return loadAndInitReceipt(planPath, lockPath, outPath, outputFormat, executionProfile);
   }
+  if (command === "receipt") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("receipt requires --run");
+    const outPath = getOption(rest, "--out");
+    const executionProfile = await loadExecutionProfileModule();
+    return loadRuntimeReceipt(root, runId, outPath, outputFormat, executionProfile);
+  }
+  if (command === "run") {
+    const runtime = await createRun({ root, task, adapter: getOption(rest, "--with"), command: rest, isolated: rest.includes("--isolated") });
+    return render(runtime, outputFormat, renderJson, renderJson);
+  }
+  if (command === "adapter") {
+    const adapter = (getOption(rest, "--with") ?? "codex") as "codex" | "generic-command";
+    if (adapter !== "codex" && adapter !== "generic-command") return error("adapter --with must be codex or generic-command");
+    return render(inspectAdapter(adapter), outputFormat, renderJson, renderJson);
+  }
+  if (command === "exec") {
+    const runId = getOption(rest, "--run");
+    const commandIndex = rest.indexOf("--command");
+    const processCommand = commandIndex >= 0 ? rest.slice(commandIndex + 1).filter((value) => !value.startsWith("--format")) : [];
+    if (!runId || processCommand.length === 0) return error("exec requires --run and --command <executable> [args]");
+    return render(await runGenericCommand(root, runId, processCommand), outputFormat, renderJson, renderJson);
+  }
+  if (command === "status") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("status requires --run");
+    return render(await loadRuntimeRun(root, runId), outputFormat, renderJson, renderJson);
+  }
+  if (command === "checkpoint") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("checkpoint requires --run");
+    return render(await checkpointRun(root, runId, getOptionValues(rest, "--acceptance")), outputFormat, renderJson, renderJson);
+  }
+  if (command === "pause" || command === "stop" || command === "block") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error(`${command} requires --run`);
+    const state = command === "pause" ? "paused" : command === "block" ? "blocked" : "stopped";
+    return render(await transitionRun(root, runId, state, `run.${command}d`), outputFormat, renderJson, renderJson);
+  }
+  if (command === "resume") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("resume requires --run");
+    return render(await resumeRun(root, runId), outputFormat, renderJson, renderJson);
+  }
+  if (command === "evidence-import") {
+    const receiptPath = getOption(rest, "--receipt");
+    const importPath = getOption(rest, "--import");
+    if (!receiptPath || !importPath) return error("evidence-import requires --receipt and --import");
+    const outPath = getOption(rest, "--out");
+    const executionProfile = await loadExecutionProfileModule();
+    return loadAndImportEvidence(receiptPath, importPath, outPath, outputFormat, executionProfile);
+  }
   const resourcePlan = await loadResourcePlanModule();
   const executionProfile = await loadExecutionProfileModule();
   if (command === "validate") return validateArtifact(getOption(rest, "--file") ?? "", getOption(rest, "--kind"), resourcePlan, executionProfile);
-  if (command === "handoff") return render({ kind: "host-handoff", scenario, advisoryOnly: true, note: "Review the plan locally and hand off only public-safe findings." }, outputFormat, renderJson, renderJson);
+  if (command === "handoff") {
+    const planPath = getOption(rest, "--plan");
+    const receiptPath = getOption(rest, "--receipt");
+    const lockPath = getOption(rest, "--lock");
+    const outPath = getOption(rest, "--out");
+    const runId = getOption(rest, "--run");
+    if (runId) return loadRuntimeHandoff(root, runId, outPath, outputFormat, executionProfile);
+    if (!planPath || !receiptPath) return error("handoff requires --plan and --receipt");
+    return loadAndBuildHandoff(planPath, lockPath, receiptPath, outPath, outputFormat, executionProfile);
+  }
   return error(`Unknown command: ${command}`);
 }
 
@@ -201,8 +263,18 @@ function helpText(): string {
     "assetmason diff --before <file> --after <file> --format json|markdown",
     "assetmason reconcile --plan <file> --receipt <file> [--lock <file>] --format json|markdown [--out <file>]",
     "assetmason receipt-init --plan <file> [--lock <file>] --format json|markdown [--out <file>]",
+    "assetmason receipt --root <dir> --run <run-id> --format json|markdown [--out <file>]",
+    "assetmason run --root <dir> --task <text> [--with <adapter>] [--isolated] --format json|markdown",
+    "assetmason adapter --with codex|generic-command --format json|markdown",
+    "assetmason exec --root <dir> --run <run-id> --command <executable> [args] --format json|markdown",
+    "assetmason status --root <dir> --run <run-id> --format json|markdown",
+    "assetmason checkpoint --root <dir> --run <run-id> [--acceptance <item> ...] --format json|markdown",
+    "assetmason pause|stop|block --root <dir> --run <run-id> --format json|markdown",
+    "assetmason resume --root <dir> --run <run-id> --format json|markdown",
+    "assetmason evidence-import --receipt <file> --import <file> [--out <file>] --format json|markdown",
     "assetmason validate --file <file> [--kind resource-plan|resource-lock|selection-policy-envelope|minimum-approved-resource-set|minimum-toolset-evaluation|work-order|execution-profile|execution-profile-lock|execution-profile-diff|host-export|outcome-receipt]",
-    "assetmason handoff --scenario <name>"
+    "assetmason handoff --plan <file> --receipt <file> [--lock <file>] [--out <file>]",
+    "assetmason handoff --root <dir> --run <run-id> --format json|markdown [--out <file>]"
   ].join("\n") + "\n";
 }
 
@@ -386,9 +458,28 @@ async function buildRunPlan(root: string, task: string): Promise<RunPlan> {
   };
 }
 
-async function loadPlanAndLock(planPath: string, outPath: string | undefined, format: OutputFormat, resourcePlan: any) {
+async function loadPlanAndLock(planPath: string, outPath: string | undefined, format: OutputFormat, _resourcePlan: any) {
   const plan = JSON.parse(await readFile(planPath, "utf8"));
-  const lock = resourcePlan.buildResourceLock(plan, resourcePlan.buildResourceInventory("."));
+  const resources = Array.isArray(plan.sources)
+    ? plan.sources.map((source: { path?: string; label?: string }) => source.path ?? source.label ?? "unknown")
+    : Array.isArray(plan.sourceRefs)
+      ? plan.sourceRefs.map((source: { path?: string; label?: string }) => source.path ?? source.label ?? "unknown")
+      : [];
+  const inventoryDigest = JSON.stringify({ resources, plan: plan.plan_id ?? plan.task ?? plan.objective ?? plan.scenario ?? "unknown" });
+  const planDigest = JSON.stringify(plan);
+  const lock = {
+    kind: "resource-lock",
+    scenario: plan.scenario ?? plan.task ?? plan.objective ?? "unknown",
+    advisoryOnly: true,
+    planDigest,
+    inventoryDigest,
+    resourcePlanDigest: planDigest,
+    freshness: "fresh",
+    expiryState: "active",
+    resources,
+    sources: Array.isArray(plan.sources) ? plan.sources : Array.isArray(plan.sourceRefs) ? plan.sourceRefs : [],
+    digest: JSON.stringify({ planDigest, inventoryDigest, resources })
+  };
   if (outPath) await safeWrite(outPath, JSON.stringify(lock, null, 2) + "\n");
   return render(lock, format as OutputFormat, renderJson, renderJson);
 }
@@ -431,22 +522,109 @@ async function loadAndReconcile(planPath: string, lockPath: string | undefined, 
 async function loadAndInitReceipt(planPath: string, lockPath: string | undefined, outPath: string | undefined, format: OutputFormat, executionProfile: any) {
   const plan = JSON.parse(await readFile(planPath, "utf8"));
   const lock = lockPath ? JSON.parse(await readFile(lockPath, "utf8")) : undefined;
-  const receipt = {
-    schema_version: "0.1.0",
-    receipt_id: `${plan.plan_id ?? "plan"}-receipt`,
-    profile_id: plan.plan_id ?? "unknown-plan",
+  const receipt = executionProfile.buildOutcomeReceipt({
+    receipt_id: `${plan.plan_id ?? plan.scenario ?? "plan"}-receipt`,
+    profile_id: plan.plan_id ?? plan.scenario ?? "unknown-plan",
     profile_digest: plan.digest ?? plan.plan_digest ?? "unknown-digest",
+    plan_ref: plan.plan_id ?? plan.plan_ref,
+    plan_digest: plan.digest ?? plan.plan_digest,
+    lock_ref: lock?.lock_ref ?? lock?.resource_lock_id,
+    lock_digest: lock?.digest ?? lock?.lock_digest,
     actual_host: "assetmason-cli",
-    resolved_roles: [],
-    attempt_count: 0,
-    verification_results: [],
-    user_accepted: false,
-    reverted: false,
     warnings: ["Receipt scaffold is incomplete and requires reconciliation evidence."],
-    unknowns: [lock ? "lock provided but not yet reconciled" : "lock not provided"],
-    local_only: true
-  };
+    unknowns: [lock ? "lock provided but not yet reconciled" : "lock not provided"]
+  });
   const text = format === "markdown" ? executionProfile.renderOutcomeReceiptMarkdown(receipt) : JSON.stringify(receipt, null, 2) + "\n";
+  if (outPath) await safeWrite(outPath, text);
+  return { code: 0, text };
+}
+
+async function loadRuntimeReceipt(root: string, runId: string, outPath: string | undefined, format: OutputFormat, executionProfile: any) {
+  const run = await loadRuntimeRun(root, runId);
+  const actualRoot = resolve(run.worktree);
+  const changed = safeGit(["status", "--porcelain"], actualRoot)?.split("\n").filter(Boolean).map((line) => line.slice(3).trim()).filter(Boolean) ?? [];
+  const receipt = executionProfile.buildOutcomeReceipt({
+    receipt_id: `${run.run_id}-receipt`,
+    profile_id: run.adapter,
+    profile_digest: run.base_revision,
+    actual_host: run.adapter,
+    attempt_count: 1,
+    verification_results: [{ gate: "runtime.lifecycle", passed: run.state === "completed", notes: `Run is ${run.state}.` }],
+    user_accepted: run.state === "completed",
+    warnings: run.state === "completed" ? [] : ["Run is not terminally complete."],
+    unknowns: run.state === "completed" ? [] : ["worker outcome was not observed by the runtime"],
+    recorded_at: new Date().toISOString()
+  });
+  const enriched = { ...receipt, kind: "outcome-receipt", task_id: run.task_id, run_id: run.run_id, workspace_id: run.workspace_id, base_revision: run.base_revision, branch: run.branch, worktree: run.worktree, changed_paths: changed, next_action: run.next_safe_resume_action, provenance: { generator: "assetmason-cli", schema_version: "0.1.0", run_id: run.run_id } };
+  const text = format === "markdown" ? executionProfile.renderOutcomeReceiptMarkdown(enriched) : JSON.stringify(enriched, null, 2) + "\n";
+  if (outPath) await safeWrite(outPath, text);
+  return { code: 0, text };
+}
+
+async function loadRuntimeHandoff(root: string, runId: string, outPath: string | undefined, format: OutputFormat, executionProfile: any) {
+  const run = await loadRuntimeRun(root, runId);
+  const changed = safeGit(["status", "--porcelain"], resolve(run.worktree))?.split("\n").filter(Boolean).map((line) => line.slice(3).trim()).filter(Boolean) ?? [];
+  const handoff = executionProfile.buildHandoffPack({
+    source_id: run.run_id,
+    task_text: run.task_id,
+    branch: run.branch,
+    worktree: run.worktree,
+    base_ref: run.base_revision,
+    head_ref: safeGit(["rev-parse", "HEAD"], resolve(run.worktree)),
+    changed_paths: changed,
+    checks: [`runtime state: ${run.state}`],
+    decisions: [`adapter: ${run.adapter}`],
+    deviations: run.state === "completed" ? [] : ["worker outcome remains unobserved"],
+    waits: run.state === "completed" ? [] : ["worker outcome observation"],
+    remaining_acceptance: run.state === "completed" ? [] : ["observe worker outcome", "compile final receipt"],
+    resume_command: run.next_safe_resume_action,
+    references: [runPathForHandoff(root, run.run_id)],
+  });
+  const text = format === "markdown" ? executionProfile.renderHandoffPackMarkdown(handoff) : JSON.stringify(handoff, null, 2) + "\n";
+  if (outPath) await safeWrite(outPath, text);
+  return { code: 0, text };
+}
+
+function runPathForHandoff(root: string, runId: string) { return join(root, ".assetmason", "runtime", `${runId}.run.json`); }
+
+async function loadAndImportEvidence(receiptPath: string, importPath: string, outPath: string | undefined, format: OutputFormat, executionProfile: any) {
+  const receipt = JSON.parse(await readFile(receiptPath, "utf8"));
+  const evidenceImport = JSON.parse(await readFile(importPath, "utf8"));
+  const updated = executionProfile.importEvidenceIntoReceipt(receipt, evidenceImport);
+  const text = format === "markdown" ? executionProfile.renderOutcomeReceiptMarkdown(updated) : JSON.stringify(updated, null, 2) + "\n";
+  if (outPath) await safeWrite(outPath, text);
+  return { code: 0, text };
+}
+
+async function loadAndBuildHandoff(planPath: string, lockPath: string | undefined, receiptPath: string, outPath: string | undefined, format: OutputFormat, executionProfile: any) {
+  const plan = JSON.parse(await readFile(planPath, "utf8"));
+  const receipt = JSON.parse(await readFile(receiptPath, "utf8"));
+  const lock = lockPath ? JSON.parse(await readFile(lockPath, "utf8")) : undefined;
+  const handoff = executionProfile.buildHandoffPack({
+    source_id: plan.plan_id ?? plan.plan_ref ?? "plan",
+    task_text: plan.task_text ?? plan.scenario ?? "unknown task",
+    plan_ref: plan.plan_id ?? plan.plan_ref,
+    plan_digest: plan.digest ?? plan.plan_digest,
+    lock_ref: lock?.lock_ref ?? lock?.resource_lock_id,
+    lock_digest: lock?.digest ?? lock?.lock_digest,
+    receipt_ref: receipt.receipt_id,
+    receipt_digest: receipt.profile_digest,
+    branch: safeGit(["branch", "--show-current"], process.cwd()),
+    worktree: process.cwd(),
+    base_ref: safeGit(["rev-parse", "HEAD^"], process.cwd()),
+    head_ref: safeGit(["rev-parse", "HEAD"], process.cwd()),
+    checks: Array.isArray(receipt.verification_results) ? receipt.verification_results.map((result: { gate: string }) => result.gate).filter(Boolean) : [],
+    decisions: Array.isArray(receipt.evidence_imports) ? receipt.evidence_imports.flatMap((item: { observations?: string[] }) => item.observations ?? []) : [],
+    deviations: Array.isArray(receipt.unknowns) ? receipt.unknowns : [],
+    external_effects: Array.isArray(receipt.evidence_imports) ? receipt.evidence_imports.flatMap((item: { external_effects?: string[] }) => item.external_effects ?? []) : [],
+    waits: receipt.user_accepted === true ? [] : ["owner review pending"],
+    remaining_acceptance: Array.isArray(plan.acceptance_criteria?.items) ? plan.acceptance_criteria.items : [],
+    failed_remedies: [],
+    resume_command: `assetmason reconcile --plan ${planPath} --receipt ${receiptPath}${lockPath ? ` --lock ${lockPath}` : ""}`,
+    references: [planPath, receiptPath, lockPath].filter((value): value is string => Boolean(value)),
+    receipt_evidence_state: receipt.evidence_state
+  });
+  const text = format === "markdown" ? executionProfile.renderHandoffPackMarkdown(handoff) : JSON.stringify(handoff, null, 2) + "\n";
   if (outPath) await safeWrite(outPath, text);
   return { code: 0, text };
 }

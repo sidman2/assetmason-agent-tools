@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 import { main } from "../src/main.js";
 import { runCommand } from "../src/commands.js";
 import { buildExecutionProfile } from "agent-execution-profile";
@@ -141,4 +142,207 @@ describe("assetmason-cli", () => {
     expect(runPlan.resourcePlan.kind).toBe("resource-plan");
     expect(runPlan.selectionSet.kind).toBe("minimum-approved-resource-set");
   }, 20000);
+
+  it("runs the public transaction workflow end to end on a fixture repo", async () => {
+    const fixtureRoot = join(process.cwd(), "packages", "assetmason-cli", "test", "fixtures", "repo-a");
+    const dir = mkdtempSync(join(tmpdir(), "assetmason-workflow-"));
+    const doctorPath = join(dir, "doctor.json");
+    const contextPath = join(dir, "context.json");
+    const planPath = join(dir, "plan.json");
+    const lockPath = join(dir, "lock.json");
+    const receiptPath = join(dir, "receipt.json");
+    const importPath = join(dir, "import.json");
+    const receiptWithEvidencePath = join(dir, "receipt-with-evidence.json");
+    const reconciliationPath = join(dir, "reconciliation.json");
+    const handoffPath = join(dir, "handoff.json");
+
+    const doctor = await runCommand(["doctor", "--root", fixtureRoot, "--format", "json"]);
+    const context = await runCommand(["context", "--root", fixtureRoot, "--task", "upgrade dependency safely", "--format", "json"]);
+    const plan = await runCommand(["check", "--root", fixtureRoot, "--task", "upgrade dependency safely", "--format", "json"]);
+    writeFileSync(doctorPath, doctor.text, "utf8");
+    writeFileSync(contextPath, context.text, "utf8");
+    writeFileSync(planPath, plan.text, "utf8");
+
+    const lock = await runCommand(["lock", "--from-plan", planPath, "--out", lockPath, "--format", "json"]);
+    const receipt = await runCommand(["receipt-init", "--plan", planPath, "--lock", lockPath, "--out", receiptPath, "--format", "json"]);
+
+    writeFileSync(importPath, JSON.stringify({
+      schema_version: "0.1.0",
+      import_id: "import-1",
+      receipt_id: "plan-receipt",
+      imported_at: "2026-08-06T00:00:00.000Z",
+      source: "explicit-cli-input",
+      evidence_refs: ["tests"],
+      command_records: ["npm test"],
+      check_records: ["typecheck"],
+      artifact_refs: ["plan.json", "lock.json"],
+      external_effects: [],
+      observations: ["fixture workflow completed"],
+      warnings: [],
+      unknowns: [],
+      contradicted_evidence: [],
+      missing_evidence: [],
+      local_only: true
+    }, null, 2), "utf8");
+
+    const receiptWithEvidence = await runCommand(["evidence-import", "--receipt", receiptPath, "--import", importPath, "--out", receiptWithEvidencePath, "--format", "json"]);
+    const reconciliation = await runCommand(["reconcile", "--plan", planPath, "--lock", lockPath, "--receipt", receiptWithEvidencePath, "--out", reconciliationPath, "--format", "json"]);
+    const handoff = await runCommand(["handoff", "--plan", planPath, "--lock", lockPath, "--receipt", receiptWithEvidencePath, "--out", handoffPath, "--format", "json"]);
+
+    const doctorArtifact = JSON.parse(readFileSync(doctorPath, "utf8"));
+    const contextArtifact = JSON.parse(readFileSync(contextPath, "utf8"));
+    const planArtifact = JSON.parse(readFileSync(planPath, "utf8"));
+    const lockArtifact = JSON.parse(readFileSync(lockPath, "utf8"));
+    const receiptArtifact = JSON.parse(readFileSync(receiptWithEvidencePath, "utf8"));
+    const reconciliationArtifact = JSON.parse(readFileSync(reconciliationPath, "utf8"));
+    const handoffArtifact = JSON.parse(readFileSync(handoffPath, "utf8"));
+
+    expect(doctor.code).toBe(0);
+    expect(context.code).toBe(0);
+    expect(plan.code).toBe(0);
+    expect(lock.code).toBe(0);
+    expect(receipt.code).toBe(0);
+    expect(receiptWithEvidence.code).toBe(0);
+    expect(reconciliation.code).toBe(0);
+    expect(handoff.code).toBe(0);
+    expect(doctorArtifact.kind).toBe("doctor-report");
+    expect(contextArtifact.kind).toBe("context-pack");
+    expect(planArtifact.kind).toBe("run-plan");
+    expect(lockArtifact.kind).toBe("resource-lock");
+    expect(receiptArtifact.evidence_imports?.length).toBe(1);
+    expect(reconciliationArtifact.schema_version).toBe("0.1.0");
+    expect(handoffArtifact.schema_version).toBe("0.1.0");
+  }, 40000);
+
+  it("runs a CLI artifact corpus for the named receipt variants", async () => {
+    const fixtureRoot = join(process.cwd(), "packages", "assetmason-cli", "test", "fixtures", "repo-a");
+    const variants = [
+      { import_id: "ready", variant: "ready", evidenceBucket: "ready", waitFragment: undefined },
+      { import_id: "missing", variant: "missing_evidence", evidenceBucket: "missing", waitFragment: "missing evidence" },
+      { import_id: "contradiction", variant: "contradiction", evidenceBucket: "contradicted", waitFragment: "contradicted evidence" },
+      { import_id: "stale", variant: "stale_evidence", evidenceBucket: "stale", waitFragment: undefined },
+      { import_id: "external", variant: "external_wait", evidenceBucket: "external_wait", waitFragment: "external wait" },
+      { import_id: "delta", variant: "conditional", evidenceBucket: "conditional", waitFragment: undefined }
+    ] as const;
+
+    for (const variant of variants) {
+      const dir = mkdtempSync(join(tmpdir(), `assetmason-variant-${variant.import_id}-`));
+      const planPath = join(dir, "plan.json");
+      const lockPath = join(dir, "lock.json");
+      const receiptPath = join(dir, "receipt.json");
+      const importPath = join(dir, "import.json");
+      const receiptWithEvidencePath = join(dir, "receipt-with-evidence.json");
+      const reconciliationPath = join(dir, "reconciliation.json");
+      const handoffPath = join(dir, "handoff.json");
+
+      const plan = await runCommand(["check", "--root", fixtureRoot, "--task", `variant ${variant.import_id}`, "--format", "json"]);
+      writeFileSync(planPath, plan.text, "utf8");
+      const lock = await runCommand(["lock", "--from-plan", planPath, "--out", lockPath, "--format", "json"]);
+      const receipt = await runCommand(["receipt-init", "--plan", planPath, "--lock", lockPath, "--out", receiptPath, "--format", "json"]);
+
+      writeFileSync(importPath, JSON.stringify({
+        schema_version: "0.1.0",
+        import_id: variant.import_id,
+        receipt_id: "plan-receipt",
+        imported_at: "2026-08-06T00:00:00.000Z",
+        source: "explicit-cli-input",
+        evidence_refs: [],
+        command_records: [],
+        check_records: [],
+        artifact_refs: [],
+        external_effects: [],
+        observations: [],
+        warnings: [],
+        unknowns: [],
+        contradicted_evidence: [],
+        missing_evidence: [],
+        variant: variant.variant,
+        local_only: true
+      }, null, 2), "utf8");
+
+      const receiptWithEvidence = await runCommand(["evidence-import", "--receipt", receiptPath, "--import", importPath, "--out", receiptWithEvidencePath, "--format", "json"]);
+      const reconciliation = await runCommand(["reconcile", "--plan", planPath, "--lock", lockPath, "--receipt", receiptWithEvidencePath, "--out", reconciliationPath, "--format", "json"]);
+      const handoff = await runCommand(["handoff", "--plan", planPath, "--lock", lockPath, "--receipt", receiptWithEvidencePath, "--out", handoffPath, "--format", "json"]);
+
+      const receiptArtifact = JSON.parse(readFileSync(receiptWithEvidencePath, "utf8"));
+      const handoffArtifact = JSON.parse(readFileSync(handoffPath, "utf8"));
+
+      expect(plan.code).toBe(0);
+      expect(lock.code).toBe(0);
+      expect(receipt.code).toBe(0);
+      expect(receiptWithEvidence.code).toBe(0);
+      expect(reconciliation.code).toBe(0);
+      expect(handoff.code).toBe(0);
+      expect(receiptArtifact.evidence_state?.[variant.evidenceBucket]).toContain(variant.import_id);
+      if (variant.waitFragment) {
+        expect(handoffArtifact.waits.some((wait: string) => wait.includes(variant.waitFragment as string))).toBe(true);
+      }
+    }
+  }, 60000);
+
+  it("persists a runtime event log across pause, checkpoint, and fresh-process resume", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-runtime-"));
+    const runResult = await runCommand(["run", "--root", root, "--task", "record a local checkpoint", "--with", "generic-command"]);
+    const run = JSON.parse(runResult.text);
+    expect(runResult.code).toBe(0);
+    expect(run.kind).toBe("run-record");
+    expect(run.state).toBe("created");
+    const processResult = JSON.parse((await runCommand(["exec", "--root", root, "--run", run.run_id, "--command", process.execPath, "-e", "process.stdout.write('ok')"])).text);
+    expect(processResult.classification).toBe("completed");
+    expect(processResult.stdout).toBe("ok");
+
+    const pausedResult = await runCommand(["pause", "--root", root, "--run", run.run_id]);
+    expect(JSON.parse(pausedResult.text).state).toBe("paused");
+    const checkpointResult = await runCommand(["checkpoint", "--root", root, "--run", run.run_id, "--acceptance", "verify receipt"]);
+    const checkpoint = JSON.parse(checkpointResult.text);
+    expect(checkpoint.kind).toBe("checkpoint-record");
+    expect(checkpoint.outstanding_acceptance).toEqual(["verify receipt"]);
+
+    const resumedResult = await runCommand(["resume", "--root", root, "--run", run.run_id]);
+    const resumed = JSON.parse(resumedResult.text);
+    expect(resumed.state).toBe("running");
+    expect(resumed.event_offset).toBeGreaterThan(run.event_offset);
+    const status = JSON.parse((await runCommand(["status", "--root", root, "--run", run.run_id])).text);
+    expect(status.checkpoint_id).toBe(checkpoint.checkpoint_id);
+    const receipt = JSON.parse((await runCommand(["receipt", "--root", root, "--run", run.run_id])).text);
+    expect(receipt.kind).toBe("outcome-receipt");
+    expect(receipt.run_id).toBe(run.run_id);
+    expect(receipt.provenance.generator).toBe("assetmason-cli");
+    const handoff = JSON.parse((await runCommand(["handoff", "--root", root, "--run", run.run_id])).text);
+    expect(handoff.local_only).toBe(true);
+    expect(handoff.source_id).toBe(run.run_id);
+    expect(handoff.resume_command).toContain("assetmason resume");
+    const stopped = JSON.parse((await runCommand(["stop", "--root", root, "--run", run.run_id])).text);
+    expect(stopped.state).toBe("stopped");
+    const stoppedReceipt = JSON.parse((await runCommand(["receipt", "--root", root, "--run", run.run_id])).text);
+    expect(stoppedReceipt.user_accepted).toBe(false);
+  });
+
+  it("binds isolated runs to a retained project-owned worktree", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-worktree-"));
+    execFileSync("git", ["init", "-q"], { cwd: root });
+    writeFileSync(join(root, "README.md"), "fixture\n", "utf8");
+    execFileSync("git", ["add", "README.md"], { cwd: root });
+    execFileSync("git", ["-c", "user.name=AssetMason Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"], { cwd: root });
+    const result = await runCommand(["run", "--root", root, "--task", "isolated task", "--isolated"]);
+    const run = JSON.parse(result.text);
+    expect(result.code).toBe(0);
+    expect(run.worktree).toContain(".assetmason");
+    expect(run.worktree).not.toBe(root);
+    expect(run.branch).toContain("assetmason/");
+    const checkpoint = JSON.parse((await runCommand(["checkpoint", "--root", root, "--run", run.run_id])).text);
+    expect(checkpoint.run_id).toBe(run.run_id);
+    const resumed = JSON.parse((await runCommand(["resume", "--root", root, "--run", run.run_id])).text);
+    expect(resumed.state).toBe("running");
+  });
+
+  it("reports adapter capability truth without claiming unsupported lifecycle semantics", async () => {
+    const result = await runCommand(["adapter", "--with", "codex", "--format", "json"]);
+    const capability = JSON.parse(result.text);
+    expect(result.code).toBe(0);
+    expect(capability.kind).toBe("worker-capability");
+    expect(capability.adapter).toBe("codex");
+    expect(["supported", "access_denied", "not_installed", "unknown"]).toContain(capability.launch);
+    if (capability.launch !== "supported") expect(capability.unknowns.length).toBeGreaterThan(0);
+  });
 });

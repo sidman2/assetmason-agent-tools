@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildBeforeBuildPacket,
+  buildPlanDelta,
+  classifyPlanDeltaStaleness,
   buildResourceDiff,
   buildResourceInventory,
   buildResourceLock,
@@ -54,6 +56,55 @@ describe("agent-resource-plan", () => {
     expect(plan.kind).toBe("resource-plan");
     expect(lock.kind).toBe("resource-lock");
     expect(lock.planDigest).toBe(plan.digest);
+    expect(lock.freshness).toBe("fresh");
+    expect(lock.expiryState).toBe("active");
+    expect(lock.planDelta?.kind).toBe("plan-delta");
+  });
+
+  it("builds deterministic plan deltas for material and non-material changes", () => {
+    const previousPlan = buildResourcePlan("auth-redirect-bug");
+    const currentPlan = buildResourcePlan("auth-redirect-bug");
+    const sameDelta = buildPlanDelta({ previousPlan, currentPlan, statuses: [], reasons: [], changedFields: [] });
+    const changedDelta = buildPlanDelta({
+      previousPlan,
+      currentPlan: { ...currentPlan, digest: "different" },
+      statuses: ["STALE_EVIDENCE", "STALE_BASE"],
+      reasons: ["evidence changed", "base changed"],
+      changedFields: ["evidence", "base"],
+      observedRevision: "HEAD",
+      sourceRevision: "base-sha"
+    });
+
+    expect(sameDelta.material).toBe(false);
+    expect(sameDelta.statuses).toEqual([]);
+    expect(changedDelta.material).toBe(true);
+    expect(changedDelta.statuses).toEqual(["STALE_BASE", "STALE_EVIDENCE"]);
+    expect(changedDelta.changedFields).toEqual(["base", "evidence"]);
+    expect(changedDelta.digest).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("classifies stale plan deltas deterministically", () => {
+    const previousPlan = buildResourcePlan("auth-redirect-bug");
+    const currentPlan = { ...previousPlan, digest: "current" };
+    expect(classifyPlanDeltaStaleness({
+      sourceRevision: "base-a",
+      observedRevision: "base-b",
+      previousPlan,
+      currentPlan,
+      acceptanceChanged: true,
+      authorityChanged: true,
+      capabilityChanged: true,
+      evidenceChanged: true,
+      decisionChanged: true
+    })).toEqual([
+      "STALE_ACCEPTANCE",
+      "STALE_AUTHORITY",
+      "STALE_BASE",
+      "STALE_CAPABILITY",
+      "STALE_DECISION",
+      "STALE_EVIDENCE",
+      "STALE_SOURCE"
+    ]);
   });
 
   it("marks an explicit diff change", () => {
