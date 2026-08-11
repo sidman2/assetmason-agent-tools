@@ -8,6 +8,8 @@ import type {
   ResourceDiff,
   ResourceDiffState,
   ResourceInventory,
+  PlanDelta,
+  PlanDeltaStatus,
   ResourceLock,
   ResourcePlan,
   ResourceSelectionPolicyEnvelope,
@@ -94,7 +96,64 @@ export function buildResourcePlan(scenario: string): ResourcePlan {
   return { ...plan, digest: computeResourceArtifactDigest({ ...plan, digest: undefined }) };
 }
 
+function buildPlanDeltaDigest(delta: Omit<PlanDelta, "digest">): string {
+  return computeResourceArtifactDigest(delta);
+}
+
+export function buildPlanDelta(input: {
+  previousPlan?: ResourcePlan;
+  currentPlan: ResourcePlan;
+  observedRevision?: string;
+  sourceRevision?: string;
+  statuses?: PlanDeltaStatus[];
+  reasons?: string[];
+  changedFields?: string[];
+}): PlanDelta {
+  const previousPlanDigest = input.previousPlan?.digest;
+  const currentPlanDigest = input.currentPlan.digest;
+  const statuses = [...new Set(input.statuses ?? [])].sort();
+  const material = statuses.length > 0 || previousPlanDigest !== undefined && previousPlanDigest !== currentPlanDigest;
+  const delta: PlanDelta = {
+    kind: "plan-delta",
+    planDigest: currentPlanDigest,
+    previousPlanDigest,
+    currentPlanDigest,
+    material,
+    statuses,
+    reasons: [...new Set(input.reasons ?? [])].sort(),
+    changedFields: [...new Set(input.changedFields ?? [])].sort(),
+    observedRevision: input.observedRevision,
+    sourceRevision: input.sourceRevision,
+    digest: ""
+  };
+  const { digest: _digest, ...digestInput } = delta;
+  return { ...delta, digest: buildPlanDeltaDigest(digestInput) };
+}
+
+export function classifyPlanDeltaStaleness(input: {
+  sourceRevision?: string;
+  observedRevision?: string;
+  previousPlan?: ResourcePlan;
+  currentPlan: ResourcePlan;
+  acceptanceChanged?: boolean;
+  authorityChanged?: boolean;
+  capabilityChanged?: boolean;
+  evidenceChanged?: boolean;
+  decisionChanged?: boolean;
+}): PlanDeltaStatus[] {
+  const statuses = new Set<PlanDeltaStatus>();
+  if (input.sourceRevision && input.observedRevision && input.sourceRevision !== input.observedRevision) statuses.add("STALE_SOURCE");
+  if (input.previousPlan && input.previousPlan.digest !== input.currentPlan.digest) statuses.add("STALE_BASE");
+  if (input.decisionChanged) statuses.add("STALE_DECISION");
+  if (input.acceptanceChanged) statuses.add("STALE_ACCEPTANCE");
+  if (input.authorityChanged) statuses.add("STALE_AUTHORITY");
+  if (input.capabilityChanged) statuses.add("STALE_CAPABILITY");
+  if (input.evidenceChanged) statuses.add("STALE_EVIDENCE");
+  return [...statuses].sort();
+}
+
 export function buildResourceLock(plan: ResourcePlan, inventory: ResourceInventory): ResourceLock {
+  const planDelta = buildPlanDelta({ currentPlan: plan, sourceRevision: "unknown" });
   const lock: ResourceLock = {
     kind: "resource-lock",
     scenario: plan.scenario,
@@ -102,6 +161,9 @@ export function buildResourceLock(plan: ResourcePlan, inventory: ResourceInvento
     planDigest: plan.digest,
     inventoryDigest: inventory.digest,
     resourcePlanDigest: plan.digest,
+    planDelta,
+    freshness: "fresh",
+    expiryState: "active",
     resources: inventory.files.map((file) => file.path),
     sources: plan.sources,
     digest: ""

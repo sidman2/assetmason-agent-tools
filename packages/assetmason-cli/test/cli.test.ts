@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { main } from "../src/main.js";
@@ -141,4 +141,141 @@ describe("assetmason-cli", () => {
     expect(runPlan.resourcePlan.kind).toBe("resource-plan");
     expect(runPlan.selectionSet.kind).toBe("minimum-approved-resource-set");
   }, 20000);
+
+  it("runs the public transaction workflow end to end on a fixture repo", async () => {
+    const fixtureRoot = join(process.cwd(), "packages", "assetmason-cli", "test", "fixtures", "repo-a");
+    const dir = mkdtempSync(join(tmpdir(), "assetmason-workflow-"));
+    const doctorPath = join(dir, "doctor.json");
+    const contextPath = join(dir, "context.json");
+    const planPath = join(dir, "plan.json");
+    const lockPath = join(dir, "lock.json");
+    const receiptPath = join(dir, "receipt.json");
+    const importPath = join(dir, "import.json");
+    const receiptWithEvidencePath = join(dir, "receipt-with-evidence.json");
+    const reconciliationPath = join(dir, "reconciliation.json");
+    const handoffPath = join(dir, "handoff.json");
+
+    const doctor = await runCommand(["doctor", "--root", fixtureRoot, "--format", "json"]);
+    const context = await runCommand(["context", "--root", fixtureRoot, "--task", "upgrade dependency safely", "--format", "json"]);
+    const plan = await runCommand(["check", "--root", fixtureRoot, "--task", "upgrade dependency safely", "--format", "json"]);
+    writeFileSync(doctorPath, doctor.text, "utf8");
+    writeFileSync(contextPath, context.text, "utf8");
+    writeFileSync(planPath, plan.text, "utf8");
+
+    const lock = await runCommand(["lock", "--from-plan", planPath, "--out", lockPath, "--format", "json"]);
+    const receipt = await runCommand(["receipt-init", "--plan", planPath, "--lock", lockPath, "--out", receiptPath, "--format", "json"]);
+
+    writeFileSync(importPath, JSON.stringify({
+      schema_version: "0.1.0",
+      import_id: "import-1",
+      receipt_id: "plan-receipt",
+      imported_at: "2026-08-06T00:00:00.000Z",
+      source: "explicit-cli-input",
+      evidence_refs: ["tests"],
+      command_records: ["npm test"],
+      check_records: ["typecheck"],
+      artifact_refs: ["plan.json", "lock.json"],
+      external_effects: [],
+      observations: ["fixture workflow completed"],
+      warnings: [],
+      unknowns: [],
+      contradicted_evidence: [],
+      missing_evidence: [],
+      local_only: true
+    }, null, 2), "utf8");
+
+    const receiptWithEvidence = await runCommand(["evidence-import", "--receipt", receiptPath, "--import", importPath, "--out", receiptWithEvidencePath, "--format", "json"]);
+    const reconciliation = await runCommand(["reconcile", "--plan", planPath, "--lock", lockPath, "--receipt", receiptWithEvidencePath, "--out", reconciliationPath, "--format", "json"]);
+    const handoff = await runCommand(["handoff", "--plan", planPath, "--lock", lockPath, "--receipt", receiptWithEvidencePath, "--out", handoffPath, "--format", "json"]);
+
+    const doctorArtifact = JSON.parse(readFileSync(doctorPath, "utf8"));
+    const contextArtifact = JSON.parse(readFileSync(contextPath, "utf8"));
+    const planArtifact = JSON.parse(readFileSync(planPath, "utf8"));
+    const lockArtifact = JSON.parse(readFileSync(lockPath, "utf8"));
+    const receiptArtifact = JSON.parse(readFileSync(receiptWithEvidencePath, "utf8"));
+    const reconciliationArtifact = JSON.parse(readFileSync(reconciliationPath, "utf8"));
+    const handoffArtifact = JSON.parse(readFileSync(handoffPath, "utf8"));
+
+    expect(doctor.code).toBe(0);
+    expect(context.code).toBe(0);
+    expect(plan.code).toBe(0);
+    expect(lock.code).toBe(0);
+    expect(receipt.code).toBe(0);
+    expect(receiptWithEvidence.code).toBe(0);
+    expect(reconciliation.code).toBe(0);
+    expect(handoff.code).toBe(0);
+    expect(doctorArtifact.kind).toBe("doctor-report");
+    expect(contextArtifact.kind).toBe("context-pack");
+    expect(planArtifact.kind).toBe("run-plan");
+    expect(lockArtifact.kind).toBe("resource-lock");
+    expect(receiptArtifact.evidence_imports?.length).toBe(1);
+    expect(reconciliationArtifact.schema_version).toBe("0.1.0");
+    expect(handoffArtifact.schema_version).toBe("0.1.0");
+  }, 40000);
+
+  it("runs a CLI artifact corpus for the named receipt variants", async () => {
+    const fixtureRoot = join(process.cwd(), "packages", "assetmason-cli", "test", "fixtures", "repo-a");
+    const variants = [
+      { import_id: "ready", variant: "ready", evidenceBucket: "ready", waitFragment: undefined },
+      { import_id: "missing", variant: "missing_evidence", evidenceBucket: "missing", waitFragment: "missing evidence" },
+      { import_id: "contradiction", variant: "contradiction", evidenceBucket: "contradicted", waitFragment: "contradicted evidence" },
+      { import_id: "stale", variant: "stale_evidence", evidenceBucket: "stale", waitFragment: undefined },
+      { import_id: "external", variant: "external_wait", evidenceBucket: "external_wait", waitFragment: "external wait" },
+      { import_id: "delta", variant: "conditional", evidenceBucket: "conditional", waitFragment: undefined }
+    ] as const;
+
+    for (const variant of variants) {
+      const dir = mkdtempSync(join(tmpdir(), `assetmason-variant-${variant.import_id}-`));
+      const planPath = join(dir, "plan.json");
+      const lockPath = join(dir, "lock.json");
+      const receiptPath = join(dir, "receipt.json");
+      const importPath = join(dir, "import.json");
+      const receiptWithEvidencePath = join(dir, "receipt-with-evidence.json");
+      const reconciliationPath = join(dir, "reconciliation.json");
+      const handoffPath = join(dir, "handoff.json");
+
+      const plan = await runCommand(["check", "--root", fixtureRoot, "--task", `variant ${variant.import_id}`, "--format", "json"]);
+      writeFileSync(planPath, plan.text, "utf8");
+      const lock = await runCommand(["lock", "--from-plan", planPath, "--out", lockPath, "--format", "json"]);
+      const receipt = await runCommand(["receipt-init", "--plan", planPath, "--lock", lockPath, "--out", receiptPath, "--format", "json"]);
+
+      writeFileSync(importPath, JSON.stringify({
+        schema_version: "0.1.0",
+        import_id: variant.import_id,
+        receipt_id: "plan-receipt",
+        imported_at: "2026-08-06T00:00:00.000Z",
+        source: "explicit-cli-input",
+        evidence_refs: [],
+        command_records: [],
+        check_records: [],
+        artifact_refs: [],
+        external_effects: [],
+        observations: [],
+        warnings: [],
+        unknowns: [],
+        contradicted_evidence: [],
+        missing_evidence: [],
+        variant: variant.variant,
+        local_only: true
+      }, null, 2), "utf8");
+
+      const receiptWithEvidence = await runCommand(["evidence-import", "--receipt", receiptPath, "--import", importPath, "--out", receiptWithEvidencePath, "--format", "json"]);
+      const reconciliation = await runCommand(["reconcile", "--plan", planPath, "--lock", lockPath, "--receipt", receiptWithEvidencePath, "--out", reconciliationPath, "--format", "json"]);
+      const handoff = await runCommand(["handoff", "--plan", planPath, "--lock", lockPath, "--receipt", receiptWithEvidencePath, "--out", handoffPath, "--format", "json"]);
+
+      const receiptArtifact = JSON.parse(readFileSync(receiptWithEvidencePath, "utf8"));
+      const handoffArtifact = JSON.parse(readFileSync(handoffPath, "utf8"));
+
+      expect(plan.code).toBe(0);
+      expect(lock.code).toBe(0);
+      expect(receipt.code).toBe(0);
+      expect(receiptWithEvidence.code).toBe(0);
+      expect(reconciliation.code).toBe(0);
+      expect(handoff.code).toBe(0);
+      expect(receiptArtifact.evidence_state?.[variant.evidenceBucket]).toContain(variant.import_id);
+      if (variant.waitFragment) {
+        expect(handoffArtifact.waits.some((wait: string) => wait.includes(variant.waitFragment as string))).toBe(true);
+      }
+    }
+  }, 60000);
 });

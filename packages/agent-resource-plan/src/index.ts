@@ -11,6 +11,8 @@ export type {
   ResourceDiff,
   ResourceDiffState,
   ResourceInventory,
+  PlanDelta,
+  PlanDeltaStatus,
   ResourceLock,
   ResourcePlan,
   SelectionCandidate,
@@ -33,6 +35,8 @@ export type {
 export {
   buildBeforeBuildPacket,
   buildWorkOrder,
+  buildPlanDelta,
+  classifyPlanDeltaStaleness,
   buildResourceDiff,
   buildResourceInventory,
   buildResourceLock,

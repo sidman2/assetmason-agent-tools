@@ -12,7 +12,7 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
 | `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
-| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `doctor`, `context`, `explain-context`, `check`, `select`, and validation. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
+| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `doctor`, `context`, `explain-context`, `check`, `select`, `lock`, `receipt-init`, `evidence-import`, `reconcile`, `handoff`, and validation. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
 | `agent-execution-profile` | Public-safe execution-profile contracts, host exports, locks, diffs, and receipt validation. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
 
 ## Quickstart
@@ -59,6 +59,11 @@ npx -y assetmason-cli@preview check --root . --task "update the CLI" --format js
 npx -y assetmason-cli@preview select --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview profile --scenario auth-redirect-bug --format json
 npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
+npx -y assetmason-cli@preview lock --from-plan ./plan.json --format json
+npx -y assetmason-cli@preview receipt-init --plan ./plan.json --lock ./lock.json --format json
+npx -y assetmason-cli@preview evidence-import --receipt ./receipt.json --import ./import.json --format json
+npx -y assetmason-cli@preview reconcile --plan ./plan.json --lock ./lock.json --receipt ./receipt-with-evidence.json --format json
+npx -y assetmason-cli@preview handoff --plan ./plan.json --lock ./lock.json --receipt ./receipt-with-evidence.json --format json
 npx -y assetmason-cli@preview validate --file ./example.json --kind execution-profile
 npx -y assetmason-cli@preview validate --file ./work-order.json --kind work-order
 npx -y assetmason-cli@preview scan --root . --format markdown

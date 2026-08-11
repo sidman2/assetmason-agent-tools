@@ -208,6 +208,33 @@ export type PlanActualDiff = {
   rule_codes: string[];
   rule_explanations: string[];
   source_artifact_refs: string[];
+  evidence_state: {
+    required: string[];
+    observed: string[];
+    missing: string[];
+    contradicted: string[];
+    unknown: string[];
+  };
+};
+
+export type EvidenceImport = {
+  schema_version: "0.1.0";
+  import_id: string;
+  receipt_id: string;
+  imported_at: string;
+  source: string;
+  evidence_refs: string[];
+  command_records: string[];
+  check_records: string[];
+  artifact_refs: string[];
+  external_effects: string[];
+  observations: string[];
+  warnings: string[];
+  unknowns: string[];
+  contradicted_evidence: string[];
+  missing_evidence: string[];
+  variant?: "reuse_only" | "ready" | "conditional" | "blocked" | "human" | "unknown" | "stale_base" | "stale_evidence" | "material_delta" | "missing_evidence" | "contradiction" | "partial_checks" | "external_effect" | "external_wait";
+  local_only: true;
 };
 
 export type HostExportArtifact = {
@@ -227,10 +254,26 @@ export type OutcomeReceipt = {
   receipt_id: string;
   profile_id: string;
   profile_digest: string;
+  plan_ref?: string;
+  plan_digest?: string;
+  lock_ref?: string;
+  lock_digest?: string;
   actual_host?: string;
   resolved_roles: string[];
   attempt_count?: number;
   verification_results: Array<{ gate: string; passed: boolean; notes?: string }>;
+  evidence_imports?: EvidenceImport[];
+  evidence_state?: {
+    ready: string[];
+    conditional: string[];
+    blocked: string[];
+    human: string[];
+    unknown: string[];
+    stale: string[];
+    missing: string[];
+    contradicted: string[];
+    external_wait: string[];
+  };
   user_accepted?: boolean;
   reverted?: boolean;
   cost?: string;
@@ -238,5 +281,35 @@ export type OutcomeReceipt = {
   warnings: string[];
   unknowns: string[];
   recorded_at?: string;
+  local_only: true;
+};
+
+export type HandoffPack = {
+  schema_version: "0.1.0";
+  handoff_id: string;
+  generated_at: string;
+  source_id: string;
+  task_text: string;
+  branch?: string;
+  worktree?: string;
+  base_ref?: string;
+  head_ref?: string;
+  plan_ref?: string;
+  plan_digest?: string;
+  lock_ref?: string;
+  lock_digest?: string;
+  receipt_ref?: string;
+  receipt_digest?: string;
+  changed_paths: string[];
+  untracked_paths: string[];
+  checks: string[];
+  decisions: string[];
+  deviations: string[];
+  external_effects: string[];
+  waits: string[];
+  remaining_acceptance: string[];
+  failed_remedies: string[];
+  resume_command: string;
+  references: string[];
   local_only: true;
 };

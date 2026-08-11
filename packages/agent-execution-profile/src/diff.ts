@@ -25,6 +25,16 @@ function sortAndDedupe(values: string[]) {
   return [...new Set(values)].sort();
 }
 
+function evidenceState(required: string[], observed: string[], missing: string[], contradicted: string[], unknown: string[]) {
+  return {
+    required: sortAndDedupe(required),
+    observed: sortAndDedupe(observed),
+    missing: sortAndDedupe(missing),
+    contradicted: sortAndDedupe(contradicted),
+    unknown: sortAndDedupe(unknown)
+  };
+}
+
 function truthyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
@@ -166,6 +176,7 @@ export function buildPlanActualDiff(input: BuildPlanActualDiffInput): PlanActual
     completion_claim_state: completionClaimState,
     rule_codes: sortAndDedupe(rule_codes),
     rule_explanations: sortAndDedupe(rule_explanations),
-    source_artifact_refs: sourceArtifactRefs
+    source_artifact_refs: sourceArtifactRefs,
+    evidence_state: evidenceState(requiredEvidenceRefs, observedEvidenceRefs, missingEvidence, contradictedEvidence, explicitUnknowns)
   };
 }

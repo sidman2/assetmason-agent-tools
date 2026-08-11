@@ -53,8 +53,42 @@ export function validateHostExport(exported: unknown) {
   return isObject(exported) && exported.schema_version === "0.1.0" && exported.runtime_advisory_only === true && typeof exported.generated_at === "string" && typeof exported.profile_id === "string" && typeof exported.profile_digest === "string" && (exported.host === "generic" || exported.host === "codex" || exported.host === "claude-code") && (exported.format === "markdown" || exported.format === "json") && typeof exported.content === "string" && isStringArray(exported.warnings);
 }
 
+function validateEvidenceImport(value: unknown) {
+  return isObject(value)
+    && value.schema_version === "0.1.0"
+    && typeof value.import_id === "string"
+    && typeof value.receipt_id === "string"
+    && typeof value.imported_at === "string"
+    && typeof value.source === "string"
+    && isStringArray(value.evidence_refs)
+    && isStringArray(value.command_records)
+    && isStringArray(value.check_records)
+    && isStringArray(value.artifact_refs)
+    && isStringArray(value.external_effects)
+    && isStringArray(value.observations)
+    && isStringArray(value.warnings)
+    && isStringArray(value.unknowns)
+    && isStringArray(value.contradicted_evidence)
+    && isStringArray(value.missing_evidence)
+    && value.local_only === true;
+}
+
 export function validateOutcomeReceipt(receipt: unknown) {
-  return isObject(receipt) && receipt.schema_version === "0.1.0" && receipt.local_only === true && typeof receipt.receipt_id === "string" && typeof receipt.profile_id === "string" && typeof receipt.profile_digest === "string" && isStringArray(receipt.resolved_roles) && isArray(receipt.verification_results) && isStringArray(receipt.warnings) && isStringArray(receipt.unknowns);
+  return isObject(receipt)
+    && receipt.schema_version === "0.1.0"
+    && receipt.local_only === true
+    && typeof receipt.receipt_id === "string"
+    && typeof receipt.profile_id === "string"
+    && typeof receipt.profile_digest === "string"
+    && (receipt.plan_ref === undefined || typeof receipt.plan_ref === "string")
+    && (receipt.plan_digest === undefined || typeof receipt.plan_digest === "string")
+    && (receipt.lock_ref === undefined || typeof receipt.lock_ref === "string")
+    && (receipt.lock_digest === undefined || typeof receipt.lock_digest === "string")
+    && isStringArray(receipt.resolved_roles)
+    && isArray(receipt.verification_results)
+    && (receipt.evidence_imports === undefined || (isArray(receipt.evidence_imports) && receipt.evidence_imports.every(validateEvidenceImport)))
+    && isStringArray(receipt.warnings)
+    && isStringArray(receipt.unknowns);
 }
 
 export function validatePlanActualDiff(diff: unknown) {
@@ -79,5 +113,11 @@ export function validatePlanActualDiff(diff: unknown) {
     && ["claimed", "unclaimed", "unknown"].includes(String(diff.completion_claim_state))
     && isStringArray(diff.rule_codes)
     && isStringArray(diff.rule_explanations)
-    && isStringArray(diff.source_artifact_refs);
+    && isStringArray(diff.source_artifact_refs)
+    && isObject(diff.evidence_state)
+    && isStringArray(diff.evidence_state.required)
+    && isStringArray(diff.evidence_state.observed)
+    && isStringArray(diff.evidence_state.missing)
+    && isStringArray(diff.evidence_state.contradicted)
+    && isStringArray(diff.evidence_state.unknown);
 }

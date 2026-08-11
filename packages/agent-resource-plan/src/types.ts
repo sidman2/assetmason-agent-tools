@@ -253,6 +253,29 @@ export type ResourcePlan = {
   digest: string;
 };
 
+export type PlanDeltaStatus =
+  | "STALE_SOURCE"
+  | "STALE_BASE"
+  | "STALE_DECISION"
+  | "STALE_ACCEPTANCE"
+  | "STALE_AUTHORITY"
+  | "STALE_CAPABILITY"
+  | "STALE_EVIDENCE";
+
+export type PlanDelta = {
+  kind: "plan-delta";
+  planDigest: string;
+  previousPlanDigest?: string;
+  currentPlanDigest: string;
+  material: boolean;
+  statuses: PlanDeltaStatus[];
+  reasons: string[];
+  changedFields: string[];
+  observedRevision?: string;
+  sourceRevision?: string;
+  digest: string;
+};
+
 export type ResourceLock = {
   kind: "resource-lock";
   scenario: string;
@@ -260,6 +283,9 @@ export type ResourceLock = {
   planDigest: string;
   inventoryDigest: string;
   resourcePlanDigest: string;
+  planDelta?: PlanDelta;
+  freshness: "fresh" | "stale" | "unknown";
+  expiryState: "active" | "superseded" | "expired";
   resources: string[];
   sources: ResourceSourceReference[];
   digest: string;

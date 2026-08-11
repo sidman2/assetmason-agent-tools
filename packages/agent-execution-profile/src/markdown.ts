@@ -1,5 +1,5 @@
 import { canonicalize } from "./stable-json.js";
-import type { ExecutionProfile, ExecutionProfileDiff, ExecutionProfileLock, OutcomeReceipt, PlanActualDiff } from "./types.js";
+import type { ExecutionProfile, ExecutionProfileDiff, ExecutionProfileLock, HandoffPack, OutcomeReceipt, PlanActualDiff } from "./types.js";
 
 function lines(title: string, body: string[]) {
   return [`# ${title}`, "", ...body].join("\n") + "\n";
@@ -36,7 +36,23 @@ export function renderClaudeCodeHostExportMarkdown(profile: ExecutionProfile) {
 }
 
 export function renderOutcomeReceiptMarkdown(receipt: OutcomeReceipt) {
-  return lines("Outcome Receipt", [`- receipt_id: ${receipt.receipt_id}`, `- resolved_roles: ${receipt.resolved_roles.join(", ")}`]);
+  return lines("Outcome Receipt", [
+    `- receipt_id: ${receipt.receipt_id}`,
+    `- profile_id: ${receipt.profile_id}`,
+    `- resolved_roles: ${receipt.resolved_roles.join(", ")}`,
+    `- evidence_imports: ${receipt.evidence_imports?.length ?? 0}`
+  ]);
+}
+
+export function renderHandoffPackMarkdown(handoff: HandoffPack) {
+  return lines("Handoff Pack", [
+    `- handoff_id: ${handoff.handoff_id}`,
+    `- source_id: ${handoff.source_id}`,
+    `- task_text: ${handoff.task_text}`,
+    `- checks: ${handoff.checks.join(", ") || "none"}`,
+    `- remaining_acceptance: ${handoff.remaining_acceptance.join(", ") || "none"}`,
+    `- resume_command: ${handoff.resume_command}`
+  ]);
 }
 
 export function renderPlanActualDiffMarkdown(diff: PlanActualDiff) {
