@@ -228,6 +228,8 @@ export async function runCommand(argv: string[]) {
     const receiptPath = getOption(rest, "--receipt");
     const lockPath = getOption(rest, "--lock");
     const outPath = getOption(rest, "--out");
+    const runId = getOption(rest, "--run");
+    if (runId) return loadRuntimeHandoff(root, runId, outPath, outputFormat, executionProfile);
     if (!planPath || !receiptPath) return error("handoff requires --plan and --receipt");
     return loadAndBuildHandoff(planPath, lockPath, receiptPath, outPath, outputFormat, executionProfile);
   }
@@ -263,7 +265,8 @@ function helpText(): string {
     "assetmason resume --root <dir> --run <run-id> --format json|markdown",
     "assetmason evidence-import --receipt <file> --import <file> [--out <file>] --format json|markdown",
     "assetmason validate --file <file> [--kind resource-plan|resource-lock|selection-policy-envelope|minimum-approved-resource-set|minimum-toolset-evaluation|work-order|execution-profile|execution-profile-lock|execution-profile-diff|host-export|outcome-receipt]",
-    "assetmason handoff --plan <file> --receipt <file> [--lock <file>] [--out <file>]"
+    "assetmason handoff --plan <file> --receipt <file> [--lock <file>] [--out <file>]",
+    "assetmason handoff --root <dir> --run <run-id> --format json|markdown [--out <file>]"
   ].join("\n") + "\n";
 }
 
@@ -549,6 +552,32 @@ async function loadRuntimeReceipt(root: string, runId: string, outPath: string |
   if (outPath) await safeWrite(outPath, text);
   return { code: 0, text };
 }
+
+async function loadRuntimeHandoff(root: string, runId: string, outPath: string | undefined, format: OutputFormat, executionProfile: any) {
+  const run = await loadRuntimeRun(root, runId);
+  const changed = safeGit(["status", "--porcelain"], resolve(run.worktree))?.split("\n").filter(Boolean).map((line) => line.slice(3).trim()).filter(Boolean) ?? [];
+  const handoff = executionProfile.buildHandoffPack({
+    source_id: run.run_id,
+    task_text: run.task_id,
+    branch: run.branch,
+    worktree: run.worktree,
+    base_ref: run.base_revision,
+    head_ref: safeGit(["rev-parse", "HEAD"], resolve(run.worktree)),
+    changed_paths: changed,
+    checks: [`runtime state: ${run.state}`],
+    decisions: [`adapter: ${run.adapter}`],
+    deviations: run.state === "completed" ? [] : ["worker outcome remains unobserved"],
+    waits: run.state === "completed" ? [] : ["worker outcome observation"],
+    remaining_acceptance: run.state === "completed" ? [] : ["observe worker outcome", "compile final receipt"],
+    resume_command: run.next_safe_resume_action,
+    references: [runPathForHandoff(root, run.run_id)],
+  });
+  const text = format === "markdown" ? executionProfile.renderHandoffPackMarkdown(handoff) : JSON.stringify(handoff, null, 2) + "\n";
+  if (outPath) await safeWrite(outPath, text);
+  return { code: 0, text };
+}
+
+function runPathForHandoff(root: string, runId: string) { return join(root, ".assetmason", "runtime", `${runId}.run.json`); }
 
 async function loadAndImportEvidence(receiptPath: string, importPath: string, outPath: string | undefined, format: OutputFormat, executionProfile: any) {
   const receipt = JSON.parse(await readFile(receiptPath, "utf8"));

@@ -305,6 +305,10 @@ describe("assetmason-cli", () => {
     expect(receipt.kind).toBe("outcome-receipt");
     expect(receipt.run_id).toBe(run.run_id);
     expect(receipt.provenance.generator).toBe("assetmason-cli");
+    const handoff = JSON.parse((await runCommand(["handoff", "--root", root, "--run", run.run_id])).text);
+    expect(handoff.local_only).toBe(true);
+    expect(handoff.source_id).toBe(run.run_id);
+    expect(handoff.resume_command).toContain("assetmason resume");
   });
 
   it("binds isolated runs to a retained project-owned worktree", async () => {
