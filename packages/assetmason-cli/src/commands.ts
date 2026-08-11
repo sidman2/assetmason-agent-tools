@@ -211,7 +211,7 @@ export async function runCommand(argv: string[]) {
   if (command === "pause" || command === "stop" || command === "block") {
     const runId = getOption(rest, "--run");
     if (!runId) return error(`${command} requires --run`);
-    const state = command === "pause" ? "paused" : command === "block" ? "blocked" : "completed";
+    const state = command === "pause" ? "paused" : command === "block" ? "blocked" : "stopped";
     return render(await transitionRun(root, runId, state, `run.${command}d`), outputFormat, renderJson, renderJson);
   }
   if (command === "resume") {

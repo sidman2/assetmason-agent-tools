@@ -312,6 +312,10 @@ describe("assetmason-cli", () => {
     expect(handoff.local_only).toBe(true);
     expect(handoff.source_id).toBe(run.run_id);
     expect(handoff.resume_command).toContain("assetmason resume");
+    const stopped = JSON.parse((await runCommand(["stop", "--root", root, "--run", run.run_id])).text);
+    expect(stopped.state).toBe("stopped");
+    const stoppedReceipt = JSON.parse((await runCommand(["receipt", "--root", root, "--run", run.run_id])).text);
+    expect(stoppedReceipt.user_accepted).toBe(false);
   });
 
   it("binds isolated runs to a retained project-owned worktree", async () => {

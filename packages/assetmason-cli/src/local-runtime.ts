@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { execFile, execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 
-export type RuntimeState = "created" | "running" | "paused" | "blocked" | "completed" | "failed";
+export type RuntimeState = "created" | "running" | "paused" | "blocked" | "stopped" | "completed" | "failed";
 
 export type RunRecord = {
   schema_version: "0.1.0";
