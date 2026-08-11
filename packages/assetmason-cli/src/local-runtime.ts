@@ -74,17 +74,28 @@ async function loadRun(root: string, runId: string): Promise<RunRecord> {
   return JSON.parse(await readFile(runPath(root, runId), "utf8")) as RunRecord;
 }
 
-export async function createRun(input: { root: string; task: string; adapter?: string; command?: string[] }) {
+function prepareIsolatedWorktree(root: string, runId: string) {
+  const gitRoot = git(root, ["rev-parse", "--show-toplevel"]);
+  if (gitRoot === "unknown") return { worktree: root, branch: git(root, ["branch", "--show-current"]), base: "unknown" };
+  if (git(root, ["status", "--porcelain"]) !== "") throw new Error("isolated run refused: project base is dirty");
+  const base = git(root, ["rev-parse", "HEAD"]);
+  const branch = `assetmason/${runId}`;
+  const worktree = join(gitRoot, ".assetmason", "worktrees", runId);
+  execFileSync("git", ["worktree", "add", "-b", branch, worktree, base], { cwd: gitRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  return { worktree, branch, base };
+}
+
+export async function createRun(input: { root: string; task: string; adapter?: string; command?: string[]; isolated?: boolean }) {
   const root = resolve(input.root);
   const task = input.task;
   const now = new Date().toISOString();
   const task_id = `task-${digest({ root, task })}`;
   const run_id = `run-${randomUUID()}`;
   const workspace_id = `workspace-${digest(root)}`;
-  const branch = git(root, ["branch", "--show-current"]);
+  const workspace = input.isolated ? prepareIsolatedWorktree(root, run_id) : { worktree: root, branch: git(root, ["branch", "--show-current"]), base: git(root, ["rev-parse", "HEAD"]) };
   const run: RunRecord = {
     schema_version: "0.1.0", kind: "run-record", task_id, run_id, workspace_id,
-    project_root: root, worktree: root, branch, base_revision: git(root, ["rev-parse", "HEAD"]),
+    project_root: root, worktree: workspace.worktree, branch: workspace.branch, base_revision: workspace.base,
     state: "created", adapter: input.adapter ?? "generic-command", created_at: now, updated_at: now,
     next_safe_resume_action: "assetmason resume --root . --run <run-id>", event_offset: 0, command: input.command
   };

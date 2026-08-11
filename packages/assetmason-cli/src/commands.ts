@@ -176,7 +176,7 @@ export async function runCommand(argv: string[]) {
     return loadAndInitReceipt(planPath, lockPath, outPath, outputFormat, executionProfile);
   }
   if (command === "run") {
-    const runtime = await createRun({ root, task, adapter: getOption(rest, "--with"), command: rest });
+    const runtime = await createRun({ root, task, adapter: getOption(rest, "--with"), command: rest, isolated: rest.includes("--isolated") });
     return render(runtime, outputFormat, renderJson, renderJson);
   }
   if (command === "status") {
@@ -242,7 +242,7 @@ function helpText(): string {
     "assetmason diff --before <file> --after <file> --format json|markdown",
     "assetmason reconcile --plan <file> --receipt <file> [--lock <file>] --format json|markdown [--out <file>]",
     "assetmason receipt-init --plan <file> [--lock <file>] --format json|markdown [--out <file>]",
-    "assetmason run --root <dir> --task <text> [--with <adapter>] --format json|markdown",
+    "assetmason run --root <dir> --task <text> [--with <adapter>] [--isolated] --format json|markdown",
     "assetmason status --root <dir> --run <run-id> --format json|markdown",
     "assetmason checkpoint --root <dir> --run <run-id> [--acceptance <item> ...] --format json|markdown",
     "assetmason pause|stop|block --root <dir> --run <run-id> --format json|markdown",

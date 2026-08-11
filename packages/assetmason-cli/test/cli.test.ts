@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 import { main } from "../src/main.js";
 import { runCommand } from "../src/commands.js";
 import { buildExecutionProfile } from "agent-execution-profile";
@@ -300,5 +301,19 @@ describe("assetmason-cli", () => {
     expect(resumed.event_offset).toBeGreaterThan(run.event_offset);
     const status = JSON.parse((await runCommand(["status", "--root", root, "--run", run.run_id])).text);
     expect(status.checkpoint_id).toBe(checkpoint.checkpoint_id);
+  });
+
+  it("binds isolated runs to a retained project-owned worktree", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-worktree-"));
+    execFileSync("git", ["init", "-q"], { cwd: root });
+    writeFileSync(join(root, "README.md"), "fixture\n", "utf8");
+    execFileSync("git", ["add", "README.md"], { cwd: root });
+    execFileSync("git", ["-c", "user.name=AssetMason Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"], { cwd: root });
+    const result = await runCommand(["run", "--root", root, "--task", "isolated task", "--isolated"]);
+    const run = JSON.parse(result.text);
+    expect(result.code).toBe(0);
+    expect(run.worktree).toContain(".assetmason");
+    expect(run.worktree).not.toBe(root);
+    expect(run.branch).toContain("assetmason/");
   });
 });
