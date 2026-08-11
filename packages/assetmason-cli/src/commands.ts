@@ -175,6 +175,13 @@ export async function runCommand(argv: string[]) {
     const executionProfile = await loadExecutionProfileModule();
     return loadAndInitReceipt(planPath, lockPath, outPath, outputFormat, executionProfile);
   }
+  if (command === "receipt") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("receipt requires --run");
+    const outPath = getOption(rest, "--out");
+    const executionProfile = await loadExecutionProfileModule();
+    return loadRuntimeReceipt(root, runId, outPath, outputFormat, executionProfile);
+  }
   if (command === "run") {
     const runtime = await createRun({ root, task, adapter: getOption(rest, "--with"), command: rest, isolated: rest.includes("--isolated") });
     return render(runtime, outputFormat, renderJson, renderJson);
@@ -242,6 +249,7 @@ function helpText(): string {
     "assetmason diff --before <file> --after <file> --format json|markdown",
     "assetmason reconcile --plan <file> --receipt <file> [--lock <file>] --format json|markdown [--out <file>]",
     "assetmason receipt-init --plan <file> [--lock <file>] --format json|markdown [--out <file>]",
+    "assetmason receipt --root <dir> --run <run-id> --format json|markdown [--out <file>]",
     "assetmason run --root <dir> --task <text> [--with <adapter>] [--isolated] --format json|markdown",
     "assetmason status --root <dir> --run <run-id> --format json|markdown",
     "assetmason checkpoint --root <dir> --run <run-id> [--acceptance <item> ...] --format json|markdown",
@@ -510,6 +518,28 @@ async function loadAndInitReceipt(planPath: string, lockPath: string | undefined
     unknowns: [lock ? "lock provided but not yet reconciled" : "lock not provided"]
   });
   const text = format === "markdown" ? executionProfile.renderOutcomeReceiptMarkdown(receipt) : JSON.stringify(receipt, null, 2) + "\n";
+  if (outPath) await safeWrite(outPath, text);
+  return { code: 0, text };
+}
+
+async function loadRuntimeReceipt(root: string, runId: string, outPath: string | undefined, format: OutputFormat, executionProfile: any) {
+  const run = await loadRuntimeRun(root, runId);
+  const actualRoot = resolve(run.worktree);
+  const changed = safeGit(["status", "--porcelain"], actualRoot)?.split("\n").filter(Boolean).map((line) => line.slice(3).trim()).filter(Boolean) ?? [];
+  const receipt = executionProfile.buildOutcomeReceipt({
+    receipt_id: `${run.run_id}-receipt`,
+    profile_id: run.adapter,
+    profile_digest: run.base_revision,
+    actual_host: run.adapter,
+    attempt_count: 1,
+    verification_results: [{ gate: "runtime.lifecycle", passed: run.state === "completed", notes: `Run is ${run.state}.` }],
+    user_accepted: run.state === "completed",
+    warnings: run.state === "completed" ? [] : ["Run is not terminally complete."],
+    unknowns: run.state === "completed" ? [] : ["worker outcome was not observed by the runtime"],
+    recorded_at: new Date().toISOString()
+  });
+  const enriched = { ...receipt, kind: "outcome-receipt", task_id: run.task_id, run_id: run.run_id, workspace_id: run.workspace_id, base_revision: run.base_revision, branch: run.branch, worktree: run.worktree, changed_paths: changed, next_action: run.next_safe_resume_action, provenance: { generator: "assetmason-cli", schema_version: "0.1.0", run_id: run.run_id } };
+  const text = format === "markdown" ? executionProfile.renderOutcomeReceiptMarkdown(enriched) : JSON.stringify(enriched, null, 2) + "\n";
   if (outPath) await safeWrite(outPath, text);
   return { code: 0, text };
 }
