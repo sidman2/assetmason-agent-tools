@@ -287,6 +287,9 @@ describe("assetmason-cli", () => {
     expect(runResult.code).toBe(0);
     expect(run.kind).toBe("run-record");
     expect(run.state).toBe("created");
+    const processResult = JSON.parse((await runCommand(["exec", "--root", root, "--run", run.run_id, "--command", process.execPath, "-e", "process.stdout.write('ok')"])).text);
+    expect(processResult.classification).toBe("completed");
+    expect(processResult.stdout).toBe("ok");
 
     const pausedResult = await runCommand(["pause", "--root", root, "--run", run.run_id]);
     expect(JSON.parse(pausedResult.text).state).toBe("paused");

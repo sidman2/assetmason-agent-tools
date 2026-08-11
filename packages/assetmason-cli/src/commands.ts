@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, transitionRun } from "./local-runtime.js";
+import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, runGenericCommand, transitionRun } from "./local-runtime.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -191,6 +191,13 @@ export async function runCommand(argv: string[]) {
     if (adapter !== "codex" && adapter !== "generic-command") return error("adapter --with must be codex or generic-command");
     return render(inspectAdapter(adapter), outputFormat, renderJson, renderJson);
   }
+  if (command === "exec") {
+    const runId = getOption(rest, "--run");
+    const commandIndex = rest.indexOf("--command");
+    const processCommand = commandIndex >= 0 ? rest.slice(commandIndex + 1).filter((value) => !value.startsWith("--format")) : [];
+    if (!runId || processCommand.length === 0) return error("exec requires --run and --command <executable> [args]");
+    return render(await runGenericCommand(root, runId, processCommand), outputFormat, renderJson, renderJson);
+  }
   if (command === "status") {
     const runId = getOption(rest, "--run");
     if (!runId) return error("status requires --run");
@@ -259,6 +266,7 @@ function helpText(): string {
     "assetmason receipt --root <dir> --run <run-id> --format json|markdown [--out <file>]",
     "assetmason run --root <dir> --task <text> [--with <adapter>] [--isolated] --format json|markdown",
     "assetmason adapter --with codex|generic-command --format json|markdown",
+    "assetmason exec --root <dir> --run <run-id> --command <executable> [args] --format json|markdown",
     "assetmason status --root <dir> --run <run-id> --format json|markdown",
     "assetmason checkpoint --root <dir> --run <run-id> [--acceptance <item> ...] --format json|markdown",
     "assetmason pause|stop|block --root <dir> --run <run-id> --format json|markdown",

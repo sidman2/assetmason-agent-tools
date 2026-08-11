@@ -1,6 +1,6 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 
 export type RuntimeState = "created" | "running" | "paused" | "blocked" | "completed" | "failed";
@@ -65,6 +65,16 @@ export type AdapterCapability = {
   stop: "supported" | "unknown";
   continuation: "supported" | "unknown";
   unknowns: string[];
+};
+
+export type ProcessResult = {
+  process_id: number;
+  command: string[];
+  exit_code: number | null;
+  signal?: string;
+  classification: "completed" | "failed" | "signaled";
+  stdout: string;
+  stderr: string;
 };
 
 const runtimeDir = (root: string) => join(resolve(root), ".assetmason", "runtime");
@@ -180,4 +190,21 @@ export async function resumeRun(root: string, runId: string) {
   if (!run.checkpoint_id) throw new Error("run has no checkpoint; create one before resuming");
   if (run.worktree !== resolve(root)) throw new Error("resume refused: workspace binding does not match");
   return transitionRun(root, runId, "running", "run.resumed");
+}
+
+export async function runGenericCommand(root: string, runId: string, command: string[], timeoutMs = 60_000): Promise<ProcessResult> {
+  if (command.length === 0) throw new Error("generic command requires an executable");
+  const run = await loadRun(root, runId);
+  const started = await appendEvent(root, run, "process.started", "running", { command: [command[0]], argument_count: command.length - 1 });
+  const result = await new Promise<ProcessResult>((resolveResult) => {
+    const child = execFile(command[0], command.slice(1), { cwd: run.worktree, windowsHide: true, timeout: timeoutMs, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+      const exit_code = typeof error?.code === "number" ? error.code : error ? null : 0;
+      const signal = error?.signal ?? undefined;
+      resolveResult({ process_id: child.pid ?? -1, command: [command[0], ...command.slice(1)], exit_code, signal, classification: signal ? "signaled" : exit_code === 0 ? "completed" : "failed", stdout: String(stdout), stderr: String(stderr) });
+    });
+    void started;
+  });
+  const finalRun = await loadRun(root, runId);
+  await appendEvent(root, finalRun, "process.exited", result.classification === "completed" ? "running" : "failed", { process_id: result.process_id, exit_code: result.exit_code, signal: result.signal, classification: result.classification });
+  return result;
 }
