@@ -278,4 +278,27 @@ describe("assetmason-cli", () => {
       }
     }
   }, 60000);
+
+  it("persists a runtime event log across pause, checkpoint, and fresh-process resume", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-runtime-"));
+    const runResult = await runCommand(["run", "--root", root, "--task", "record a local checkpoint", "--with", "generic-command"]);
+    const run = JSON.parse(runResult.text);
+    expect(runResult.code).toBe(0);
+    expect(run.kind).toBe("run-record");
+    expect(run.state).toBe("created");
+
+    const pausedResult = await runCommand(["pause", "--root", root, "--run", run.run_id]);
+    expect(JSON.parse(pausedResult.text).state).toBe("paused");
+    const checkpointResult = await runCommand(["checkpoint", "--root", root, "--run", run.run_id, "--acceptance", "verify receipt"]);
+    const checkpoint = JSON.parse(checkpointResult.text);
+    expect(checkpoint.kind).toBe("checkpoint-record");
+    expect(checkpoint.outstanding_acceptance).toEqual(["verify receipt"]);
+
+    const resumedResult = await runCommand(["resume", "--root", root, "--run", run.run_id]);
+    const resumed = JSON.parse(resumedResult.text);
+    expect(resumed.state).toBe("running");
+    expect(resumed.event_offset).toBeGreaterThan(run.event_offset);
+    const status = JSON.parse((await runCommand(["status", "--root", root, "--run", run.run_id])).text);
+    expect(status.checkpoint_id).toBe(checkpoint.checkpoint_id);
+  });
 });

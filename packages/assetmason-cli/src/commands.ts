@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { checkpointRun, createRun, loadRuntimeRun, resumeRun, transitionRun } from "./local-runtime.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -174,6 +175,31 @@ export async function runCommand(argv: string[]) {
     const executionProfile = await loadExecutionProfileModule();
     return loadAndInitReceipt(planPath, lockPath, outPath, outputFormat, executionProfile);
   }
+  if (command === "run") {
+    const runtime = await createRun({ root, task, adapter: getOption(rest, "--with"), command: rest });
+    return render(runtime, outputFormat, renderJson, renderJson);
+  }
+  if (command === "status") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("status requires --run");
+    return render(await loadRuntimeRun(root, runId), outputFormat, renderJson, renderJson);
+  }
+  if (command === "checkpoint") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("checkpoint requires --run");
+    return render(await checkpointRun(root, runId, getOptionValues(rest, "--acceptance")), outputFormat, renderJson, renderJson);
+  }
+  if (command === "pause" || command === "stop" || command === "block") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error(`${command} requires --run`);
+    const state = command === "pause" ? "paused" : command === "block" ? "blocked" : "completed";
+    return render(await transitionRun(root, runId, state, `run.${command}d`), outputFormat, renderJson, renderJson);
+  }
+  if (command === "resume") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("resume requires --run");
+    return render(await resumeRun(root, runId), outputFormat, renderJson, renderJson);
+  }
   if (command === "evidence-import") {
     const receiptPath = getOption(rest, "--receipt");
     const importPath = getOption(rest, "--import");
@@ -216,6 +242,11 @@ function helpText(): string {
     "assetmason diff --before <file> --after <file> --format json|markdown",
     "assetmason reconcile --plan <file> --receipt <file> [--lock <file>] --format json|markdown [--out <file>]",
     "assetmason receipt-init --plan <file> [--lock <file>] --format json|markdown [--out <file>]",
+    "assetmason run --root <dir> --task <text> [--with <adapter>] --format json|markdown",
+    "assetmason status --root <dir> --run <run-id> --format json|markdown",
+    "assetmason checkpoint --root <dir> --run <run-id> [--acceptance <item> ...] --format json|markdown",
+    "assetmason pause|stop|block --root <dir> --run <run-id> --format json|markdown",
+    "assetmason resume --root <dir> --run <run-id> --format json|markdown",
     "assetmason evidence-import --receipt <file> --import <file> [--out <file>] --format json|markdown",
     "assetmason validate --file <file> [--kind resource-plan|resource-lock|selection-policy-envelope|minimum-approved-resource-set|minimum-toolset-evaluation|work-order|execution-profile|execution-profile-lock|execution-profile-diff|host-export|outcome-receipt]",
     "assetmason handoff --plan <file> --receipt <file> [--lock <file>] [--out <file>]"
