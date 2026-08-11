@@ -53,6 +53,20 @@ export type CheckpointRecord = {
   created_at: string;
 };
 
+export type AdapterCapability = {
+  schema_version: "0.1.0";
+  kind: "worker-capability";
+  adapter: "codex" | "generic-command";
+  executable: string;
+  installed: boolean;
+  launch: "supported" | "access_denied" | "not_installed" | "unknown";
+  worktree_binding: "supported" | "unknown";
+  process_identity: "supported" | "unknown";
+  stop: "supported" | "unknown";
+  continuation: "supported" | "unknown";
+  unknowns: string[];
+};
+
 const runtimeDir = (root: string) => join(resolve(root), ".assetmason", "runtime");
 const runPath = (root: string, runId: string) => join(runtimeDir(root), `${runId}.run.json`);
 const eventPath = (root: string, runId: string) => join(runtimeDir(root), `${runId}.events.jsonl`);
@@ -64,6 +78,26 @@ function git(root: string, args: string[]) {
 }
 
 function digest(value: unknown) { return createHash("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 16); }
+
+export function inspectAdapter(adapter: "codex" | "generic-command"): AdapterCapability {
+  if (adapter === "generic-command") return {
+    schema_version: "0.1.0", kind: "worker-capability", adapter, executable: "<user-command>", installed: true,
+    launch: "supported", worktree_binding: "supported", process_identity: "supported", stop: "supported", continuation: "unknown",
+    unknowns: ["generic commands do not establish cross-agent continuation semantics"]
+  };
+  try {
+    const executable = process.platform === "win32" ? execFileSync("where.exe", ["codex"], { encoding: "utf8" }).split(/\r?\n/)[0] : execFileSync("which", ["codex"], { encoding: "utf8" }).trim();
+    try { execFileSync(executable, ["--help"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }); }
+    catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/access denied|EACCES/i.test(message)) return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "access_denied", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex executable was discovered but launch was denied by the host"] };
+      return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "unknown", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex launch probe failed", message] };
+    }
+    return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "supported", worktree_binding: "supported", process_identity: "supported", stop: "unknown", continuation: "unknown", unknowns: ["Stop and continuation semantics require a bounded live run"] };
+  } catch {
+    return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable: "codex", installed: false, launch: "not_installed", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex executable was not discoverable"] };
+  }
+}
 
 async function persist(root: string, path: string, value: unknown) {
   await mkdir(dirname(path), { recursive: true });

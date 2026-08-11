@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { checkpointRun, createRun, loadRuntimeRun, resumeRun, transitionRun } from "./local-runtime.js";
+import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, transitionRun } from "./local-runtime.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -186,6 +186,11 @@ export async function runCommand(argv: string[]) {
     const runtime = await createRun({ root, task, adapter: getOption(rest, "--with"), command: rest, isolated: rest.includes("--isolated") });
     return render(runtime, outputFormat, renderJson, renderJson);
   }
+  if (command === "adapter") {
+    const adapter = (getOption(rest, "--with") ?? "codex") as "codex" | "generic-command";
+    if (adapter !== "codex" && adapter !== "generic-command") return error("adapter --with must be codex or generic-command");
+    return render(inspectAdapter(adapter), outputFormat, renderJson, renderJson);
+  }
   if (command === "status") {
     const runId = getOption(rest, "--run");
     if (!runId) return error("status requires --run");
@@ -251,6 +256,7 @@ function helpText(): string {
     "assetmason receipt-init --plan <file> [--lock <file>] --format json|markdown [--out <file>]",
     "assetmason receipt --root <dir> --run <run-id> --format json|markdown [--out <file>]",
     "assetmason run --root <dir> --task <text> [--with <adapter>] [--isolated] --format json|markdown",
+    "assetmason adapter --with codex|generic-command --format json|markdown",
     "assetmason status --root <dir> --run <run-id> --format json|markdown",
     "assetmason checkpoint --root <dir> --run <run-id> [--acceptance <item> ...] --format json|markdown",
     "assetmason pause|stop|block --root <dir> --run <run-id> --format json|markdown",

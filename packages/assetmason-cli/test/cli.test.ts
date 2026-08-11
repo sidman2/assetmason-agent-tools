@@ -320,4 +320,14 @@ describe("assetmason-cli", () => {
     expect(run.worktree).not.toBe(root);
     expect(run.branch).toContain("assetmason/");
   });
+
+  it("reports adapter capability truth without claiming unsupported lifecycle semantics", async () => {
+    const result = await runCommand(["adapter", "--with", "codex", "--format", "json"]);
+    const capability = JSON.parse(result.text);
+    expect(result.code).toBe(0);
+    expect(capability.kind).toBe("worker-capability");
+    expect(capability.adapter).toBe("codex");
+    expect(["supported", "access_denied", "not_installed", "unknown"]).toContain(capability.launch);
+    if (capability.launch !== "supported") expect(capability.unknowns.length).toBeGreaterThan(0);
+  });
 });
