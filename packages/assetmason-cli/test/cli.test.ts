@@ -326,6 +326,10 @@ describe("assetmason-cli", () => {
     expect(run.worktree).toContain(".assetmason");
     expect(run.worktree).not.toBe(root);
     expect(run.branch).toContain("assetmason/");
+    const checkpoint = JSON.parse((await runCommand(["checkpoint", "--root", root, "--run", run.run_id])).text);
+    expect(checkpoint.run_id).toBe(run.run_id);
+    const resumed = JSON.parse((await runCommand(["resume", "--root", root, "--run", run.run_id])).text);
+    expect(resumed.state).toBe("running");
   });
 
   it("reports adapter capability truth without claiming unsupported lifecycle semantics", async () => {

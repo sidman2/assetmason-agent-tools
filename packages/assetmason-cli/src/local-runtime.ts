@@ -188,13 +188,18 @@ export async function transitionRun(root: string, runId: string, state: RuntimeS
 export async function resumeRun(root: string, runId: string) {
   const run = await loadRun(root, runId);
   if (!run.checkpoint_id) throw new Error("run has no checkpoint; create one before resuming");
-  if (run.worktree !== resolve(root)) throw new Error("resume refused: workspace binding does not match");
+  const requestedRoot = resolve(root);
+  const recordedWorktree = resolve(run.worktree);
+  const projectRoot = resolve(run.project_root);
+  if (requestedRoot !== recordedWorktree && requestedRoot !== projectRoot) throw new Error("resume refused: workspace binding does not match");
+  if (recordedWorktree !== projectRoot && git(recordedWorktree, ["rev-parse", "HEAD"]) !== run.base_revision) throw new Error("resume refused: workspace base revision changed");
   return transitionRun(root, runId, "running", "run.resumed");
 }
 
 export async function runGenericCommand(root: string, runId: string, command: string[], timeoutMs = 60_000): Promise<ProcessResult> {
   if (command.length === 0) throw new Error("generic command requires an executable");
   const run = await loadRun(root, runId);
+  if (run.worktree !== run.project_root && git(run.worktree, ["rev-parse", "HEAD"]) !== run.base_revision) throw new Error("execution refused: workspace base revision changed");
   const started = await appendEvent(root, run, "process.started", "running", { command: [command[0]], argument_count: command.length - 1 });
   const result = await new Promise<ProcessResult>((resolveResult) => {
     const child = execFile(command[0], command.slice(1), { cwd: run.worktree, windowsHide: true, timeout: timeoutMs, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
