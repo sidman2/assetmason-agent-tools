@@ -454,7 +454,9 @@ async function buildRunPlan(root: string, task: string): Promise<RunPlan> {
     selectionSet,
     sourceRefs: context.entries,
     findings: doctor.findings,
-    nextAction: context.readiness === "ready" ? "Proceed with the smallest implementation slice." : "Resolve the blocking or conditional repository evidence first."
+    nextAction: context.readiness === "ready"
+      ? "Proceed with the smallest implementation slice using the available repository evidence."
+      : "Resolve the blocking or conditional repository evidence first."
   };
 }
 
