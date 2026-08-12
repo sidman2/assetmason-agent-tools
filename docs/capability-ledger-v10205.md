@@ -41,5 +41,6 @@ Evidence is bound to repository head `e9e2a1e`. `TESTED` means a focused determi
 
 - Repository typecheck and full workspace build passed.
 - Generated-source guard passed.
+- Draft PR #33 exact-head CI passed on Ubuntu, macOS, and Windows for Node 18, 20, and 22.
 - `names:check` is not green because the environment attempted to resolve unpublished `ai-discovery` from npm and received `E404`; this is not treated as a code pass.
 - Full Vitest execution remains environment-blocked by worker hangs.
