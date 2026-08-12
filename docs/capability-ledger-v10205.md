@@ -1,6 +1,6 @@
 # AssetMason capability ledger — current checkpoint
 
-Evidence is bound to repository head `11b114b`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
+Evidence is bound to repository head `3d2c840`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
 
 | Capability | Implemented | Tested | Live-proven | Claimable | Evidence / gap |
 |---|---|---|---|---|---|
@@ -22,7 +22,7 @@ Evidence is bound to repository head `11b114b`. `TESTED` means a focused determi
 | PersonalScope | yes | yes (smoke) | no | local foundation | `.assetmason/scopes/scope-state.json` |
 | ProjectScope | yes | yes (smoke) | no | local foundation | project head and discovered instructions |
 | TaskScope | yes | yes (smoke) | no | local foundation | run-created task linkage |
-| DecisionMemoryLedger | partial | yes (smoke) | no | governed local foundation | candidate and explicit transitions; repeat-task value not proven |
+| DecisionMemoryLedger | partial | yes (repeat-task smoke) | no | governed local foundation | `memory applicable` returns fresh accepted decisions and surfaces stale/conflicted decisions; broader retention value not proven |
 | freshness / conflict surfacing | yes | yes (smoke) | no | local foundation | repository-head drift marks accepted memory stale |
 | local scope export | yes | yes (CLI smoke) | no | local foundation | `scope export` |
 | attempt / fork lineage | yes | yes (smoke) | no | local retry/fork mechanics only | explicit `fork` preserves TaskScope identity and parent RunRecord; worker-neutral continuation remains unearned |
