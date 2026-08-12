@@ -1,8 +1,8 @@
 # AssetMason Agent Tools
 
-Preview local-first tools for checking and improving ARD / AI Catalog readiness alongside the public AssetMason Agent Resource Planning surface.
+Local-first tools for AssetMason delegation preflight, run contracts, evidence reconciliation, and project-owned local runtime workflows.
 
-The public packages provide portable contracts, deterministic artifact builders, validators, scanners, fixtures, and CLI workflows. Proprietary hosted intelligence, private ranking, private graph data, and team workflows are outside this repository.
+The public packages provide portable contracts, deterministic artifact builders, validators, scanners, fixtures, CLI workflows, and local runtime mechanics. Proprietary hosted intelligence and later team coordination are outside this repository.
 
 ## Packages
 
@@ -11,16 +11,19 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ard-kit` | Shared schemas, validators, fixtures, and helpers for ARD / AI Catalog readiness. | Existing public preview package. |
 | `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
-| `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
-| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow. The repository also contains newer local-runtime commands that require a package release before they are available from npm. | The published `0.1.0-preview.3` `preview` package contains the previously released planning surface; do not infer unpublished runtime commands from this repository. |
-| `agent-execution-profile` | Public-safe execution-profile contracts, host exports, locks, diffs, and receipt validation. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
+| `agent-resource-plan` | Resource checks, Plan/Lock contracts, Plan Delta/staleness semantics, diffs, inventory, validation, and rendering. | Source-prepared as `0.1.0-preview.4`; verify the live `preview` tag after publishing. |
+| `assetmason-cli` | Installed `assetmason` CLI for delegation preflight and local project-owned runtime workflows. | Source-prepared as `0.1.0-preview.4`; this package version includes the merged runtime command surface. |
+| `agent-execution-profile` | Execution-profile contracts, host exports, locks, diffs, evidence reconciliation, handoff, and receipt validation. | Source-prepared as `0.1.0-preview.4`; verify the live `preview` tag after publishing. |
 
 ## Quickstart
 
-Public preview CLI:
+After preview.4 is published:
 
 ```bash
 npx -y assetmason-cli@preview --help
+npx -y assetmason-cli@preview doctor --root . --format json
+npx -y assetmason-cli@preview context --root . --task "upgrade a dependency without changing wrapper behavior" --format json
+npx -y assetmason-cli@preview check --root . --task "upgrade a dependency without changing wrapper behavior" --format json
 ```
 
 Local development:
@@ -33,43 +36,33 @@ npm test
 npm run build
 ```
 
+## Local runtime preview
+
+The preview.4 CLI package contains the current local runtime mechanics, including project-owned run identity, isolated worktree support, checkpoints, pause/resume, handoff/receipt, scopes, governed decision memory, retry/fork lineage, and worker adapters.
+
+```bash
+npx -y assetmason-cli@preview init --root . --format json
+npx -y assetmason-cli@preview run --root . --task "bounded local task" --with codex --isolated --format json
+npx -y assetmason-cli@preview checkpoint --root . --run <run-id> --format json
+npx -y assetmason-cli@preview pause --root . --run <run-id> --format json
+npx -y assetmason-cli@preview resume --root . --run <run-id> --format json
+npx -y assetmason-cli@preview receipt --root . --run <run-id> --format json
+npx -y assetmason-cli@preview handoff --root . --run <run-id> --format json
+```
+
+The Codex adapter has deterministic mechanics coverage, but a live real Codex worker launch remains a separate proof requirement. Publication does not establish live-worker, cross-agent, security, production, or launch claims.
+
 ## What these tools do not do
 
-These tools do not certify conformance, guarantee registry indexing, guarantee ranking, guarantee successful agent invocation, provide legal/security/privacy/compliance certification, capture credentials, or send telemetry by default.
+These tools do not certify conformance, guarantee registry indexing or ranking, guarantee successful agent invocation, provide legal/security/privacy/compliance certification, capture credentials, or send telemetry by default.
 
-The public packages are advisory-only. They do not provide certification, credential custody, runtime execution, or model inference.
-
-Install from the public preview channel:
+Install from the public preview channel after publishing:
 
 ```bash
 npm install agent-resource-plan@preview
+npm install agent-execution-profile@preview
 npm install --save-dev assetmason-cli@preview
 ```
-
-Public npx commands:
-
-```bash
-npx -y assetmason-cli@preview --help
-npx -y assetmason-cli@preview list-scenarios
-npx -y assetmason-cli@preview doctor --root . --format json
-npx -y assetmason-cli@preview context --root . --task "update the CLI" --format json
-npx -y assetmason-cli@preview context --root . --task "update the CLI" --diff codex claude-code --format json
-npx -y assetmason-cli@preview explain-context --root . --entry packages/assetmason-cli/src/commands.ts --format json
-npx -y assetmason-cli@preview check --root . --task "update the CLI" --format json
-npx -y assetmason-cli@preview select --scenario auth-redirect-bug --format json
-npx -y assetmason-cli@preview profile --scenario auth-redirect-bug --format json
-npx -y assetmason-cli@preview plan --scenario auth-redirect-bug --format json
-npx -y assetmason-cli@preview lock --from-plan ./plan.json --format json
-npx -y assetmason-cli@preview receipt-init --plan ./plan.json --lock ./lock.json --format json
-npx -y assetmason-cli@preview evidence-import --receipt ./receipt.json --import ./import.json --format json
-npx -y assetmason-cli@preview reconcile --plan ./plan.json --lock ./lock.json --receipt ./receipt-with-evidence.json --format json
-npx -y assetmason-cli@preview handoff --plan ./plan.json --lock ./lock.json --receipt ./receipt-with-evidence.json --format json
-npx -y assetmason-cli@preview validate --file ./example.json --kind execution-profile
-npx -y assetmason-cli@preview validate --file ./work-order.json --kind work-order
-npx -y assetmason-cli@preview scan --root . --format markdown
-```
-
-The planning commands above are the published preview surface. Newer repository commands, including local-runtime execution, checkpoint/resume, receipt, and handoff-by-run, are repository-source features until a package release explicitly includes them.
 
 Execution-profile parity and freshness checks stay advisory for public use: public mode writes its report under ignored `tmp/agent-runs/execution-profile-parity/`, and private parity only runs when `ASSETMASON_PRIVATE_SOURCE_ROOT` and `ASSETMASON_PRIVATE_SOURCE_SHA` are set.
 
@@ -78,10 +71,10 @@ Verification evidence for the public preview surface is captured in `scripts/rel
 ## Naming
 
 * ARD / AI Catalog package surface: `ard-kit`, `ard-cli`, `ai-discovery`
-* Agent Resource Planning package surface: `agent-resource-plan`, `assetmason-cli`
-* public artifact families: check, select, plan, lock, diff, validate, handoff
+* AssetMason package surface: `agent-resource-plan`, `agent-execution-profile`, `assetmason-cli`
+* canonical run-contract roots: `ResourcePlan`, `ResourceLock`, `OutcomeReceipt`
 
-Preview API note: semantic versioning may change during preview, `preview.3` is a prerelease rather than a stable release, and private hosted intelligence remains outside this FOSS repository. `latest` remains at its actual live registry value.
+Preview API note: semantic versioning may change during preview. `preview.4` is a prerelease rather than a stable release, and `latest` remains at its actual live registry value.
 
 ## Development
 
