@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
+import { checkpointRun, createRun, forkRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
 import { addDecisionCandidate, createTaskScope, exportScopes, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
 
 type OutputFormat = "json" | "markdown";
@@ -211,6 +211,11 @@ export async function runCommand(argv: string[]) {
     const runtime = await createRun({ root, task, adapter: getOption(rest, "--with"), command: rest, isolated: rest.includes("--isolated") });
     return render(runtime, outputFormat, renderJson, renderJson);
   }
+  if (command === "fork") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("fork requires --run");
+    return render(await forkRun(root, runId, getOption(rest, "--task")), outputFormat, renderJson, renderJson);
+  }
   if (command === "adapter") {
     const adapter = (getOption(rest, "--with") ?? "codex") as "codex" | "generic-command";
     if (adapter !== "codex" && adapter !== "generic-command") return error("adapter --with must be codex or generic-command");
@@ -296,6 +301,7 @@ function helpText(): string {
     "assetmason receipt-init --plan <file> [--lock <file>] --format json|markdown [--out <file>]",
     "assetmason receipt --root <dir> --run <run-id> --format json|markdown [--out <file>]",
     "assetmason run --root <dir> --task <text> [--with <adapter>] [--isolated] --format json|markdown",
+    "assetmason fork --root <dir> --run <run-id> [--task <text>] --format json|markdown",
     "assetmason adapter --with codex|generic-command --format json|markdown",
     "assetmason exec --root <dir> --run <run-id> --command <executable> [args] --format json|markdown",
     "assetmason status --root <dir> --run <run-id> --format json|markdown",

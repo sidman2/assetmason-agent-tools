@@ -23,6 +23,8 @@ export type RunRecord = {
   updated_at: string;
   next_safe_resume_action: string;
   event_offset: number;
+  parent_run_id?: string;
+  attempt: number;
   checkpoint_id?: string;
   process_id?: number;
   command?: string[];
@@ -153,7 +155,7 @@ export async function createRun(input: { root: string; task: string; adapter?: s
     schema_version: "0.1.0", kind: "run-record", task_id, task, run_id, workspace_id,
     project_root: root, worktree: workspace.worktree, branch: workspace.branch, base_revision: workspace.base,
     state: "created", adapter: input.adapter ?? "generic-command", created_at: now, updated_at: now,
-    next_safe_resume_action: "assetmason resume --root . --run <run-id>", event_offset: 0, command: input.command
+    next_safe_resume_action: "assetmason resume --root . --run <run-id>", event_offset: 0, attempt: 1, command: input.command
   };
   await persist(root, runPath(root, run_id), run);
   await createTaskScope(root, task_id, task);
@@ -232,6 +234,28 @@ export async function runGenericCommand(root: string, runId: string, command: st
   const finalRun = await loadRun(root, runId);
   await appendEvent(root, finalRun, "process.exited", result.classification === "completed" ? "running" : "failed", { process_id: result.process_id, exit_code: result.exit_code, signal: result.signal, classification: result.classification });
   return result;
+}
+
+export async function forkRun(root: string, runId: string, task?: string) {
+  const parent = await loadRun(root, runId);
+  const child: RunRecord = {
+    ...parent,
+    run_id: `run-${randomUUID()}`,
+    task: task ?? parent.task,
+    state: "created",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    event_offset: 0,
+    checkpoint_id: undefined,
+    process_id: undefined,
+    parent_run_id: parent.run_id,
+    attempt: parent.attempt + 1,
+    next_safe_resume_action: "assetmason resume --root . --run <run-id>"
+  };
+  await createTaskScope(root, child.task_id, child.task, parent.task_id);
+  await persist(root, runPath(root, child.run_id), child);
+  await appendEvent(root, child, "run.forked", "created", { parent_run_id: parent.run_id, parent_state: parent.state, attempt: child.attempt });
+  return child;
 }
 
 /**

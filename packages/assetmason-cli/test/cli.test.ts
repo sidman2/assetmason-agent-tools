@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { main } from "../src/main.js";
 import { runCommand } from "../src/commands.js";
-import { createRun, runCodexCommand } from "../src/local-runtime.js";
+import { createRun, forkRun, runCodexCommand } from "../src/local-runtime.js";
 import { buildExecutionProfile } from "agent-execution-profile";
 import { buildExecutionProfileLock } from "agent-execution-profile";
 import { buildGenericHostExportArtifact } from "agent-execution-profile";
@@ -375,5 +375,17 @@ describe("assetmason-cli", () => {
     expect(accepted.state).toBe("accepted");
     expect(accepted.accepted_by).toBe("owner");
     expect(accepted.no_silent_promotion).toBe(true);
+  });
+
+  it("preserves task identity and records explicit fork lineage", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-fork-"));
+    const parent = await createRun({ root, task: "retry a bounded task", adapter: "generic-command" });
+    const child = await forkRun(root, parent.run_id);
+    expect(child.parent_run_id).toBe(parent.run_id);
+    expect(child.task_id).toBe(parent.task_id);
+    expect(child.attempt).toBe(2);
+    expect(child.state).toBe("created");
+    const events = readFileSync(join(root, ".assetmason", "runtime", `${child.run_id}.events.jsonl`), "utf8");
+    expect(events).toContain("run.forked");
   });
 });
