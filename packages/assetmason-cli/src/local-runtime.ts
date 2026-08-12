@@ -287,7 +287,6 @@ export async function forkRun(root: string, runId: string, task?: string) {
     attempt: parent.attempt + 1,
     next_safe_resume_action: "assetmason resume --root . --run <run-id>"
   };
-  await createTaskScope(root, child.task_id, child.task, parent.task_id);
   await persist(root, runPath(root, child.run_id), child);
   await appendEvent(root, child, "run.forked", "created", { parent_run_id: parent.run_id, parent_state: parent.state, attempt: child.attempt });
   return child;
