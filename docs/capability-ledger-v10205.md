@@ -1,6 +1,6 @@
 # AssetMason capability ledger — current checkpoint
 
-Evidence is bound to repository head `b9f633c`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
+Evidence is bound to repository head `e4603cf`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
 
 | Capability | Implemented | Tested | Live-proven | Claimable | Evidence / gap |
 |---|---|---|---|---|---|
@@ -25,6 +25,7 @@ Evidence is bound to repository head `b9f633c`. `TESTED` means a focused determi
 | DecisionMemoryLedger | partial | yes (repeat-task smoke) | no | governed local foundation | `memory applicable` returns fresh accepted decisions and surfaces stale/conflicted decisions; broader retention value not proven |
 | freshness / conflict surfacing | yes | yes (smoke) | no | local foundation | repository-head drift marks accepted memory stale |
 | local scope export | yes | yes (CLI smoke) | no | local foundation | `scope export` |
+| local scope delete | yes | yes (CLI smoke) | no | guarded local foundation | `scope delete --confirm` preserves runtime records |
 | attempt / fork lineage | yes | yes (smoke) | no | local retry/fork mechanics only | explicit `fork` preserves TaskScope identity and parent RunRecord; worker-neutral continuation remains unearned |
 | second worker adapter | no | no | no | not claimable | no second real adapter selected |
 | worker-neutral continuation pack | yes | yes (smoke) | no | local continuation contract only | explicit unsupported vendor-session and cross-agent fields |

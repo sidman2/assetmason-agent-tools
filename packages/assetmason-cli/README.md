@@ -48,10 +48,14 @@ assetmason fork --root . --run <run-id> --task "bounded retry" --format json
 assetmason continuation --root . --run <run-id> --format json
 assetmason scope init --root . --format json
 assetmason memory applicable --root . --format json
+assetmason scope export --root . --out ./scope-export.json --format json
+assetmason scope delete --root . --confirm --format json
 ```
 
 Runtime records are stored under `.assetmason/runtime/` and include schema version, stable task/run/workspace identity, append-only event offsets, worktree binding, checkpoint provenance, and an explicit next safe resume action. `adapter` reports capability truth; `generic-command` is not cross-agent support, and an installed worker is never treated as launchable unless its probe succeeds.
 
 Scope records are stored under `.assetmason/scopes/`. Personal, project, and task scopes remain distinct; decision memory is only applicable after explicit acceptance and fresh, conflict-free evidence. Stale or conflicted decisions are surfaced for review and are never silently promoted. The Codex adapter has deterministic mechanics coverage, but live Codex execution and vendor-session restoration remain separately unproven.
+
+`scope delete` requires `--confirm` and deletes only the local scope profile; runtime records under `.assetmason/runtime/` are preserved.
 
 The public package is advisory-only and is published with provenance through the trusted GitHub Actions OIDC workflow when the release gate is intentionally run.
