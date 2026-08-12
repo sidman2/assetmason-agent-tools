@@ -90,6 +90,23 @@ export type CodexAdapterOptions = {
   onChild?: (child: ChildProcess) => void;
 };
 
+export type ContinuationPack = {
+  schema_version: "0.1.0";
+  kind: "worker-neutral-continuation";
+  task_id: string;
+  run_id: string;
+  parent_run_id?: string;
+  attempt: number;
+  adapter: string;
+  project_root: string;
+  worktree: string;
+  base_revision: string;
+  current_state: RuntimeState;
+  next_safe_action: string;
+  observed_events: string[];
+  unsupported: string[];
+};
+
 const runtimeDir = (root: string) => join(resolve(root), ".assetmason", "runtime");
 const runPath = (root: string, runId: string) => join(runtimeDir(root), `${runId}.run.json`);
 const eventPath = (root: string, runId: string) => join(runtimeDir(root), `${runId}.events.jsonl`);
@@ -178,6 +195,19 @@ export async function appendEvent(root: string, run: RunRecord, type: string, st
 }
 
 export async function loadRuntimeRun(root: string, runId: string) { return loadRun(root, runId); }
+
+export async function compileContinuation(root: string, runId: string): Promise<ContinuationPack> {
+  const run = await loadRun(root, runId);
+  let events: RuntimeEvent[] = [];
+  try { events = (await readFile(eventPath(root, runId), "utf8")).trim().split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line) as RuntimeEvent); } catch { /* no events beyond run creation */ }
+  return {
+    schema_version: "0.1.0", kind: "worker-neutral-continuation", task_id: run.task_id, run_id: run.run_id,
+    parent_run_id: run.parent_run_id, attempt: run.attempt, adapter: run.adapter, project_root: run.project_root,
+    worktree: run.worktree, base_revision: run.base_revision, current_state: run.state,
+    next_safe_action: run.next_safe_resume_action, observed_events: events.map((event) => event.type),
+    unsupported: ["vendor coding-agent session restoration", "cross-agent equivalence proof"]
+  };
+}
 
 export async function checkpointRun(root: string, runId: string, outstandingAcceptance: string[] = []) {
   const run = await loadRun(root, runId);

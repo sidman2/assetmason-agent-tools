@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { checkpointRun, createRun, forkRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
+import { checkpointRun, compileContinuation, createRun, forkRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
 import { addDecisionCandidate, createTaskScope, exportScopes, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
 
 type OutputFormat = "json" | "markdown";
@@ -237,6 +237,11 @@ export async function runCommand(argv: string[]) {
     if (!runId) return error("status requires --run");
     return render(await loadRuntimeRun(root, runId), outputFormat, renderJson, renderJson);
   }
+  if (command === "continuation") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("continuation requires --run");
+    return render(await compileContinuation(root, runId), outputFormat, renderJson, renderJson);
+  }
   if (command === "checkpoint") {
     const runId = getOption(rest, "--run");
     if (!runId) return error("checkpoint requires --run");
@@ -305,6 +310,7 @@ function helpText(): string {
     "assetmason adapter --with codex|generic-command --format json|markdown",
     "assetmason exec --root <dir> --run <run-id> --command <executable> [args] --format json|markdown",
     "assetmason status --root <dir> --run <run-id> --format json|markdown",
+    "assetmason continuation --root <dir> --run <run-id> --format json|markdown",
     "assetmason checkpoint --root <dir> --run <run-id> [--acceptance <item> ...] --format json|markdown",
     "assetmason pause|stop|block --root <dir> --run <run-id> --format json|markdown",
     "assetmason resume --root <dir> --run <run-id> --format json|markdown",

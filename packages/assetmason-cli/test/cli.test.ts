@@ -387,5 +387,9 @@ describe("assetmason-cli", () => {
     expect(child.state).toBe("created");
     const events = readFileSync(join(root, ".assetmason", "runtime", `${child.run_id}.events.jsonl`), "utf8");
     expect(events).toContain("run.forked");
+    const continuation = JSON.parse((await runCommand(["continuation", "--root", root, "--run", child.run_id])).text);
+    expect(continuation.kind).toBe("worker-neutral-continuation");
+    expect(continuation.parent_run_id).toBe(parent.run_id);
+    expect(continuation.unsupported).toContain("vendor coding-agent session restoration");
   });
 });
