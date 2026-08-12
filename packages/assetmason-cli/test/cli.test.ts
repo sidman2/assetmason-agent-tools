@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -396,5 +396,19 @@ describe("assetmason-cli", () => {
     expect(continuation.kind).toBe("worker-neutral-continuation");
     expect(continuation.parent_run_id).toBe(parent.run_id);
     expect(continuation.unsupported).toContain("vendor coding-agent session restoration");
+  });
+
+  it("loads pre-lineage run records with compatibility defaults", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-legacy-run-"));
+    const runId = "run-legacy";
+    mkdirSync(join(root, ".assetmason", "runtime"), { recursive: true });
+    writeFileSync(join(root, ".assetmason", "runtime", `${runId}.run.json`), JSON.stringify({
+      schema_version: "0.1.0", kind: "run-record", task_id: "task-legacy", run_id: runId, workspace_id: "workspace-legacy",
+      project_root: root, worktree: root, branch: "main", base_revision: "unknown", state: "created", adapter: "generic-command",
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString(), next_safe_resume_action: "resume", event_offset: 0
+    }), "utf8");
+    const status = JSON.parse((await runCommand(["status", "--root", root, "--run", runId])).text);
+    expect(status.task).toBe("task-legacy");
+    expect(status.attempt).toBe(1);
   });
 });

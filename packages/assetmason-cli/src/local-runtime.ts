@@ -146,7 +146,12 @@ async function persist(root: string, path: string, value: unknown) {
 }
 
 async function loadRun(root: string, runId: string): Promise<RunRecord> {
-  return JSON.parse(await readFile(runPath(root, runId), "utf8")) as RunRecord;
+  const raw = JSON.parse(await readFile(runPath(root, runId), "utf8")) as Partial<RunRecord>;
+  return {
+    ...raw,
+    task: raw.task ?? raw.task_id,
+    attempt: raw.attempt ?? 1
+  } as RunRecord;
 }
 
 function prepareIsolatedWorktree(root: string, runId: string) {
