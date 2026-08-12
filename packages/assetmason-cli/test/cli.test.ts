@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { main } from "../src/main.js";
 import { runCommand } from "../src/commands.js";
-import { createRun, forkRun, runCodexCommand } from "../src/local-runtime.js";
+import { createRun, forkRun, inspectAdapter, runCodexCommand } from "../src/local-runtime.js";
 import { loadScopes } from "../src/scopes.js";
 import { buildExecutionProfile } from "agent-execution-profile";
 import { buildExecutionProfileLock } from "agent-execution-profile";
@@ -347,6 +347,19 @@ describe("assetmason-cli", () => {
     expect(["supported", "access_denied", "not_installed", "unknown"]).toContain(capability.launch);
     if (capability.launch !== "supported") expect(capability.unknowns.length).toBeGreaterThan(0);
   }, 30000);
+
+  it("honors an explicit Codex executable path for restricted host discovery", () => {
+    const previous = process.env.ASSETMASON_CODEX_EXECUTABLE;
+    process.env.ASSETMASON_CODEX_EXECUTABLE = process.execPath;
+    try {
+      const capability = inspectAdapter("codex");
+      expect(capability.executable).toBe(process.execPath);
+      expect(capability.launch).toBe("supported");
+    } finally {
+      if (previous === undefined) delete process.env.ASSETMASON_CODEX_EXECUTABLE;
+      else process.env.ASSETMASON_CODEX_EXECUTABLE = previous;
+    }
+  });
 
   it("exercises the Codex adapter boundary with an injected harmless process", async () => {
     const root = mkdtempSync(join(tmpdir(), "assetmason-codex-adapter-"));

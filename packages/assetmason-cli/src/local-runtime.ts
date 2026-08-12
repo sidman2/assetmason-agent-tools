@@ -127,7 +127,7 @@ export function inspectAdapter(adapter: "codex" | "generic-command"): AdapterCap
     unknowns: ["generic commands do not establish cross-agent continuation semantics"]
   };
   try {
-    const executable = process.platform === "win32" ? execFileSync("where.exe", ["codex"], { encoding: "utf8" }).split(/\r?\n/)[0] : execFileSync("which", ["codex"], { encoding: "utf8" }).trim();
+    const executable = resolveCodexExecutable();
     try { execFileSync(executable, ["--help"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }); }
     catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -324,6 +324,8 @@ export async function runCodexCommand(root: string, runId: string, options: Code
 }
 
 function resolveCodexExecutable() {
+  const configured = process.env.ASSETMASON_CODEX_EXECUTABLE?.trim();
+  if (configured) return configured;
   const command = process.platform === "win32" ? "where.exe" : "which";
   return execFileSync(command, ["codex"], { encoding: "utf8" }).split(/\r?\n/)[0].trim();
 }
