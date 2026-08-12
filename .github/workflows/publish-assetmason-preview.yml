@@ -99,22 +99,22 @@ jobs:
             }
           };
           expect(resourcePlan.name, 'agent-resource-plan', 'resource plan name');
-          expect(resourcePlan.version, '0.1.0-preview.3', 'resource plan version');
+          expect(resourcePlan.version, '0.1.0-preview.4', 'resource plan version');
           expect(resourcePlan.publishConfig?.tag, 'preview', 'resource plan tag');
           expect(resourcePlan.publishConfig?.access, 'public', 'resource plan access');
           expect(resourcePlan.repository?.directory, 'packages/agent-resource-plan', 'resource plan repository.directory');
           expect(executionProfile.name, 'agent-execution-profile', 'execution profile name');
-          expect(executionProfile.version, '0.1.0-preview.3', 'execution profile version');
+          expect(executionProfile.version, '0.1.0-preview.4', 'execution profile version');
           expect(executionProfile.publishConfig?.tag, 'preview', 'execution profile tag');
           expect(executionProfile.publishConfig?.access, 'public', 'execution profile access');
           expect(executionProfile.repository?.directory, 'packages/agent-execution-profile', 'execution profile repository.directory');
           expect(cli.name, 'assetmason-cli', 'cli name');
-          expect(cli.version, '0.1.0-preview.3', 'cli version');
+          expect(cli.version, '0.1.0-preview.4', 'cli version');
           expect(cli.publishConfig?.tag, 'preview', 'cli tag');
           expect(cli.publishConfig?.access, 'public', 'cli access');
           expect(cli.repository?.directory, 'packages/assetmason-cli', 'cli repository.directory');
-          expect(cli.dependencies?.['agent-execution-profile'], '0.1.0-preview.3', 'cli execution-profile dependency');
-          expect(cli.dependencies?.['agent-resource-plan'], '0.1.0-preview.3', 'cli dependency');
+          expect(cli.dependencies?.['agent-execution-profile'], '0.1.0-preview.4', 'cli execution-profile dependency');
+          expect(cli.dependencies?.['agent-resource-plan'], '0.1.0-preview.4', 'cli dependency');
           NODE
 
       - name: Verify versions are unpublished
@@ -122,9 +122,9 @@ jobs:
         run: |
           set -euo pipefail
           cd "$(mktemp -d)"
-          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-resource-plan@0.1.0-preview.3
-          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-execution-profile@0.1.0-preview.3
-          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" assetmason-cli@0.1.0-preview.3
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-resource-plan@0.1.0-preview.4
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" agent-execution-profile@0.1.0-preview.4
+          node "$GITHUB_WORKSPACE/scripts/release-version-guard.mjs" assetmason-cli@0.1.0-preview.4
 
       - name: Capture pack manifests
         run: |
@@ -141,7 +141,7 @@ jobs:
           npm publish --workspace agent-resource-plan --access public --tag preview --provenance
           npm view agent-resource-plan dist-tags --json
           for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            if npm view agent-resource-plan@0.1.0-preview.3 name version dist-tags repository license engines --json; then
+            if npm view agent-resource-plan@0.1.0-preview.4 name version dist-tags repository license engines --json; then
               break
             fi
             if [ "$attempt" -eq 12 ]; then
@@ -160,7 +160,7 @@ jobs:
           npm publish --workspace agent-execution-profile --access public --tag preview --provenance
           npm view agent-execution-profile dist-tags --json
           for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            if npm view agent-execution-profile@0.1.0-preview.3 name version dist-tags repository license engines --json; then
+            if npm view agent-execution-profile@0.1.0-preview.4 name version dist-tags repository license engines --json; then
               break
             fi
             if [ "$attempt" -eq 12 ]; then
@@ -179,7 +179,7 @@ jobs:
           npm publish --workspace assetmason-cli --access public --tag preview --provenance
           npm view assetmason-cli dist-tags --json
           for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            if npm view assetmason-cli@0.1.0-preview.3 name version dist-tags repository license engines bin dependencies --json; then
+            if npm view assetmason-cli@0.1.0-preview.4 name version dist-tags repository license engines bin dependencies --json; then
               break
             fi
             if [ "$attempt" -eq 12 ]; then
@@ -209,6 +209,23 @@ jobs:
           npx -y assetmason-cli@preview profile-lock --scenario auth-redirect-bug --format json
           npx -y assetmason-cli@preview export --scenario auth-redirect-bug --format markdown
           npx -y assetmason-cli@preview handoff --scenario auth-redirect-bug
+
+          fixture="$tmpdir/runtime-fixture"
+          mkdir "$fixture"
+          cd "$fixture"
+          git init >/dev/null
+          git config user.name "AssetMason Release Smoke"
+          git config user.email "release-smoke@assetmason.invalid"
+          printf 'export const value = 1;\n' > index.js
+          git add index.js
+          git commit -m "fixture" >/dev/null
+          npx -y assetmason-cli@preview doctor --root . --format json
+          npx -y assetmason-cli@preview context --root . --task "inspect runtime preview" --format json
+          npx -y assetmason-cli@preview check --root . --task "inspect runtime preview" --format json
+          npx -y assetmason-cli@preview init --root . --format json
+          npx -y assetmason-cli@preview scope status --root . --format json
+          npx -y assetmason-cli@preview adapter --root . --with generic-command --format json
+          npx -y assetmason-cli@preview run --root . --task "inspect runtime preview" --with generic-command --isolated --format json
 
       - name: Upload release evidence
         uses: actions/upload-artifact@v4

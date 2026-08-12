@@ -1,8 +1,8 @@
 # agent-resource-plan
 
-Portable, advisory-only contracts and deterministic builders for the public AssetMason Agent Resource Planning surface.
+Portable, advisory-only contracts and deterministic builders for AssetMason resource planning and admission.
 
-Source-prepared as `agent-resource-plan@0.1.0-preview.3`. The live `preview` channel currently resolves to `agent-resource-plan@0.1.0-preview.3`.
+Source-prepared as `agent-resource-plan@0.1.0-preview.4`. Verify the live npm `preview` tag independently after the trusted publish workflow completes.
 
 This library provides public-safe artifact contracts for:
 
@@ -10,9 +10,9 @@ This library provides public-safe artifact contracts for:
 - selection policy envelopes
 - minimum approved resource sets
 - minimum toolset evaluation
-- selection policy envelopes
 - resource plans
 - resource locks
+- Plan Delta and staleness semantics
 - resource diffs
 - resource inventories
 - validation results
