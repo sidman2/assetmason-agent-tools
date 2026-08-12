@@ -18,7 +18,7 @@ Evidence is bound to repository head `2db3533`. `TESTED` means a focused determi
 | pause / stop | yes | partial | no | generic stop semantics | stop termination now uses persisted process identity across CLI invocations; bounded async test hangs |
 | fresh-process continuation | yes | yes for generic lifecycle | no | generic continuation | resume/checkpoint tests |
 | HandoffPack / runtime receipt | yes | yes | no | conservative runtime handoff | CLI tests |
-| validation harness | yes | yes for existing corpus | no | 4-real-task beta evidence | `scripts/validation-harness.mjs` |
+| validation harness | yes | yes for existing corpus and CI replay | no | 20-real-task beta evidence | `scripts/validation-harness.mjs`, exact-head CI artifact |
 | PersonalScope | yes | yes (smoke) | no | local foundation | `.assetmason/scopes/scope-state.json` |
 | ProjectScope | yes | yes (smoke) | no | local foundation | project head and discovered instructions |
 | TaskScope | yes | yes (smoke) | no | local foundation | run-created task linkage |
@@ -29,13 +29,13 @@ Evidence is bound to repository head `2db3533`. `TESTED` means a focused determi
 | attempt / fork lineage | yes | yes (smoke) | no | local retry/fork mechanics only | explicit `fork` preserves TaskScope identity and parent RunRecord; worker-neutral continuation remains unearned |
 | second worker adapter | no | no | no | not claimable | no second real adapter selected |
 | worker-neutral continuation pack | yes | yes (smoke) | no | local continuation contract only | explicit unsupported vendor-session and cross-agent fields |
-| historical replay corpus | tool implemented | syntax only | no | not claimable | Windows Node child-process boundary prevents execution |
+| historical replay corpus | yes | yes (20 REAL_TASK CI replay) | no | 20-real-task beta gate | exact-head CI artifact: 20 records, 20 useful source-linked findings, 20 actionable plans, 0 errors |
 
 ## Claims not earned
 
 - Project Harness / true live Codex worker.
 - Cross-agent continuation.
-- 20–30 real-task retention gate.
+- broader retention-quality metrics beyond source-linked findings and actionable plans.
 - Production-ready, secure, compliant, autonomous, or hosted-runtime claims.
 
 ## Verification boundary at this checkpoint

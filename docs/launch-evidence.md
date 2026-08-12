@@ -28,7 +28,7 @@ The environment exposed four separate brownfield repositories with task-shaped s
 | Median doctor/context/check latency | 9.1s |
 | P90 doctor/context/check latency | 15.1s (nearest-rank) |
 
-The requested 20–30 real-task denominator was not available in this environment. The shortfall is explicit: 4 legitimate real tasks were run, not 20 fabricated tasks. Raw JSONL records are generated at `tmp/launch-validation.jsonl` during validation and are intentionally ignored runtime evidence.
+The exact-head CI replay at `0f7fff8` completed 20 repository-commit-derived REAL_TASK records: 20 useful source-linked findings, 20 actionable plans, and 0 errors. The artifact is uploaded by the `historical-replay` job; this is validation-harness evidence, not live worker execution.
 
 ## Runtime proof
 
@@ -44,7 +44,7 @@ This verdict applies only to the narrow preflight/local-runtime beta. It does no
 
 Limitations:
 
-- real-task corpus is 4 rather than the requested 20–30;
+- broader retention-quality metrics beyond source-linked findings and actionable plans remain unmeasured;
 - live Codex launch proof is unavailable;
 - generic runtime receipts remain conservative when worker outcome is unobserved;
 - no package publication or deployment was performed.
