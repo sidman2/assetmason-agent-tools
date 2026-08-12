@@ -5,7 +5,7 @@ Exact AssetMason head for the original beta evidence: `45ad056acc91f2cc4c22056da
 
 ## Continuation checkpoint
 
-Current implementation head `bc96d82` includes the project-owned Codex adapter boundary, governed scopes/memory, worker-neutral continuation, and deterministic injected-process coverage. The installed Windows Codex host was probed once afterward and classified `LIVE_CODEX_HOST_BLOCKED` (`EPERM`); this is not live worker proof. Current capability details are tracked in [`capability-ledger-v10205.md`](capability-ledger-v10205.md).
+Current implementation head `e9e2a1e` includes the project-owned Codex adapter boundary, governed scopes/memory, worker-neutral continuation, and deterministic injected-process coverage. The installed Windows Codex host was probed once afterward and classified `LIVE_CODEX_HOST_BLOCKED` (`EPERM`); this is not live worker proof. Current capability details are tracked in [`capability-ledger-v10205.md`](capability-ledger-v10205.md).
 
 ## Validation corpus
 
