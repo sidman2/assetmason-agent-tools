@@ -197,6 +197,9 @@ export async function transitionRun(root: string, runId: string, state: RuntimeS
   if (state === "stopped") {
     const child = activeProcesses.get(runId);
     if (child && !child.killed) child.kill();
+    if (run.process_id) {
+      try { process.kill(run.process_id); } catch { /* process already exited */ }
+    }
   }
   await appendEvent(root, run, type, state);
   return loadRun(root, runId);
@@ -250,6 +253,8 @@ export async function runCodexCommand(root: string, runId: string, options: Code
       const signal = error?.signal ?? undefined;
       resolveResult({ process_id: child.pid ?? -1, command: [executable, ...args], exit_code: exitCode, signal, classification: signal ? "signaled" : exitCode === 0 ? "completed" : "failed", stdout: String(stdout), stderr: String(stderr), adapter: "codex", timed_out: timedOut, invocation: { executable, cwd: run.worktree, args, task: run.task, run_id: run.run_id } });
     });
+    run.process_id = child.pid;
+    void persist(root, runPath(root, runId), run);
     activeProcesses.set(runId, child);
     options.onChild?.(child);
     void appendEvent(root, run, "codex.process.observed", "running", { process_id: child.pid, executable, cwd: run.worktree });
