@@ -2,7 +2,7 @@
 
 Installed CLI for the public AssetMason Agent Resource Planning workflow.
 
-Source-prepared as `assetmason-cli@0.1.0-preview.3`. The live `preview` channel currently resolves to `assetmason-cli@0.1.0-preview.3`.
+The repository source is ahead of the currently published `assetmason-cli@0.1.0-preview.3` preview package. The published preview surface must not be assumed to contain newer local-runtime commands until a release explicitly includes them.
 
 Use this package when you want the `assetmason` binary from `npx` or a local install.
 
@@ -32,6 +32,8 @@ npx -y assetmason-cli@preview scan --root . --format markdown
 ```
 
 ## Local runtime consumer seam
+
+This section documents the repository-source runtime foundation. These commands are not promised by the currently published npm preview package.
 
 The CLI exposes a file-backed, machine-readable local runtime without requiring a server or account. A consumer should treat the JSON output as the authority and keep `ResourcePlan`, `ResourceLock`, and `OutcomeReceipt` as the only canonical root artifacts.
 

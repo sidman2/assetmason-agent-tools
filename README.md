@@ -12,7 +12,7 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
 | `agent-resource-plan` | Public-safe resource check, selection policy envelope, minimum approved resource set, plan, lock, diff, inventory, validation, and Markdown / JSON rendering. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
-| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow, including `doctor`, `context`, `explain-context`, `check`, `select`, `lock`, `receipt-init`, `evidence-import`, `reconcile`, `handoff`, and validation. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
+| `assetmason-cli` | Installed `assetmason` CLI for the public Resource Planning workflow. The repository also contains newer local-runtime commands that require a package release before they are available from npm. | The published `0.1.0-preview.3` `preview` package contains the previously released planning surface; do not infer unpublished runtime commands from this repository. |
 | `agent-execution-profile` | Public-safe execution-profile contracts, host exports, locks, diffs, and receipt validation. | Publicly available as `0.1.0-preview.3` on the `preview` channel. |
 
 ## Quickstart
@@ -69,7 +69,7 @@ npx -y assetmason-cli@preview validate --file ./work-order.json --kind work-orde
 npx -y assetmason-cli@preview scan --root . --format markdown
 ```
 
-These commands are available through the published `preview` dist-tag.
+The planning commands above are the published preview surface. Newer repository commands, including local-runtime execution, checkpoint/resume, receipt, and handoff-by-run, are repository-source features until a package release explicitly includes them.
 
 Execution-profile parity and freshness checks stay advisory for public use: public mode writes its report under ignored `tmp/agent-runs/execution-profile-parity/`, and private parity only runs when `ASSETMASON_PRIVATE_SOURCE_ROOT` and `ASSETMASON_PRIVATE_SOURCE_SHA` are set.
 

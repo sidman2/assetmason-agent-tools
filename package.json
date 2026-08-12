@@ -24,6 +24,7 @@
     "generated-source:check": "node scripts/generated-source-guard.mjs",
     "parity:execution-profile": "npx tsx scripts/execution-profile-parity.mjs",
     "parity:execution-profile:freshness": "node scripts/execution-profile-freshness.mjs",
+    "validate:harness": "node scripts/validation-harness.mjs",
     "verify:public": "npm run generated-source:check && npm run stale:check && npm run typecheck && npm test && npm run pack:dry-run -w agent-resource-plan && npm run pack:dry-run -w agent-execution-profile && npm run pack:dry-run -w assetmason-cli && node scripts/ci-pack-smoke.mjs",
     "stale:check": "node scripts/stale-package-refs.mjs"
   },
