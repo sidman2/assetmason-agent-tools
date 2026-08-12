@@ -392,6 +392,16 @@ describe("assetmason-cli", () => {
     expect(readFileSync(join(root, ".assetmason", "scopes", "scope-state.json"), "utf8")).toContain("project-scope");
   });
 
+  it("guards local scope deletion and preserves runtime records", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-scope-delete-"));
+    await runCommand(["init", "--root", root]);
+    const refused = await runCommand(["scope", "delete", "--root", root]);
+    expect(refused.code).toBe(1);
+    const deleted = JSON.parse((await runCommand(["scope", "delete", "--root", root, "--confirm"])).text);
+    expect(deleted.runtime_preserved).toBe(true);
+    expect(() => readFileSync(join(root, ".assetmason", "scopes", "scope-state.json"), "utf8")).toThrow();
+  });
+
   it("preserves task identity and records explicit fork lineage", async () => {
     const root = mkdtempSync(join(tmpdir(), "assetmason-fork-"));
     const parent = await createRun({ root, task: "retry a bounded task", adapter: "generic-command" });

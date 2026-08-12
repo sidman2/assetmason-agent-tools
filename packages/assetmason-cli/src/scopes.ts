@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
 
@@ -90,6 +90,12 @@ export async function exportScopes(root: string, outPath: string) {
   if (!bundle) throw new Error("scope state is not initialized");
   await writeFile(resolve(outPath), JSON.stringify(bundle, null, 2) + "\n", "utf8");
   return { kind: "scope-export", path: resolve(outPath), scope_ids: [bundle.personal.scope_id, bundle.project.scope_id], decision_count: bundle.decisions.length };
+}
+
+export async function deleteScopes(root: string, confirmed: boolean) {
+  if (!confirmed) throw new Error("scope delete requires --confirm; runtime records are not affected");
+  await rm(bundlePath(root), { force: true });
+  return { kind: "scope-delete", deleted: bundlePath(root), runtime_preserved: true };
 }
 
 export async function applicableDecisions(root: string) {

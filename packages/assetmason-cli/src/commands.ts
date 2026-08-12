@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { checkpointRun, compileContinuation, createRun, forkRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
-import { addDecisionCandidate, applicableDecisions, createTaskScope, exportScopes, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
+import { addDecisionCandidate, applicableDecisions, createTaskScope, deleteScopes, exportScopes, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -109,6 +109,10 @@ export async function runCommand(argv: string[]) {
       const outPath = getOption(rest, "--out");
       if (!outPath) return error("scope export requires --out");
       return render(await exportScopes(root, outPath), outputFormat, renderJson, renderJson);
+    }
+    if (action === "delete") {
+      if (!rest.includes("--confirm")) return error("scope delete requires --confirm; runtime records are not affected");
+      return render(await deleteScopes(root, true), outputFormat, renderJson, renderJson);
     }
     return render(await loadScopes(root) ?? { kind: "scope-state", initialized: false }, outputFormat, renderJson, renderJson);
   }
@@ -294,7 +298,7 @@ function helpText(): string {
     "assetmason explain-context --root <dir> --entry <name> --format json|markdown",
     "assetmason check --root <dir> --task <text> --format json|markdown",
     "assetmason init --root <dir> --format json|markdown",
-    "assetmason scope init|status|task|export --root <dir> [--task-id <id>] [--out <file>] --task <text> --format json|markdown",
+    "assetmason scope init|status|task|export|delete --root <dir> [--task-id <id>] [--out <file>] [--confirm] --task <text> --format json|markdown",
     "assetmason memory candidate|list|applicable|accept|reject|defer|supersede|expire --root <dir> [options] --format json|markdown",
     "assetmason list-scenarios",
     "assetmason plan --scenario <name> --format json|markdown",
