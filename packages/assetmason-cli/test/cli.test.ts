@@ -378,6 +378,8 @@ describe("assetmason-cli", () => {
     const applicable = JSON.parse((await runCommand(["memory", "applicable", "--root", root])).text);
     expect(applicable.applicable).toHaveLength(1);
     expect(applicable.applicable[0].decision_id).toBe(candidate.decision_id);
+    const context = JSON.parse((await runCommand(["context", "--root", root, "--task", "repeat the project task"])).text);
+    expect(context.governedMemory.applicable[0].decision_id).toBe(candidate.decision_id);
   });
 
   it("preserves task identity and records explicit fork lineage", async () => {

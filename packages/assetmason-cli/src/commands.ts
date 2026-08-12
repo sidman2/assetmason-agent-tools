@@ -46,6 +46,7 @@ type ContextPack = {
   entries: SourceRef[];
   omissions: SourceRef[];
   explanation: string[];
+  governedMemory: Awaited<ReturnType<typeof applicableDecisions>>;
 };
 
 type RunPlan = {
@@ -405,6 +406,7 @@ async function buildDoctorReport(root: string): Promise<DoctorReport> {
 
 async function buildContextPack(root: string, task: string): Promise<ContextPack> {
   const doctor = await buildDoctorReport(root);
+  const governedMemory = await applicableDecisions(root);
   const packageJson = await readJson(join(root, "package.json")).catch(() => undefined);
   const candidates: SourceRef[] = [
     { kind: "file", label: "packages/assetmason-cli/src/commands.ts", path: "packages/assetmason-cli/src/commands.ts", status: "included", reason: "This file owns the CLI command surface." },
@@ -433,10 +435,12 @@ async function buildContextPack(root: string, task: string): Promise<ContextPack
     readiness: doctor.findings.some((finding) => finding.status === "blocked") ? "blocked" : doctor.findings.some((finding) => finding.status === "human") ? "human" : doctor.findings.some((finding) => finding.status === "conditional") ? "conditional" : doctor.findings.some((finding) => finding.status === "unknown") ? "unknown" : "ready",
     entries,
     omissions,
+    governedMemory,
     explanation: [
       `Task: ${task}`,
       `Root package: ${typeof packageJson?.name === "string" ? packageJson.name : "unknown"}`,
-      `Declared scripts: ${doctor.scripts.map((entry) => entry.label).join(", ") || "none"}`
+      `Declared scripts: ${doctor.scripts.map((entry) => entry.label).join(", ") || "none"}`,
+      `Applicable governed decisions: ${governedMemory.applicable.length}; decisions requiring review: ${governedMemory.surfaced.length}`
     ]
   };
 }
