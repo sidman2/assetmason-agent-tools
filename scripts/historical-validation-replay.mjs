@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
+import { execPath } from "node:process";
 import { promisify } from "node:util";
 
 const repoRoot = resolve(new URL("..", import.meta.url).pathname);
@@ -41,7 +42,7 @@ try {
     if (archived.code !== 0) throw new Error(`git archive failed for ${item.base_sha}: ${archived.stderr}`);
     const extracted = await run("tar", ["-xf", archivePath, "-C", target], repoRoot, true);
     if (extracted.code !== 0) throw new Error(`tar extraction failed for ${item.base_sha}: ${extracted.stderr}`);
-    const result = await run("node", [harness, "--root", target, "--task", item.task, "--task-class", "historical-commit-replay", "--real"]);
+    const result = await run(execPath, [harness, "--root", target, "--task", item.task, "--task-class", "historical-commit-replay", "--real"]);
     const parsed = result.stdout.trim().split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line)).at(-1);
     records.push({ ...parsed, real_or_fixture: "REAL_TASK", replay: true, source_commit: item.sha, base_sha: item.base_sha, task_source: `git commit ${item.sha}`, harness_exit_code: result.code, harness_stderr: result.stderr });
   }
