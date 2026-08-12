@@ -3,12 +3,13 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { exec, spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { promisify } from "node:util";
 
 const repoRoot = resolve(new URL("..", import.meta.url).pathname);
 const harness = join(repoRoot, "scripts", "validation-harness.mjs");
-const execAsync = promisify(exec);
+const gitExecutable = process.platform === "win32" ? "C:/Users/sudhir.manchanda/AppData/Local/Programs/Git/cmd/git.exe" : "git";
+const tarExecutable = process.platform === "win32" ? "C:/Windows/System32/tar.exe" : "tar";
 const output = process.argv.includes("--out") ? process.argv[process.argv.indexOf("--out") + 1] : join(repoRoot, "tmp", "historical-validation.jsonl");
 const requestedCount = Number(process.argv.includes("--count") ? process.argv[process.argv.indexOf("--count") + 1] : 20);
 
@@ -23,8 +24,8 @@ function run(command, args, cwd = repoRoot) {
   });
 }
 
-const log = await execAsync("git log --no-merges --format='%H%x09%P%x09%s' -n " + String(Math.max(requestedCount + 10, 30)), { cwd: repoRoot });
-const commits = log.stdout.trim().split(/\r?\n/).map((line) => {
+const log = execFileSync(gitExecutable, ["log", "--no-merges", "--format=%H%x09%P%x09%s", "-n", String(Math.max(requestedCount + 10, 30))], { cwd: repoRoot, encoding: "utf8" });
+const commits = log.trim().split(/\r?\n/).map((line) => {
   const [sha, parents, ...subject] = line.split("\t");
   return { sha, base_sha: parents.split(" ")[0], task: subject.join("\t") };
 }).filter((item) => item.sha && item.base_sha).slice(0, requestedCount);
@@ -37,8 +38,8 @@ try {
     const target = join(runRoot, item.sha);
     await mkdir(target, { recursive: true });
     const archivePath = join(runRoot, `${item.sha}.tar`);
-    await execAsync(`git archive ${item.base_sha} -o "${archivePath}"`, { cwd: repoRoot });
-    await execAsync(`tar -xf "${archivePath}" -C "${target}"`);
+    execFileSync(gitExecutable, ["archive", item.base_sha, "-o", archivePath], { cwd: repoRoot, stdio: "ignore" });
+    execFileSync(tarExecutable, ["-xf", archivePath, "-C", target], { stdio: "ignore" });
     const result = await run("node", [harness, "--root", target, "--task", item.task, "--task-class", "historical-commit-replay", "--real"]);
     const parsed = result.stdout.trim().split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line)).at(-1);
     records.push({ ...parsed, real_or_fixture: "REAL_TASK", replay: true, source_commit: item.sha, base_sha: item.base_sha, task_source: `git commit ${item.sha}`, harness_exit_code: result.code, harness_stderr: result.stderr });
