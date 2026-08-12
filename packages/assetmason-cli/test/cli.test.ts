@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { main } from "../src/main.js";
 import { runCommand } from "../src/commands.js";
+import { createRun, runCodexCommand } from "../src/local-runtime.js";
 import { buildExecutionProfile } from "agent-execution-profile";
 import { buildExecutionProfileLock } from "agent-execution-profile";
 import { buildGenericHostExportArtifact } from "agent-execution-profile";
@@ -344,5 +345,20 @@ describe("assetmason-cli", () => {
     expect(capability.adapter).toBe("codex");
     expect(["supported", "access_denied", "not_installed", "unknown"]).toContain(capability.launch);
     if (capability.launch !== "supported") expect(capability.unknowns.length).toBeGreaterThan(0);
+  });
+
+  it("exercises the Codex adapter boundary with an injected harmless process", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-codex-adapter-"));
+    const run = await createRun({ root, task: "continue the project-owned task", adapter: "codex" });
+    const result = await runCodexCommand(root, run.run_id, { executable: process.execPath });
+    expect(result.adapter).toBe("codex");
+    expect(result.invocation?.cwd).toBe(root);
+    expect(result.invocation?.task).toBe("continue the project-owned task");
+    expect(result.invocation?.args).toEqual(["exec", "--json", "--", "continue the project-owned task"]);
+    expect(result.classification).toBe("failed");
+    expect(result.exit_code).not.toBe(0);
+    const events = readFileSync(join(root, ".assetmason", "runtime", `${run.run_id}.events.jsonl`), "utf8");
+    expect(events).toContain("codex.started");
+    expect(events).toContain("codex.exited");
   });
 });

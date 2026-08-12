@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, runGenericCommand, transitionRun } from "./local-runtime.js";
+import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -195,8 +195,12 @@ export async function runCommand(argv: string[]) {
     const runId = getOption(rest, "--run");
     const commandIndex = rest.indexOf("--command");
     const processCommand = commandIndex >= 0 ? rest.slice(commandIndex + 1).filter((value) => !value.startsWith("--format")) : [];
-    if (!runId || processCommand.length === 0) return error("exec requires --run and --command <executable> [args]");
-    return render(await runGenericCommand(root, runId, processCommand), outputFormat, renderJson, renderJson);
+    if (!runId) return error("exec requires --run");
+    const run = await loadRuntimeRun(root, runId);
+    if (run.adapter !== "codex" && processCommand.length === 0) return error("exec requires --run and --command <executable> [args]");
+    return render(run.adapter === "codex"
+      ? await runCodexCommand(root, runId)
+      : await runGenericCommand(root, runId, processCommand), outputFormat, renderJson, renderJson);
   }
   if (command === "status") {
     const runId = getOption(rest, "--run");

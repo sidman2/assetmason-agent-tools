@@ -1,6 +1,6 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
-import { execFile, execFileSync } from "node:child_process";
+import { execFile, execFileSync, type ChildProcess } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 
 export type RuntimeState = "created" | "running" | "paused" | "blocked" | "stopped" | "completed" | "failed";
@@ -9,6 +9,7 @@ export type RunRecord = {
   schema_version: "0.1.0";
   kind: "run-record";
   task_id: string;
+  task: string;
   run_id: string;
   workspace_id: string;
   project_root: string;
@@ -75,12 +76,22 @@ export type ProcessResult = {
   classification: "completed" | "failed" | "signaled";
   stdout: string;
   stderr: string;
+  adapter?: "codex" | "generic-command";
+  timed_out?: boolean;
+  invocation?: { executable: string; cwd: string; args: string[]; task: string; run_id: string };
+};
+
+export type CodexAdapterOptions = {
+  executable?: string;
+  timeoutMs?: number;
+  onChild?: (child: ChildProcess) => void;
 };
 
 const runtimeDir = (root: string) => join(resolve(root), ".assetmason", "runtime");
 const runPath = (root: string, runId: string) => join(runtimeDir(root), `${runId}.run.json`);
 const eventPath = (root: string, runId: string) => join(runtimeDir(root), `${runId}.events.jsonl`);
 const checkpointPath = (root: string, checkpointId: string) => join(runtimeDir(root), `${checkpointId}.checkpoint.json`);
+const activeProcesses = new Map<string, ChildProcess>();
 
 function git(root: string, args: string[]) {
   try { return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(); }
@@ -138,7 +149,7 @@ export async function createRun(input: { root: string; task: string; adapter?: s
   const workspace_id = `workspace-${digest(root)}`;
   const workspace = input.isolated ? prepareIsolatedWorktree(root, run_id) : { worktree: root, branch: git(root, ["branch", "--show-current"]), base: git(root, ["rev-parse", "HEAD"]) };
   const run: RunRecord = {
-    schema_version: "0.1.0", kind: "run-record", task_id, run_id, workspace_id,
+    schema_version: "0.1.0", kind: "run-record", task_id, task, run_id, workspace_id,
     project_root: root, worktree: workspace.worktree, branch: workspace.branch, base_revision: workspace.base,
     state: "created", adapter: input.adapter ?? "generic-command", created_at: now, updated_at: now,
     next_safe_resume_action: "assetmason resume --root . --run <run-id>", event_offset: 0, command: input.command
@@ -181,6 +192,10 @@ export async function checkpointRun(root: string, runId: string, outstandingAcce
 
 export async function transitionRun(root: string, runId: string, state: RuntimeState, type: string) {
   const run = await loadRun(root, runId);
+  if (state === "stopped") {
+    const child = activeProcesses.get(runId);
+    if (child && !child.killed) child.kill();
+  }
   await appendEvent(root, run, type, state);
   return loadRun(root, runId);
 }
@@ -212,4 +227,38 @@ export async function runGenericCommand(root: string, runId: string, command: st
   const finalRun = await loadRun(root, runId);
   await appendEvent(root, finalRun, "process.exited", result.classification === "completed" ? "running" : "failed", { process_id: result.process_id, exit_code: result.exit_code, signal: result.signal, classification: result.classification });
   return result;
+}
+
+/**
+ * The project-owned Codex boundary. The executable is injectable for deterministic
+ * mechanics tests; no capability probe or generic command is treated as Codex.
+ */
+export async function runCodexCommand(root: string, runId: string, options: CodexAdapterOptions = {}): Promise<ProcessResult> {
+  const run = await loadRun(root, runId);
+  if (run.adapter !== "codex") throw new Error("Codex adapter requires a run created with --with codex");
+  const executable = options.executable ?? resolveCodexExecutable();
+  const args = ["exec", "--json", "--", run.task];
+  const timeoutMs = options.timeoutMs ?? 60_000;
+  if (run.worktree !== run.project_root && git(run.worktree, ["rev-parse", "HEAD"]) !== run.base_revision) throw new Error("execution refused: workspace base revision changed");
+  await appendEvent(root, run, "codex.started", "running", { executable, cwd: run.worktree, args, run_id: run.run_id });
+  const result = await new Promise<ProcessResult>((resolveResult) => {
+    const child = execFile(executable, args, { cwd: run.worktree, windowsHide: true, timeout: timeoutMs, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+      const timedOut = Boolean(error && (error as NodeJS.ErrnoException).code === "ETIMEDOUT");
+      const exitCode = typeof error?.code === "number" ? error.code : error ? null : 0;
+      const signal = error?.signal ?? undefined;
+      resolveResult({ process_id: child.pid ?? -1, command: [executable, ...args], exit_code: exitCode, signal, classification: signal ? "signaled" : exitCode === 0 ? "completed" : "failed", stdout: String(stdout), stderr: String(stderr), adapter: "codex", timed_out: timedOut, invocation: { executable, cwd: run.worktree, args, task: run.task, run_id: run.run_id } });
+    });
+    activeProcesses.set(runId, child);
+    options.onChild?.(child);
+    void appendEvent(root, run, "codex.process.observed", "running", { process_id: child.pid, executable, cwd: run.worktree });
+  });
+  const finalRun = await loadRun(root, runId);
+  activeProcesses.delete(runId);
+  await appendEvent(root, finalRun, "codex.exited", result.classification === "completed" ? "running" : "failed", { process_id: result.process_id, exit_code: result.exit_code, signal: result.signal, timed_out: result.timed_out, classification: result.classification });
+  return result;
+}
+
+function resolveCodexExecutable() {
+  const command = process.platform === "win32" ? "where.exe" : "which";
+  return execFileSync(command, ["codex"], { encoding: "utf8" }).split(/\r?\n/)[0].trim();
 }
