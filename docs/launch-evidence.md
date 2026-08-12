@@ -5,7 +5,7 @@ Exact AssetMason head for the original beta evidence: `45ad056acc91f2cc4c22056da
 
 ## Continuation checkpoint
 
-Current implementation head `7ff262e` includes the project-owned Codex adapter boundary, governed scopes/memory, worker-neutral continuation, bounded local init/delete, and deterministic injected-process coverage. The installed Windows Codex host was probed once afterward and classified `LIVE_CODEX_HOST_BLOCKED` (`EPERM`); this is not live worker proof. Current capability details are tracked in [`capability-ledger-v10205.md`](capability-ledger-v10205.md).
+Current implementation head `53f119e` includes the project-owned Codex adapter boundary, governed scopes/memory, worker-neutral continuation, bounded local init/delete, and deterministic injected-process coverage. PowerShell resolves a WindowsApps Codex binary, but the Node runtime probe cannot spawn `where.exe` (`EPERM`) and therefore reports `not_installed`; this is not live worker proof. Current capability details are tracked in [`capability-ledger-v10205.md`](capability-ledger-v10205.md).
 
 The preceding draft PR checkpoint `df686346` passed the repository CI matrix across Ubuntu, macOS, and Windows for Node 18, 20, and 22. This is exact-head repository verification for that checkpoint, not live worker or deployment proof.
 
@@ -34,7 +34,7 @@ The exact-head CI replay at `0f7fff8` completed 20 repository-commit-derived REA
 
 The generic CLI dogfood passed from user-facing boundaries: disposable Git fixture, `doctor`, `context`, `check`, isolated run, generic process execution with PID/exit observation, checkpoint, pause, fresh-process resume, explicit stop, conservative receipt, and handoff. The receipt remained non-complete because the worker outcome was not observed. Stopped and completed states remained distinct.
 
-This does not prove a live Codex worker. The installed WindowsApps Codex binary remains blocked by host execution denial. The Project Harness and cross-agent claims remain unearned.
+This does not prove a live Codex worker. The current Node host cannot establish a launchable Codex executable: WindowsApps resolution is visible to PowerShell, while Node process discovery is blocked by `EPERM`. The Project Harness and cross-agent claims remain unearned.
 
 ## Verdict
 

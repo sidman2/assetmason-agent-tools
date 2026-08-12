@@ -2,7 +2,7 @@
 
 Status: `CODEX_ADAPTER_IMPLEMENTED_LIVE_PROOF_PENDING`
 
-This packet is intentionally for execution outside the IDE host. The installed WindowsApps Codex binaries are known to return `Access is denied` from the current host. Do not treat `assetmason adapter --with codex` capability reporting as live worker proof.
+This packet is intentionally for execution outside the IDE host. The current Node host may be unable to discover or launch WindowsApps Codex binaries; preserve the exact probe result and do not infer live proof from PowerShell resolution. Do not treat `assetmason adapter --with codex` capability reporting as live worker proof.
 
 ## Procedure
 
