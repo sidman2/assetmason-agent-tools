@@ -361,4 +361,19 @@ describe("assetmason-cli", () => {
     expect(events).toContain("codex.started");
     expect(events).toContain("codex.exited");
   });
+
+  it("keeps local scopes distinct and requires explicit decision promotion", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-scopes-"));
+    const initialized = JSON.parse((await runCommand(["scope", "init", "--root", root])).text);
+    expect(initialized.personal.kind).toBe("personal-scope");
+    expect(initialized.project.kind).toBe("project-scope");
+    const task = JSON.parse((await runCommand(["scope", "task", "--root", root, "--task", "preserve the project profile", "--task-id", "task-1"])).text);
+    expect(task.kind).toBe("task-scope");
+    const candidate = JSON.parse((await runCommand(["memory", "candidate", "--root", root, "--statement", "Keep runtime roots immutable", "--rationale", "Preserves proposed/approved/actual separation", "--source", "test:evidence"])).text);
+    expect(candidate.state).toBe("candidate");
+    const accepted = JSON.parse((await runCommand(["memory", "accept", "--root", root, "--id", candidate.decision_id])).text);
+    expect(accepted.state).toBe("accepted");
+    expect(accepted.accepted_by).toBe("owner");
+    expect(accepted.no_silent_promotion).toBe(true);
+  });
 });

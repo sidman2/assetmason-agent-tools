@@ -2,6 +2,7 @@ import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
 import { execFile, execFileSync, type ChildProcess } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
+import { createTaskScope } from "./scopes.js";
 
 export type RuntimeState = "created" | "running" | "paused" | "blocked" | "stopped" | "completed" | "failed";
 
@@ -155,6 +156,7 @@ export async function createRun(input: { root: string; task: string; adapter?: s
     next_safe_resume_action: "assetmason resume --root . --run <run-id>", event_offset: 0, command: input.command
   };
   await persist(root, runPath(root, run_id), run);
+  await createTaskScope(root, task_id, task);
   await appendEvent(root, run, "run.created", "created", { task });
   return run;
 }

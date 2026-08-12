@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
+import { addDecisionCandidate, createTaskScope, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -94,6 +95,25 @@ export async function runCommand(argv: string[]) {
       return render(resourcePlan.buildBeforeBuildPacket(scenario), outputFormat, renderJson, renderJson);
     }
     return render(await buildRunPlan(root, task), outputFormat, renderJson, renderJson);
+  }
+  if (command === "scope") {
+    const action = rest.find((value) => !value.startsWith("--")) ?? "status";
+    if (action === "init") return render(await initializeScopes(root), outputFormat, renderJson, renderJson);
+    if (action === "task") {
+      const taskId = getOption(rest, "--task-id") ?? `task-${Date.now()}`;
+      return render(await createTaskScope(root, taskId, task), outputFormat, renderJson, renderJson);
+    }
+    return render(await loadScopes(root) ?? { kind: "scope-state", initialized: false }, outputFormat, renderJson, renderJson);
+  }
+  if (command === "memory") {
+    const action = rest.find((value) => !value.startsWith("--")) ?? "list";
+    if (action === "candidate") return render(await addDecisionCandidate(root, getOption(rest, "--statement") ?? task, getOption(rest, "--rationale") ?? "", getOptionValues(rest, "--source")), outputFormat, renderJson, renderJson);
+    if (action === "list") return render((await loadScopes(root))?.decisions ?? [], outputFormat, renderJson, renderJson);
+    const decisionId = getOption(rest, "--id");
+    if (!decisionId) return error("memory transition requires --id");
+    if (!["accept", "reject", "defer", "supersede", "expire"].includes(action)) return error("memory action must be candidate|list|accept|reject|defer|supersede|expire");
+    const state = ({ accept: "accepted", reject: "rejected", defer: "deferred", supersede: "superseded", expire: "expired" } as const)[action as "accept" | "reject" | "defer" | "supersede" | "expire"];
+    return render(await transitionDecision(root, decisionId, state, getOptionValues(rest, "--conflict")), outputFormat, renderJson, renderJson);
   }
   if (command === "list-scenarios") {
     const resourcePlan = await loadResourcePlanModule();
@@ -255,6 +275,8 @@ function helpText(): string {
     "assetmason context --root <dir> --task <text> --diff <worker-a> <worker-b> --format json|markdown",
     "assetmason explain-context --root <dir> --entry <name> --format json|markdown",
     "assetmason check --root <dir> --task <text> --format json|markdown",
+    "assetmason scope init|status|task --root <dir> [--task-id <id>] --task <text> --format json|markdown",
+    "assetmason memory candidate|list|accept|reject|defer|supersede|expire --root <dir> [options] --format json|markdown",
     "assetmason list-scenarios",
     "assetmason plan --scenario <name> --format json|markdown",
     "assetmason select --scenario <name> --format json|markdown",
