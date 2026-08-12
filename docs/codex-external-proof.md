@@ -13,7 +13,7 @@ Run from a clean checkout of the exact commit under test:
 3. Create a disposable Git fixture with one bounded source change.
 4. Run `doctor`, `context`, `check`, and `lock` and preserve their JSON output.
 5. Create an isolated run with `run --isolated`.
-6. Launch Codex through an implemented AssetMason adapter. The current repository does not yet implement this launch adapter; stop and record that result if the command is unavailable.
+6. Launch Codex through an implemented AssetMason adapter. The repository implements the project-owned launch adapter; record the adapter result and distinguish host denial from a successful live worker.
 7. Once implemented, make exactly one bounded source change and capture stdout, stderr, PID, exit, and signal observations.
 8. Create a checkpoint, then pause or stop the run.
 9. Terminate the controller process and start a fresh controller process.
