@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, runGenericCommand, transitionRun } from "./local-runtime.js";
+import { checkpointRun, compileContinuation, createRun, forkRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
+import { addDecisionCandidate, applicableDecisions, createTaskScope, deleteScopes, exportScopes, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -45,6 +46,7 @@ type ContextPack = {
   entries: SourceRef[];
   omissions: SourceRef[];
   explanation: string[];
+  governedMemory: Awaited<ReturnType<typeof applicableDecisions>>;
 };
 
 type RunPlan = {
@@ -94,6 +96,36 @@ export async function runCommand(argv: string[]) {
       return render(resourcePlan.buildBeforeBuildPacket(scenario), outputFormat, renderJson, renderJson);
     }
     return render(await buildRunPlan(root, task), outputFormat, renderJson, renderJson);
+  }
+  if (command === "init") return render(await initializeScopes(root), outputFormat, renderJson, renderJson);
+  if (command === "scope") {
+    const action = rest.find((value) => !value.startsWith("--")) ?? "status";
+    if (action === "init") return render(await initializeScopes(root), outputFormat, renderJson, renderJson);
+    if (action === "task") {
+      const taskId = getOption(rest, "--task-id") ?? `task-${Date.now()}`;
+      return render(await createTaskScope(root, taskId, task), outputFormat, renderJson, renderJson);
+    }
+    if (action === "export") {
+      const outPath = getOption(rest, "--out");
+      if (!outPath) return error("scope export requires --out");
+      return render(await exportScopes(root, outPath), outputFormat, renderJson, renderJson);
+    }
+    if (action === "delete") {
+      if (!rest.includes("--confirm")) return error("scope delete requires --confirm; runtime records are not affected");
+      return render(await deleteScopes(root, true), outputFormat, renderJson, renderJson);
+    }
+    return render(await loadScopes(root) ?? { kind: "scope-state", initialized: false }, outputFormat, renderJson, renderJson);
+  }
+  if (command === "memory") {
+    const action = rest.find((value) => !value.startsWith("--")) ?? "list";
+    if (action === "candidate") return render(await addDecisionCandidate(root, getOption(rest, "--statement") ?? task, getOption(rest, "--rationale") ?? "", getOptionValues(rest, "--source")), outputFormat, renderJson, renderJson);
+    if (action === "list") return render((await loadScopes(root))?.decisions ?? [], outputFormat, renderJson, renderJson);
+    if (action === "applicable") return render(await applicableDecisions(root), outputFormat, renderJson, renderJson);
+    const decisionId = getOption(rest, "--id");
+    if (!decisionId) return error("memory transition requires --id");
+    if (!["accept", "reject", "defer", "supersede", "expire"].includes(action)) return error("memory action must be candidate|list|accept|reject|defer|supersede|expire");
+    const state = ({ accept: "accepted", reject: "rejected", defer: "deferred", supersede: "superseded", expire: "expired" } as const)[action as "accept" | "reject" | "defer" | "supersede" | "expire"];
+    return render(await transitionDecision(root, decisionId, state, getOptionValues(rest, "--conflict")), outputFormat, renderJson, renderJson);
   }
   if (command === "list-scenarios") {
     const resourcePlan = await loadResourcePlanModule();
@@ -186,6 +218,11 @@ export async function runCommand(argv: string[]) {
     const runtime = await createRun({ root, task, adapter: getOption(rest, "--with"), command: rest, isolated: rest.includes("--isolated") });
     return render(runtime, outputFormat, renderJson, renderJson);
   }
+  if (command === "fork") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("fork requires --run");
+    return render(await forkRun(root, runId, getOption(rest, "--task")), outputFormat, renderJson, renderJson);
+  }
   if (command === "adapter") {
     const adapter = (getOption(rest, "--with") ?? "codex") as "codex" | "generic-command";
     if (adapter !== "codex" && adapter !== "generic-command") return error("adapter --with must be codex or generic-command");
@@ -195,13 +232,22 @@ export async function runCommand(argv: string[]) {
     const runId = getOption(rest, "--run");
     const commandIndex = rest.indexOf("--command");
     const processCommand = commandIndex >= 0 ? rest.slice(commandIndex + 1).filter((value) => !value.startsWith("--format")) : [];
-    if (!runId || processCommand.length === 0) return error("exec requires --run and --command <executable> [args]");
-    return render(await runGenericCommand(root, runId, processCommand), outputFormat, renderJson, renderJson);
+    if (!runId) return error("exec requires --run");
+    const run = await loadRuntimeRun(root, runId);
+    if (run.adapter !== "codex" && processCommand.length === 0) return error("exec requires --run and --command <executable> [args]");
+    return render(run.adapter === "codex"
+      ? await runCodexCommand(root, runId)
+      : await runGenericCommand(root, runId, processCommand), outputFormat, renderJson, renderJson);
   }
   if (command === "status") {
     const runId = getOption(rest, "--run");
     if (!runId) return error("status requires --run");
     return render(await loadRuntimeRun(root, runId), outputFormat, renderJson, renderJson);
+  }
+  if (command === "continuation") {
+    const runId = getOption(rest, "--run");
+    if (!runId) return error("continuation requires --run");
+    return render(await compileContinuation(root, runId), outputFormat, renderJson, renderJson);
   }
   if (command === "checkpoint") {
     const runId = getOption(rest, "--run");
@@ -251,6 +297,9 @@ function helpText(): string {
     "assetmason context --root <dir> --task <text> --diff <worker-a> <worker-b> --format json|markdown",
     "assetmason explain-context --root <dir> --entry <name> --format json|markdown",
     "assetmason check --root <dir> --task <text> --format json|markdown",
+    "assetmason init --root <dir> --format json|markdown",
+    "assetmason scope init|status|task|export|delete --root <dir> [--task-id <id>] [--out <file>] [--confirm] --task <text> --format json|markdown",
+    "assetmason memory candidate|list|applicable|accept|reject|defer|supersede|expire --root <dir> [options] --format json|markdown",
     "assetmason list-scenarios",
     "assetmason plan --scenario <name> --format json|markdown",
     "assetmason select --scenario <name> --format json|markdown",
@@ -265,9 +314,11 @@ function helpText(): string {
     "assetmason receipt-init --plan <file> [--lock <file>] --format json|markdown [--out <file>]",
     "assetmason receipt --root <dir> --run <run-id> --format json|markdown [--out <file>]",
     "assetmason run --root <dir> --task <text> [--with <adapter>] [--isolated] --format json|markdown",
+    "assetmason fork --root <dir> --run <run-id> [--task <text>] --format json|markdown",
     "assetmason adapter --with codex|generic-command --format json|markdown",
     "assetmason exec --root <dir> --run <run-id> --command <executable> [args] --format json|markdown",
     "assetmason status --root <dir> --run <run-id> --format json|markdown",
+    "assetmason continuation --root <dir> --run <run-id> --format json|markdown",
     "assetmason checkpoint --root <dir> --run <run-id> [--acceptance <item> ...] --format json|markdown",
     "assetmason pause|stop|block --root <dir> --run <run-id> --format json|markdown",
     "assetmason resume --root <dir> --run <run-id> --format json|markdown",
@@ -361,6 +412,7 @@ async function buildDoctorReport(root: string): Promise<DoctorReport> {
 
 async function buildContextPack(root: string, task: string): Promise<ContextPack> {
   const doctor = await buildDoctorReport(root);
+  const governedMemory = await applicableDecisions(root);
   const packageJson = await readJson(join(root, "package.json")).catch(() => undefined);
   const candidates: SourceRef[] = [
     { kind: "file", label: "packages/assetmason-cli/src/commands.ts", path: "packages/assetmason-cli/src/commands.ts", status: "included", reason: "This file owns the CLI command surface." },
@@ -389,10 +441,12 @@ async function buildContextPack(root: string, task: string): Promise<ContextPack
     readiness: doctor.findings.some((finding) => finding.status === "blocked") ? "blocked" : doctor.findings.some((finding) => finding.status === "human") ? "human" : doctor.findings.some((finding) => finding.status === "conditional") ? "conditional" : doctor.findings.some((finding) => finding.status === "unknown") ? "unknown" : "ready",
     entries,
     omissions,
+    governedMemory,
     explanation: [
       `Task: ${task}`,
       `Root package: ${typeof packageJson?.name === "string" ? packageJson.name : "unknown"}`,
-      `Declared scripts: ${doctor.scripts.map((entry) => entry.label).join(", ") || "none"}`
+      `Declared scripts: ${doctor.scripts.map((entry) => entry.label).join(", ") || "none"}`,
+      `Applicable governed decisions: ${governedMemory.applicable.length}; decisions requiring review: ${governedMemory.surfaced.length}`
     ]
   };
 }

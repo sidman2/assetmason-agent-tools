@@ -1,7 +1,8 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
-import { execFile, execFileSync } from "node:child_process";
+import { execFile, execFileSync, type ChildProcess } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
+import { createTaskScope } from "./scopes.js";
 
 export type RuntimeState = "created" | "running" | "paused" | "blocked" | "stopped" | "completed" | "failed";
 
@@ -9,6 +10,7 @@ export type RunRecord = {
   schema_version: "0.1.0";
   kind: "run-record";
   task_id: string;
+  task: string;
   run_id: string;
   workspace_id: string;
   project_root: string;
@@ -21,6 +23,8 @@ export type RunRecord = {
   updated_at: string;
   next_safe_resume_action: string;
   event_offset: number;
+  parent_run_id?: string;
+  attempt: number;
   checkpoint_id?: string;
   process_id?: number;
   command?: string[];
@@ -75,12 +79,39 @@ export type ProcessResult = {
   classification: "completed" | "failed" | "signaled";
   stdout: string;
   stderr: string;
+  adapter?: "codex" | "generic-command";
+  timed_out?: boolean;
+  invocation?: { executable: string; cwd: string; args: string[]; task: string; run_id: string };
+};
+
+export type CodexAdapterOptions = {
+  executable?: string;
+  timeoutMs?: number;
+  onChild?: (child: ChildProcess) => void;
+};
+
+export type ContinuationPack = {
+  schema_version: "0.1.0";
+  kind: "worker-neutral-continuation";
+  task_id: string;
+  run_id: string;
+  parent_run_id?: string;
+  attempt: number;
+  adapter: string;
+  project_root: string;
+  worktree: string;
+  base_revision: string;
+  current_state: RuntimeState;
+  next_safe_action: string;
+  observed_events: string[];
+  unsupported: string[];
 };
 
 const runtimeDir = (root: string) => join(resolve(root), ".assetmason", "runtime");
 const runPath = (root: string, runId: string) => join(runtimeDir(root), `${runId}.run.json`);
 const eventPath = (root: string, runId: string) => join(runtimeDir(root), `${runId}.events.jsonl`);
 const checkpointPath = (root: string, checkpointId: string) => join(runtimeDir(root), `${checkpointId}.checkpoint.json`);
+const activeProcesses = new Map<string, ChildProcess>();
 
 function git(root: string, args: string[]) {
   try { return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(); }
@@ -96,11 +127,11 @@ export function inspectAdapter(adapter: "codex" | "generic-command"): AdapterCap
     unknowns: ["generic commands do not establish cross-agent continuation semantics"]
   };
   try {
-    const executable = process.platform === "win32" ? execFileSync("where.exe", ["codex"], { encoding: "utf8" }).split(/\r?\n/)[0] : execFileSync("which", ["codex"], { encoding: "utf8" }).trim();
+    const executable = resolveCodexExecutable();
     try { execFileSync(executable, ["--help"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }); }
     catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (/access denied|EACCES/i.test(message)) return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "access_denied", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex executable was discovered but launch was denied by the host"] };
+      if (/access denied|EACCES|EPERM/i.test(message)) return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "access_denied", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex executable was discovered but launch was denied by the host", "LIVE_CODEX_HOST_BLOCKED"] };
       return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "unknown", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex launch probe failed", message] };
     }
     return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "supported", worktree_binding: "supported", process_identity: "supported", stop: "unknown", continuation: "unknown", unknowns: ["Stop and continuation semantics require a bounded live run"] };
@@ -115,7 +146,12 @@ async function persist(root: string, path: string, value: unknown) {
 }
 
 async function loadRun(root: string, runId: string): Promise<RunRecord> {
-  return JSON.parse(await readFile(runPath(root, runId), "utf8")) as RunRecord;
+  const raw = JSON.parse(await readFile(runPath(root, runId), "utf8")) as Partial<RunRecord>;
+  return {
+    ...raw,
+    task: raw.task ?? raw.task_id,
+    attempt: raw.attempt ?? 1
+  } as RunRecord;
 }
 
 function prepareIsolatedWorktree(root: string, runId: string) {
@@ -138,12 +174,13 @@ export async function createRun(input: { root: string; task: string; adapter?: s
   const workspace_id = `workspace-${digest(root)}`;
   const workspace = input.isolated ? prepareIsolatedWorktree(root, run_id) : { worktree: root, branch: git(root, ["branch", "--show-current"]), base: git(root, ["rev-parse", "HEAD"]) };
   const run: RunRecord = {
-    schema_version: "0.1.0", kind: "run-record", task_id, run_id, workspace_id,
+    schema_version: "0.1.0", kind: "run-record", task_id, task, run_id, workspace_id,
     project_root: root, worktree: workspace.worktree, branch: workspace.branch, base_revision: workspace.base,
     state: "created", adapter: input.adapter ?? "generic-command", created_at: now, updated_at: now,
-    next_safe_resume_action: "assetmason resume --root . --run <run-id>", event_offset: 0, command: input.command
+    next_safe_resume_action: "assetmason resume --root . --run <run-id>", event_offset: 0, attempt: 1, command: input.command
   };
   await persist(root, runPath(root, run_id), run);
+  await createTaskScope(root, task_id, task);
   await appendEvent(root, run, "run.created", "created", { task });
   return run;
 }
@@ -164,6 +201,19 @@ export async function appendEvent(root: string, run: RunRecord, type: string, st
 
 export async function loadRuntimeRun(root: string, runId: string) { return loadRun(root, runId); }
 
+export async function compileContinuation(root: string, runId: string): Promise<ContinuationPack> {
+  const run = await loadRun(root, runId);
+  let events: RuntimeEvent[] = [];
+  try { events = (await readFile(eventPath(root, runId), "utf8")).trim().split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line) as RuntimeEvent); } catch { /* no events beyond run creation */ }
+  return {
+    schema_version: "0.1.0", kind: "worker-neutral-continuation", task_id: run.task_id, run_id: run.run_id,
+    parent_run_id: run.parent_run_id, attempt: run.attempt, adapter: run.adapter, project_root: run.project_root,
+    worktree: run.worktree, base_revision: run.base_revision, current_state: run.state,
+    next_safe_action: run.next_safe_resume_action, observed_events: events.map((event) => event.type),
+    unsupported: ["vendor coding-agent session restoration", "cross-agent equivalence proof"]
+  };
+}
+
 export async function checkpointRun(root: string, runId: string, outstandingAcceptance: string[] = []) {
   const run = await loadRun(root, runId);
   const checkpoint: CheckpointRecord = {
@@ -181,6 +231,13 @@ export async function checkpointRun(root: string, runId: string, outstandingAcce
 
 export async function transitionRun(root: string, runId: string, state: RuntimeState, type: string) {
   const run = await loadRun(root, runId);
+  if (state === "stopped") {
+    const child = activeProcesses.get(runId);
+    if (child && !child.killed) child.kill();
+    if (run.process_id) {
+      try { process.kill(run.process_id); } catch { /* process already exited */ }
+    }
+  }
   await appendEvent(root, run, type, state);
   return loadRun(root, runId);
 }
@@ -212,4 +269,63 @@ export async function runGenericCommand(root: string, runId: string, command: st
   const finalRun = await loadRun(root, runId);
   await appendEvent(root, finalRun, "process.exited", result.classification === "completed" ? "running" : "failed", { process_id: result.process_id, exit_code: result.exit_code, signal: result.signal, classification: result.classification });
   return result;
+}
+
+export async function forkRun(root: string, runId: string, task?: string) {
+  const parent = await loadRun(root, runId);
+  const child: RunRecord = {
+    ...parent,
+    run_id: `run-${randomUUID()}`,
+    task: task ?? parent.task,
+    state: "created",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    event_offset: 0,
+    checkpoint_id: undefined,
+    process_id: undefined,
+    parent_run_id: parent.run_id,
+    attempt: parent.attempt + 1,
+    next_safe_resume_action: "assetmason resume --root . --run <run-id>"
+  };
+  await persist(root, runPath(root, child.run_id), child);
+  await appendEvent(root, child, "run.forked", "created", { parent_run_id: parent.run_id, parent_state: parent.state, attempt: child.attempt });
+  return child;
+}
+
+/**
+ * The project-owned Codex boundary. The executable is injectable for deterministic
+ * mechanics tests; no capability probe or generic command is treated as Codex.
+ */
+export async function runCodexCommand(root: string, runId: string, options: CodexAdapterOptions = {}): Promise<ProcessResult> {
+  const run = await loadRun(root, runId);
+  if (run.adapter !== "codex") throw new Error("Codex adapter requires a run created with --with codex");
+  const executable = options.executable ?? resolveCodexExecutable();
+  const args = ["exec", "--json", "--", run.task];
+  const timeoutMs = options.timeoutMs ?? 60_000;
+  if (run.worktree !== run.project_root && git(run.worktree, ["rev-parse", "HEAD"]) !== run.base_revision) throw new Error("execution refused: workspace base revision changed");
+  await appendEvent(root, run, "codex.started", "running", { executable, cwd: run.worktree, args, run_id: run.run_id });
+  const result = await new Promise<ProcessResult>((resolveResult) => {
+    const child = execFile(executable, args, { cwd: run.worktree, windowsHide: true, timeout: timeoutMs, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+      const timedOut = Boolean(error && (error as NodeJS.ErrnoException).code === "ETIMEDOUT");
+      const exitCode = typeof error?.code === "number" ? error.code : error ? null : 0;
+      const signal = error?.signal ?? undefined;
+      resolveResult({ process_id: child.pid ?? -1, command: [executable, ...args], exit_code: exitCode, signal, classification: signal ? "signaled" : exitCode === 0 ? "completed" : "failed", stdout: String(stdout), stderr: String(stderr), adapter: "codex", timed_out: timedOut, invocation: { executable, cwd: run.worktree, args, task: run.task, run_id: run.run_id } });
+    });
+    run.process_id = child.pid;
+    void persist(root, runPath(root, runId), run);
+    activeProcesses.set(runId, child);
+    options.onChild?.(child);
+    void appendEvent(root, run, "codex.process.observed", "running", { process_id: child.pid, executable, cwd: run.worktree });
+  });
+  const finalRun = await loadRun(root, runId);
+  activeProcesses.delete(runId);
+  await appendEvent(root, finalRun, "codex.exited", result.classification === "completed" ? "running" : "failed", { process_id: result.process_id, exit_code: result.exit_code, signal: result.signal, timed_out: result.timed_out, classification: result.classification });
+  return result;
+}
+
+function resolveCodexExecutable() {
+  const configured = process.env.ASSETMASON_CODEX_EXECUTABLE?.trim();
+  if (configured) return configured;
+  const command = process.platform === "win32" ? "where.exe" : "which";
+  return execFileSync(command, ["codex"], { encoding: "utf8" }).split(/\r?\n/)[0].trim();
 }

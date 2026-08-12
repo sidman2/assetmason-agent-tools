@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { main } from "../src/main.js";
 import { runCommand } from "../src/commands.js";
+import { createRun, forkRun, inspectAdapter, runCodexCommand } from "../src/local-runtime.js";
+import { loadScopes } from "../src/scopes.js";
 import { buildExecutionProfile } from "agent-execution-profile";
 import { buildExecutionProfileLock } from "agent-execution-profile";
 import { buildGenericHostExportArtifact } from "agent-execution-profile";
@@ -344,5 +346,104 @@ describe("assetmason-cli", () => {
     expect(capability.adapter).toBe("codex");
     expect(["supported", "access_denied", "not_installed", "unknown"]).toContain(capability.launch);
     if (capability.launch !== "supported") expect(capability.unknowns.length).toBeGreaterThan(0);
+  }, 30000);
+
+  it("honors an explicit Codex executable path for restricted host discovery", () => {
+    const previous = process.env.ASSETMASON_CODEX_EXECUTABLE;
+    process.env.ASSETMASON_CODEX_EXECUTABLE = process.execPath;
+    try {
+      const capability = inspectAdapter("codex");
+      expect(capability.executable).toBe(process.execPath);
+      expect(capability.launch).toBe("supported");
+    } finally {
+      if (previous === undefined) delete process.env.ASSETMASON_CODEX_EXECUTABLE;
+      else process.env.ASSETMASON_CODEX_EXECUTABLE = previous;
+    }
+  });
+
+  it("exercises the Codex adapter boundary with an injected harmless process", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-codex-adapter-"));
+    const run = await createRun({ root, task: "continue the project-owned task", adapter: "codex" });
+    const result = await runCodexCommand(root, run.run_id, { executable: process.execPath });
+    expect(result.adapter).toBe("codex");
+    expect(result.invocation?.cwd).toBe(root);
+    expect(result.invocation?.task).toBe("continue the project-owned task");
+    expect(result.invocation?.args).toEqual(["exec", "--json", "--", "continue the project-owned task"]);
+    expect(result.classification).toBe("failed");
+    expect(result.exit_code).not.toBe(0);
+    const events = readFileSync(join(root, ".assetmason", "runtime", `${run.run_id}.events.jsonl`), "utf8");
+    expect(events).toContain("codex.started");
+    expect(events).toContain("codex.exited");
+  });
+
+  it("keeps local scopes distinct and requires explicit decision promotion", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-scopes-"));
+    const initialized = JSON.parse((await runCommand(["scope", "init", "--root", root])).text);
+    expect(initialized.personal.kind).toBe("personal-scope");
+    expect(initialized.project.kind).toBe("project-scope");
+    const task = JSON.parse((await runCommand(["scope", "task", "--root", root, "--task", "preserve the project profile", "--task-id", "task-1"])).text);
+    expect(task.kind).toBe("task-scope");
+    const candidate = JSON.parse((await runCommand(["memory", "candidate", "--root", root, "--statement", "Keep runtime roots immutable", "--rationale", "Preserves proposed/approved/actual separation", "--source", "test:evidence"])).text);
+    expect(candidate.state).toBe("candidate");
+    const accepted = JSON.parse((await runCommand(["memory", "accept", "--root", root, "--id", candidate.decision_id])).text);
+    expect(accepted.state).toBe("accepted");
+    expect(accepted.accepted_by).toBe("owner");
+    expect(accepted.no_silent_promotion).toBe(true);
+    const applicable = JSON.parse((await runCommand(["memory", "applicable", "--root", root])).text);
+    expect(applicable.applicable).toHaveLength(1);
+    expect(applicable.applicable[0].decision_id).toBe(candidate.decision_id);
+    const context = JSON.parse((await runCommand(["context", "--root", root, "--task", "repeat the project task"])).text);
+    expect(context.governedMemory.applicable[0].decision_id).toBe(candidate.decision_id);
+  });
+
+  it("initializes a reversible local profile without rewriting instructions", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-init-"));
+    writeFileSync(join(root, "README.md"), "owner guidance\n", "utf8");
+    const result = JSON.parse((await runCommand(["init", "--root", root])).text);
+    expect(result.project.discovered_instructions).toContain("README.md");
+    expect(readFileSync(join(root, "README.md"), "utf8")).toBe("owner guidance\n");
+    expect(readFileSync(join(root, ".assetmason", "scopes", "scope-state.json"), "utf8")).toContain("project-scope");
+  });
+
+  it("guards local scope deletion and preserves runtime records", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-scope-delete-"));
+    await runCommand(["init", "--root", root]);
+    const refused = await runCommand(["scope", "delete", "--root", root]);
+    expect(refused.code).toBe(1);
+    const deleted = JSON.parse((await runCommand(["scope", "delete", "--root", root, "--confirm"])).text);
+    expect(deleted.runtime_preserved).toBe(true);
+    expect(() => readFileSync(join(root, ".assetmason", "scopes", "scope-state.json"), "utf8")).toThrow();
+  });
+
+  it("preserves task identity and records explicit fork lineage", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-fork-"));
+    const parent = await createRun({ root, task: "retry a bounded task", adapter: "generic-command" });
+    const child = await forkRun(root, parent.run_id, "retry with the same governed task");
+    expect(child.parent_run_id).toBe(parent.run_id);
+    expect(child.task_id).toBe(parent.task_id);
+    expect(child.attempt).toBe(2);
+    expect(child.state).toBe("created");
+    expect(child.task).toBe("retry with the same governed task");
+    expect((await loadScopes(root))?.tasks.find((task) => task.task_id === parent.task_id)?.objective).toBe("retry a bounded task");
+    const events = readFileSync(join(root, ".assetmason", "runtime", `${child.run_id}.events.jsonl`), "utf8");
+    expect(events).toContain("run.forked");
+    const continuation = JSON.parse((await runCommand(["continuation", "--root", root, "--run", child.run_id])).text);
+    expect(continuation.kind).toBe("worker-neutral-continuation");
+    expect(continuation.parent_run_id).toBe(parent.run_id);
+    expect(continuation.unsupported).toContain("vendor coding-agent session restoration");
+  });
+
+  it("loads pre-lineage run records with compatibility defaults", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-legacy-run-"));
+    const runId = "run-legacy";
+    mkdirSync(join(root, ".assetmason", "runtime"), { recursive: true });
+    writeFileSync(join(root, ".assetmason", "runtime", `${runId}.run.json`), JSON.stringify({
+      schema_version: "0.1.0", kind: "run-record", task_id: "task-legacy", run_id: runId, workspace_id: "workspace-legacy",
+      project_root: root, worktree: root, branch: "main", base_revision: "unknown", state: "created", adapter: "generic-command",
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString(), next_safe_resume_action: "resume", event_offset: 0
+    }), "utf8");
+    const status = JSON.parse((await runCommand(["status", "--root", root, "--run", runId])).text);
+    expect(status.task).toBe("task-legacy");
+    expect(status.attempt).toBe(1);
   });
 });
