@@ -4,7 +4,7 @@ Deterministic advisory execution-profile contracts, builders, validators, render
 
 This package is public-safe and execution-free. It does not run tools, proxy inference, hold credentials, or enforce runtime behavior on a host.
 
-Source-prepared as `agent-execution-profile@0.1.0-preview.3`. The live `preview` channel currently resolves to `agent-execution-profile@0.1.0-preview.3` with provenance from the trusted GitHub Actions OIDC workflow when the release gate is intentionally run.
+Source-prepared as `agent-execution-profile@0.1.0-preview.4`. Verify the live npm `preview` tag independently after the trusted publish workflow completes.
 
 It covers:
 
@@ -13,6 +13,8 @@ It covers:
 - execution profile diffs
 - generic, Codex, and Claude Code host exports
 - outcome receipt validation and rendering
+- evidence import and reconciliation
+- Handoff Pack construction and rendering
 
 Install:
 
