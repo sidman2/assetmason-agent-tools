@@ -1,0 +1,37 @@
+# AssetMason capability ledger — current checkpoint
+
+Evidence is bound to repository head `42248ad`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
+
+| Capability | Implemented | Tested | Live-proven | Claimable | Evidence / gap |
+|---|---|---|---|---|---|
+| doctor / context / check | yes | yes | no | preflight beta | `packages/assetmason-cli/src/commands.ts`; existing launch evidence |
+| ResourcePlan | yes | yes | no | yes | `agent-resource-plan` tests |
+| ResourceLock | yes | yes | no | yes | `agent-resource-plan` tests |
+| OutcomeReceipt | yes | yes | no | runtime receipt with limitations | `local-runtime.ts`, CLI tests |
+| staleness / PlanDelta | yes | yes | no | yes | execution-profile reconciliation tests |
+| evidence authority | yes | yes | no | advisory | receipt/reconciliation contracts |
+| RunRecord / EventLog | yes | yes | no | generic runtime | `local-runtime.ts`, CLI tests |
+| CheckpointRecord | yes | yes | no | generic runtime | checkpoint lifecycle tests |
+| isolated workspace | yes | yes | no | generic runtime | retained worktree test |
+| generic runner | yes | yes | yes for generic process only | generic runtime | generic dogfood evidence |
+| Codex adapter | yes | yes (injected process) | no | adapter mechanics only | `runCodexCommand`; live host returns `LIVE_CODEX_HOST_BLOCKED` |
+| pause / stop | yes | partial | no | generic stop semantics | stop termination is implemented; bounded async test hangs |
+| fresh-process continuation | yes | yes for generic lifecycle | no | generic continuation | resume/checkpoint tests |
+| HandoffPack / runtime receipt | yes | yes | no | conservative runtime handoff | CLI tests |
+| validation harness | yes | yes for existing corpus | no | 4-real-task beta evidence | `scripts/validation-harness.mjs` |
+| PersonalScope | yes | yes (smoke) | no | local foundation | `.assetmason/scopes/scope-state.json` |
+| ProjectScope | yes | yes (smoke) | no | local foundation | project head and discovered instructions |
+| TaskScope | yes | yes (smoke) | no | local foundation | run-created task linkage |
+| DecisionMemoryLedger | partial | yes (smoke) | no | governed local foundation | candidate and explicit transitions; repeat-task value not proven |
+| freshness / conflict surfacing | yes | yes (smoke) | no | local foundation | repository-head drift marks accepted memory stale |
+| local scope export | yes | yes (CLI smoke) | no | local foundation | `scope export` |
+| attempt / fork lineage | no | no | no | not claimable | remaining Phase 5 gap |
+| second worker adapter | no | no | no | not claimable | no second real adapter selected |
+| historical replay corpus | tool implemented | syntax only | no | not claimable | Windows Node child-process boundary prevents execution |
+
+## Claims not earned
+
+- Project Harness / true live Codex worker.
+- Cross-agent continuation.
+- 20–30 real-task retention gate.
+- Production-ready, secure, compliant, autonomous, or hosted-runtime claims.

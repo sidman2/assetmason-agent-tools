@@ -1,7 +1,11 @@
 # AssetMason launch evidence
 
 Date: 2026-08-12  
-Exact AssetMason head: `45ad056acc91f2cc4c22056da70b1e906bf73e11`
+Exact AssetMason head for the original beta evidence: `45ad056acc91f2cc4c22056da70b1e906bf73e11`
+
+## Continuation checkpoint
+
+Current implementation head `42248ad` adds a project-owned Codex adapter boundary and deterministic injected-process coverage. The installed Windows Codex host was probed once afterward and classified `LIVE_CODEX_HOST_BLOCKED` (`EPERM`); this is not live worker proof. Current capability details are tracked in [`capability-ledger-v10205.md`](capability-ledger-v10205.md).
 
 ## Validation corpus
 
@@ -28,7 +32,7 @@ The requested 20–30 real-task denominator was not available in this environmen
 
 The generic CLI dogfood passed from user-facing boundaries: disposable Git fixture, `doctor`, `context`, `check`, isolated run, generic process execution with PID/exit observation, checkpoint, pause, fresh-process resume, explicit stop, conservative receipt, and handoff. The receipt remained non-complete because the worker outcome was not observed. Stopped and completed states remained distinct.
 
-This does not prove a live Codex worker. The installed WindowsApps Codex binary remains blocked by host execution denial, and the repository has no actual Codex launch adapter. The Project Harness and cross-agent claims remain unearned.
+This does not prove a live Codex worker. The installed WindowsApps Codex binary remains blocked by host execution denial. The Project Harness and cross-agent claims remain unearned.
 
 ## Verdict
 
