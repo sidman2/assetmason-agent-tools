@@ -1,6 +1,6 @@
 # AssetMason capability ledger — current checkpoint
 
-Evidence is bound to repository head `42248ad`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
+Evidence is bound to repository head `eb8784e`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
 
 | Capability | Implemented | Tested | Live-proven | Claimable | Evidence / gap |
 |---|---|---|---|---|---|
@@ -15,7 +15,7 @@ Evidence is bound to repository head `42248ad`. `TESTED` means a focused determi
 | isolated workspace | yes | yes | no | generic runtime | retained worktree test |
 | generic runner | yes | yes | yes for generic process only | generic runtime | generic dogfood evidence |
 | Codex adapter | yes | yes (injected process) | no | adapter mechanics only | `runCodexCommand`; live host returns `LIVE_CODEX_HOST_BLOCKED` |
-| pause / stop | yes | partial | no | generic stop semantics | stop termination is implemented; bounded async test hangs |
+| pause / stop | yes | partial | no | generic stop semantics | stop termination now uses persisted process identity across CLI invocations; bounded async test hangs |
 | fresh-process continuation | yes | yes for generic lifecycle | no | generic continuation | resume/checkpoint tests |
 | HandoffPack / runtime receipt | yes | yes | no | conservative runtime handoff | CLI tests |
 | validation harness | yes | yes for existing corpus | no | 4-real-task beta evidence | `scripts/validation-harness.mjs` |
