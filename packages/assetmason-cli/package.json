@@ -1,8 +1,8 @@
 {
   "name": "assetmason-cli",
-  "version": "0.1.0-preview.3",
+  "version": "0.1.0-preview.4",
   "type": "module",
-  "description": "Installed CLI for public AssetMason Agent Resource Planning workflows.",
+  "description": "Installed CLI for AssetMason delegation preflight and local project-owned runtime workflows.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -13,7 +13,7 @@
     "url": "https://github.com/sidman2/assetmason-agent-tools/issues"
   },
   "homepage": "https://github.com/sidman2/assetmason-agent-tools#readme",
-  "keywords": ["assetmason", "agent-resource-planning", "cli", "npm", "npx", "typescript"],
+  "keywords": ["assetmason", "coding-agents", "project-harness", "cli", "npm", "npx", "typescript"],
   "engines": {
     "node": ">=18"
   },
@@ -27,8 +27,8 @@
     "provenance": true
   },
   "dependencies": {
-    "agent-execution-profile": "0.1.0-preview.3",
-    "agent-resource-plan": "0.1.0-preview.3"
+    "agent-execution-profile": "0.1.0-preview.4",
+    "agent-resource-plan": "0.1.0-preview.4"
   },
   "scripts": {
     "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
