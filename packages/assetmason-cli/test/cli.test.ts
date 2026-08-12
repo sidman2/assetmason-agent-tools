@@ -375,6 +375,9 @@ describe("assetmason-cli", () => {
     expect(accepted.state).toBe("accepted");
     expect(accepted.accepted_by).toBe("owner");
     expect(accepted.no_silent_promotion).toBe(true);
+    const applicable = JSON.parse((await runCommand(["memory", "applicable", "--root", root])).text);
+    expect(applicable.applicable).toHaveLength(1);
+    expect(applicable.applicable[0].decision_id).toBe(candidate.decision_id);
   });
 
   it("preserves task identity and records explicit fork lineage", async () => {

@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { checkpointRun, compileContinuation, createRun, forkRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
-import { addDecisionCandidate, createTaskScope, exportScopes, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
+import { addDecisionCandidate, applicableDecisions, createTaskScope, exportScopes, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -114,6 +114,7 @@ export async function runCommand(argv: string[]) {
     const action = rest.find((value) => !value.startsWith("--")) ?? "list";
     if (action === "candidate") return render(await addDecisionCandidate(root, getOption(rest, "--statement") ?? task, getOption(rest, "--rationale") ?? "", getOptionValues(rest, "--source")), outputFormat, renderJson, renderJson);
     if (action === "list") return render((await loadScopes(root))?.decisions ?? [], outputFormat, renderJson, renderJson);
+    if (action === "applicable") return render(await applicableDecisions(root), outputFormat, renderJson, renderJson);
     const decisionId = getOption(rest, "--id");
     if (!decisionId) return error("memory transition requires --id");
     if (!["accept", "reject", "defer", "supersede", "expire"].includes(action)) return error("memory action must be candidate|list|accept|reject|defer|supersede|expire");
@@ -291,7 +292,7 @@ function helpText(): string {
     "assetmason explain-context --root <dir> --entry <name> --format json|markdown",
     "assetmason check --root <dir> --task <text> --format json|markdown",
     "assetmason scope init|status|task|export --root <dir> [--task-id <id>] [--out <file>] --task <text> --format json|markdown",
-    "assetmason memory candidate|list|accept|reject|defer|supersede|expire --root <dir> [options] --format json|markdown",
+    "assetmason memory candidate|list|applicable|accept|reject|defer|supersede|expire --root <dir> [options] --format json|markdown",
     "assetmason list-scenarios",
     "assetmason plan --scenario <name> --format json|markdown",
     "assetmason select --scenario <name> --format json|markdown",

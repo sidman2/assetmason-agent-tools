@@ -92,6 +92,18 @@ export async function exportScopes(root: string, outPath: string) {
   return { kind: "scope-export", path: resolve(outPath), scope_ids: [bundle.personal.scope_id, bundle.project.scope_id], decision_count: bundle.decisions.length };
 }
 
+export async function applicableDecisions(root: string) {
+  const bundle = await loadScopes(root);
+  const decisions = bundle?.decisions ?? [];
+  return {
+    kind: "decision-applicability",
+    project_scope_id: bundle?.project.scope_id,
+    applicable: decisions.filter((decision) => decision.state === "accepted" && decision.freshness === "fresh" && decision.conflicts.length === 0),
+    surfaced: decisions.filter((decision) => decision.state === "accepted" && (decision.freshness !== "fresh" || decision.conflicts.length > 0)).map((decision) => ({ decision_id: decision.decision_id, state: decision.state, freshness: decision.freshness, conflicts: decision.conflicts, requires_review: true })),
+    excluded: decisions.filter((decision) => decision.state !== "accepted").map((decision) => ({ decision_id: decision.decision_id, state: decision.state, reason: "not accepted project memory" }))
+  };
+}
+
 export async function initializeScopes(root: string, owner = "local-user") {
   const existing = await loadScopes(root);
   if (existing) return existing;
