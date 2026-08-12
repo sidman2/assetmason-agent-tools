@@ -383,6 +383,15 @@ describe("assetmason-cli", () => {
     expect(context.governedMemory.applicable[0].decision_id).toBe(candidate.decision_id);
   });
 
+  it("initializes a reversible local profile without rewriting instructions", async () => {
+    const root = mkdtempSync(join(tmpdir(), "assetmason-init-"));
+    writeFileSync(join(root, "README.md"), "owner guidance\n", "utf8");
+    const result = JSON.parse((await runCommand(["init", "--root", root])).text);
+    expect(result.project.discovered_instructions).toContain("README.md");
+    expect(readFileSync(join(root, "README.md"), "utf8")).toBe("owner guidance\n");
+    expect(readFileSync(join(root, ".assetmason", "scopes", "scope-state.json"), "utf8")).toContain("project-scope");
+  });
+
   it("preserves task identity and records explicit fork lineage", async () => {
     const root = mkdtempSync(join(tmpdir(), "assetmason-fork-"));
     const parent = await createRun({ root, task: "retry a bounded task", adapter: "generic-command" });

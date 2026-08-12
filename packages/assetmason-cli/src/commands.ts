@@ -97,6 +97,7 @@ export async function runCommand(argv: string[]) {
     }
     return render(await buildRunPlan(root, task), outputFormat, renderJson, renderJson);
   }
+  if (command === "init") return render(await initializeScopes(root), outputFormat, renderJson, renderJson);
   if (command === "scope") {
     const action = rest.find((value) => !value.startsWith("--")) ?? "status";
     if (action === "init") return render(await initializeScopes(root), outputFormat, renderJson, renderJson);
@@ -292,6 +293,7 @@ function helpText(): string {
     "assetmason context --root <dir> --task <text> --diff <worker-a> <worker-b> --format json|markdown",
     "assetmason explain-context --root <dir> --entry <name> --format json|markdown",
     "assetmason check --root <dir> --task <text> --format json|markdown",
+    "assetmason init --root <dir> --format json|markdown",
     "assetmason scope init|status|task|export --root <dir> [--task-id <id>] [--out <file>] --task <text> --format json|markdown",
     "assetmason memory candidate|list|applicable|accept|reject|defer|supersede|expire --root <dir> [options] --format json|markdown",
     "assetmason list-scenarios",
