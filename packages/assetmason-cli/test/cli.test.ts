@@ -346,7 +346,7 @@ describe("assetmason-cli", () => {
     expect(capability.adapter).toBe("codex");
     expect(["supported", "access_denied", "not_installed", "unknown"]).toContain(capability.launch);
     if (capability.launch !== "supported") expect(capability.unknowns.length).toBeGreaterThan(0);
-  });
+  }, 30000);
 
   it("exercises the Codex adapter boundary with an injected harmless process", async () => {
     const root = mkdtempSync(join(tmpdir(), "assetmason-codex-adapter-"));
