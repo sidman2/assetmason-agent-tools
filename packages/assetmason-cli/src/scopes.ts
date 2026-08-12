@@ -75,7 +75,21 @@ function git(root: string, args: string[]) {
 }
 
 export async function loadScopes(root: string): Promise<ScopeBundle | undefined> {
-  try { return JSON.parse(await readFile(bundlePath(root), "utf8")) as ScopeBundle; } catch { return undefined; }
+  try {
+    const bundle = JSON.parse(await readFile(bundlePath(root), "utf8")) as ScopeBundle;
+    const currentHead = git(resolve(root), ["rev-parse", "HEAD"]);
+    if (currentHead !== "unknown" && bundle.project.repository_head !== currentHead) {
+      return { ...bundle, project: { ...bundle.project, repository_head: currentHead, updated_at: now() }, decisions: bundle.decisions.map((decision) => decision.state === "accepted" ? { ...decision, freshness: "stale", conflicts: [...new Set([...decision.conflicts, "repository head changed since promotion"])] } : decision) };
+    }
+    return bundle;
+  } catch { return undefined; }
+}
+
+export async function exportScopes(root: string, outPath: string) {
+  const bundle = await loadScopes(root);
+  if (!bundle) throw new Error("scope state is not initialized");
+  await writeFile(resolve(outPath), JSON.stringify(bundle, null, 2) + "\n", "utf8");
+  return { kind: "scope-export", path: resolve(outPath), scope_ids: [bundle.personal.scope_id, bundle.project.scope_id], decision_count: bundle.decisions.length };
 }
 
 export async function initializeScopes(root: string, owner = "local-user") {

@@ -112,7 +112,7 @@ export function inspectAdapter(adapter: "codex" | "generic-command"): AdapterCap
     try { execFileSync(executable, ["--help"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }); }
     catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (/access denied|EACCES/i.test(message)) return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "access_denied", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex executable was discovered but launch was denied by the host"] };
+      if (/access denied|EACCES|EPERM/i.test(message)) return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "access_denied", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex executable was discovered but launch was denied by the host", "LIVE_CODEX_HOST_BLOCKED"] };
       return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "unknown", worktree_binding: "unknown", process_identity: "unknown", stop: "unknown", continuation: "unknown", unknowns: ["Codex launch probe failed", message] };
     }
     return { schema_version: "0.1.0", kind: "worker-capability", adapter, executable, installed: true, launch: "supported", worktree_binding: "supported", process_identity: "supported", stop: "unknown", continuation: "unknown", unknowns: ["Stop and continuation semantics require a bounded live run"] };

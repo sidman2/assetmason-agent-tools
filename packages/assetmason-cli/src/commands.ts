@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { checkpointRun, createRun, inspectAdapter, loadRuntimeRun, resumeRun, runCodexCommand, runGenericCommand, transitionRun } from "./local-runtime.js";
-import { addDecisionCandidate, createTaskScope, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
+import { addDecisionCandidate, createTaskScope, exportScopes, initializeScopes, loadScopes, transitionDecision } from "./scopes.js";
 
 type OutputFormat = "json" | "markdown";
 
@@ -102,6 +102,11 @@ export async function runCommand(argv: string[]) {
     if (action === "task") {
       const taskId = getOption(rest, "--task-id") ?? `task-${Date.now()}`;
       return render(await createTaskScope(root, taskId, task), outputFormat, renderJson, renderJson);
+    }
+    if (action === "export") {
+      const outPath = getOption(rest, "--out");
+      if (!outPath) return error("scope export requires --out");
+      return render(await exportScopes(root, outPath), outputFormat, renderJson, renderJson);
     }
     return render(await loadScopes(root) ?? { kind: "scope-state", initialized: false }, outputFormat, renderJson, renderJson);
   }
@@ -275,7 +280,7 @@ function helpText(): string {
     "assetmason context --root <dir> --task <text> --diff <worker-a> <worker-b> --format json|markdown",
     "assetmason explain-context --root <dir> --entry <name> --format json|markdown",
     "assetmason check --root <dir> --task <text> --format json|markdown",
-    "assetmason scope init|status|task --root <dir> [--task-id <id>] --task <text> --format json|markdown",
+    "assetmason scope init|status|task|export --root <dir> [--task-id <id>] [--out <file>] --task <text> --format json|markdown",
     "assetmason memory candidate|list|accept|reject|defer|supersede|expire --root <dir> [options] --format json|markdown",
     "assetmason list-scenarios",
     "assetmason plan --scenario <name> --format json|markdown",
