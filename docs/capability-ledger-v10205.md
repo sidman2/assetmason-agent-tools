@@ -1,6 +1,6 @@
 # AssetMason capability ledger — current checkpoint
 
-Evidence is bound to repository head `eb8784e`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
+Evidence is bound to repository head `6aa1ef9`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
 
 | Capability | Implemented | Tested | Live-proven | Claimable | Evidence / gap |
 |---|---|---|---|---|---|
@@ -25,7 +25,7 @@ Evidence is bound to repository head `eb8784e`. `TESTED` means a focused determi
 | DecisionMemoryLedger | partial | yes (smoke) | no | governed local foundation | candidate and explicit transitions; repeat-task value not proven |
 | freshness / conflict surfacing | yes | yes (smoke) | no | local foundation | repository-head drift marks accepted memory stale |
 | local scope export | yes | yes (CLI smoke) | no | local foundation | `scope export` |
-| attempt / fork lineage | no | no | no | not claimable | remaining Phase 5 gap |
+| attempt / fork lineage | yes | yes (smoke) | no | local retry/fork mechanics only | explicit `fork` preserves TaskScope identity and parent RunRecord; worker-neutral continuation remains unearned |
 | second worker adapter | no | no | no | not claimable | no second real adapter selected |
 | historical replay corpus | tool implemented | syntax only | no | not claimable | Windows Node child-process boundary prevents execution |
 
