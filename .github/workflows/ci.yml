@@ -33,6 +33,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: node scripts/historical-validation-replay.mjs --count 20 --out historical-validation.jsonl
       - run: node scripts/summarize-validation.mjs historical-validation.jsonl
       - uses: actions/upload-artifact@v4
