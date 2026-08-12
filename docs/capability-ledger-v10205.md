@@ -1,6 +1,6 @@
 # AssetMason capability ledger — current checkpoint
 
-Evidence is bound to repository head `3d2c840`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
+Evidence is bound to repository head `2af849b`. `TESTED` means a focused deterministic check passed; `LIVE_PROVEN` requires an observed external worker or end-to-end run. Capability discovery is not adapter proof.
 
 | Capability | Implemented | Tested | Live-proven | Claimable | Evidence / gap |
 |---|---|---|---|---|---|
@@ -36,3 +36,10 @@ Evidence is bound to repository head `3d2c840`. `TESTED` means a focused determi
 - Cross-agent continuation.
 - 20–30 real-task retention gate.
 - Production-ready, secure, compliant, autonomous, or hosted-runtime claims.
+
+## Verification boundary at this checkpoint
+
+- Repository typecheck and full workspace build passed.
+- Generated-source guard passed.
+- `names:check` is not green because the environment attempted to resolve unpublished `ai-discovery` from npm and received `E404`; this is not treated as a code pass.
+- Full Vitest execution remains environment-blocked by worker hangs.
