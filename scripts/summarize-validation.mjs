@@ -32,7 +32,15 @@ function summarize(items) {
     median_latency_ms: percentile(latencies, 0.5),
     p90_latency_ms: percentile(latencies, 0.9),
     source_commits: [...new Set(items.map((item) => item.source_commit).filter(Boolean))],
-    unsupported_claims: count((item) => item.unsupported_claims?.length > 0)
+    unsupported_claims: count((item) => item.unsupported_claims?.length > 0),
+    measurement_coverage: {
+      material_corrections: items.some((item) => item.material_corrections !== undefined),
+      material_confirmations: items.some((item) => item.material_confirmations !== undefined),
+      no_addition_successes: items.some((item) => item.no_addition_success !== undefined),
+      false_blocks: items.some((item) => item.false_block !== undefined),
+      missed_material_facts: items.some((item) => item.missed_material_facts !== undefined),
+      latency: latencies.length > 0
+    }
   };
 }
 const summary = {
