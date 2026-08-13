@@ -4,7 +4,7 @@ Deterministic advisory execution-profile contracts, builders, validators, render
 
 This package is public-safe and execution-free. It does not run tools, proxy inference, hold credentials, or enforce runtime behavior on a host.
 
-Source-prepared as `agent-execution-profile@0.1.0-preview.5`. Verify the live npm `preview` tag independently after the trusted publish workflow completes.
+Source-prepared as `agent-execution-profile@0.1.0-preview.6`. Verify the live npm `preview` tag independently after the trusted publish workflow completes.
 
 It covers:
 
