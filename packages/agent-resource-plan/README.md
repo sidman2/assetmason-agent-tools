@@ -2,7 +2,7 @@
 
 Portable, advisory-only contracts and deterministic builders for AssetMason resource planning and admission.
 
-Source-prepared as `agent-resource-plan@0.1.0-preview.4`. Verify the live npm `preview` tag independently after the trusted publish workflow completes.
+Source-prepared as `agent-resource-plan@0.1.0-preview.5`. Verify the live npm `preview` tag independently after the trusted publish workflow completes.
 
 This library provides public-safe artifact contracts for:
 

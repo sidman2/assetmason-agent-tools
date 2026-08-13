@@ -11,13 +11,13 @@ The public packages provide portable contracts, deterministic artifact builders,
 | `ard-kit` | Shared schemas, validators, fixtures, and helpers for ARD / AI Catalog readiness. | Existing public preview package. |
 | `ard-cli` | Run ARD readiness checks and source-linked diagnostics from the command line. | Existing public preview package. |
 | `ai-discovery` | Local workspace for validating, explaining, and drafting `ai-catalog.json` discovery assets. | Existing preview workspace package. |
-| `agent-resource-plan` | Resource checks, Plan/Lock contracts, Plan Delta/staleness semantics, diffs, inventory, validation, and rendering. | Source-prepared as `0.1.0-preview.4`; verify the live `preview` tag after publishing. |
-| `assetmason-cli` | Installed `assetmason` CLI for delegation preflight and local project-owned runtime workflows. | Source-prepared as `0.1.0-preview.4`; this package version includes the merged runtime command surface. |
-| `agent-execution-profile` | Execution-profile contracts, host exports, locks, diffs, evidence reconciliation, handoff, and receipt validation. | Source-prepared as `0.1.0-preview.4`; verify the live `preview` tag after publishing. |
+| `agent-resource-plan` | Resource checks, Plan/Lock contracts, Plan Delta/staleness semantics, diffs, inventory, validation, and rendering. | Source-prepared as `0.1.0-preview.5`; verify the live `preview` tag after publishing. |
+| `assetmason-cli` | Installed `assetmason` CLI for delegation preflight and local project-owned runtime workflows. | Source-prepared as `0.1.0-preview.5`; this package version includes the merged runtime command surface. |
+| `agent-execution-profile` | Execution-profile contracts, host exports, locks, diffs, evidence reconciliation, handoff, and receipt validation. | Source-prepared as `0.1.0-preview.5`; verify the live `preview` tag after publishing. |
 
 ## Quickstart
 
-After preview.4 is published:
+After preview.5 is published:
 
 ```bash
 npx -y assetmason-cli@preview --help
@@ -38,7 +38,7 @@ npm run build
 
 ## Local runtime preview
 
-The preview.4 CLI package contains the current local runtime mechanics, including project-owned run identity, isolated worktree support, checkpoints, pause/resume, handoff/receipt, scopes, governed decision memory, retry/fork lineage, and worker adapters.
+The preview.5 CLI package contains the current local runtime mechanics, including project-owned run identity, isolated worktree support, checkpoints, pause/resume, handoff/receipt, scopes, governed decision memory, retry/fork lineage, and worker adapters.
 
 ```bash
 npx -y assetmason-cli@preview init --root . --format json
@@ -74,7 +74,7 @@ Verification evidence for the public preview surface is captured in `scripts/rel
 * AssetMason package surface: `agent-resource-plan`, `agent-execution-profile`, `assetmason-cli`
 * canonical run-contract roots: `ResourcePlan`, `ResourceLock`, `OutcomeReceipt`
 
-Preview API note: semantic versioning may change during preview. `preview.4` is a prerelease rather than a stable release, and `latest` remains at its actual live registry value.
+Preview API note: semantic versioning may change during preview. `preview.5` is a prerelease rather than a stable release, and `latest` remains at its actual live registry value.
 
 ## Development
 

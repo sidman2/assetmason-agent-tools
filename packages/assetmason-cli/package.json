@@ -1,6 +1,6 @@
 {
   "name": "assetmason-cli",
-  "version": "0.1.0-preview.4",
+  "version": "0.1.0-preview.5",
   "type": "module",
   "description": "Installed CLI for AssetMason delegation preflight and local project-owned runtime workflows.",
   "license": "MIT",
@@ -27,8 +27,8 @@
     "provenance": true
   },
   "dependencies": {
-    "agent-execution-profile": "0.1.0-preview.4",
-    "agent-resource-plan": "0.1.0-preview.4"
+    "agent-execution-profile": "0.1.0-preview.5",
+    "agent-resource-plan": "0.1.0-preview.5"
   },
   "scripts": {
     "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
