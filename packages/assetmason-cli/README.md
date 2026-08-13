@@ -2,7 +2,7 @@
 
 Installed CLI for AssetMason delegation preflight and local project-owned runtime workflows.
 
-Source-prepared as `assetmason-cli@0.1.0-preview.5`. This release candidate includes the merged delegation-preflight and local-runtime command surface; verify the live npm `preview` tag independently after the trusted publish workflow completes.
+Source-prepared as `assetmason-cli@0.1.0-preview.6`. This release candidate includes the merged delegation-preflight and local-runtime command surface; verify the live npm `preview` tag independently after the trusted publish workflow completes.
 
 Use this package when you want the `assetmason` binary from `npx` or a local install.
 
@@ -33,7 +33,7 @@ npx -y assetmason-cli@preview scan --root . --format markdown
 
 ## Local runtime consumer seam
 
-The preview.5 package includes the file-backed, machine-readable local runtime without requiring a server or account. Consumers should treat JSON output as the authority and keep `ResourcePlan`, `ResourceLock`, and `OutcomeReceipt` as the only canonical root artifacts.
+The preview.6 package includes the file-backed, machine-readable local runtime without requiring a server or account. Consumers should treat JSON output as the authority and keep `ResourcePlan`, `ResourceLock`, and `OutcomeReceipt` as the only canonical root artifacts.
 
 ```bash
 assetmason run --root . --task "bounded local task" --isolated --format json
